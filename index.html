@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dragon Phoenix Ascension — Command Center</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@300;400&display=swap');
+  :root {
+    --ember:#FF4D00; --gold:#FFB347; --cyan:#00E5FF; --ash:#E8E4DC;
+    --smoke:#6B6B7A; --void:#0A0A0F; --surface:#13131F; --surface2:#1C1C2E;
+    --border:rgba(255,77,0,.15);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    background:var(--void); color:var(--ash);
+    font-family:'Segoe UI',system-ui,sans-serif;
+    min-height:100vh; overflow-x:hidden;
+  }
+  body::before {
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(ellipse 60% 40% at 15% 10%, rgba(255,77,0,.08), transparent 60%),
+      radial-gradient(ellipse 50% 50% at 85% 80%, rgba(0,229,255,.05), transparent 60%);
+  }
+  .wrap { position:relative; z-index:1; max-width:680px; margin:0 auto; padding:0 16px; }
+  .header { display:flex; justify-content:space-between; align-items:center; padding:22px 0 18px; border-bottom:1px solid var(--border); }
+  .brand { display:flex; align-items:center; gap:10px; }
+  .mark { width:34px; height:34px; background:linear-gradient(135deg,var(--ember),var(--gold)); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:17px; box-shadow:0 0 14px rgba(255,77,0,.4); }
+  .bname { font-weight:800; font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
+  .btag { font-size:8px; color:var(--ember); letter-spacing:.2em; font-family:'JetBrains Mono',monospace; text-transform:uppercase; }
+  .status { display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--smoke); }
+  .dot { width:7px; height:7px; border-radius:50%; background:#00FF88; box-shadow:0 0 8px #00FF88; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .hero { padding:36px 0 24px; border-bottom:1px solid var(--border); }
+  .eyebrow { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.3em; color:var(--ember); text-transform:uppercase; margin-bottom:12px; }
+  h1 { font-family:'Syne',sans-serif; font-size:clamp(28px,8vw,50px); font-weight:800; line-height:1; margin-bottom:6px; }
+  .fire { background:linear-gradient(90deg,var(--ember),var(--gold) 60%,var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .muted { color:var(--smoke); font-size:.54em; display:block; font-weight:400; }
+  .herosub { margin-top:14px; font-size:12px; color:var(--smoke); line-height:1.6; }
+  .stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin:24px 0; }
+  .stat { background:var(--surface); padding:16px 10px; text-align:center; }
+  .statn { font-family:'Syne',sans-serif; font-weight:800; font-size:24px; color:var(--gold); }
+  .statl { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:.12em; color:var(--smoke); text-transform:uppercase; margin-top:4px; }
+  .sec { padding:32px 0; border-bottom:1px solid var(--border); }
+  .sl { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.3em; color:var(--ember); text-transform:uppercase; margin-bottom:12px; }
+  .sh { font-family:'Syne',sans-serif; font-weight:800; font-size:19px; margin-bottom:4px; }
+  .sd { font-size:12px; color:var(--smoke); margin-bottom:18px; line-height:1.5; }
+  .qps { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  .qp { background:var(--surface); border:1px solid rgba(255,77,0,.2); border-radius:20px; padding:5px 11px; font-size:10px; color:var(--smoke); cursor:pointer; font-family:inherit; transition:all .2s; }
+  .qp:hover { border-color:var(--ember); color:var(--ash); }
+  .chat { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .chead { background:var(--surface2); padding:10px 13px; display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--border); }
+  .cicon { width:25px; height:25px; background:linear-gradient(135deg,var(--ember),var(--gold)); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:12px; }
+  .ctitle { font-weight:700; font-size:11px; }
+  .csub { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--smoke); margin-left:auto; }
+  .msgs { padding:14px; min-height:160px; max-height:340px; overflow-y:auto; }
+  .msgs::-webkit-scrollbar { width:3px; }
+  .msgs::-webkit-scrollbar-thumb { background:var(--ember); border-radius:3px; }
+  .msg { display:flex; gap:7px; align-items:flex-start; margin-bottom:10px; }
+  .msg.user { flex-direction:row-reverse; }
+  .ava { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; }
+  .msg.ai .ava { background:linear-gradient(135deg,var(--ember),var(--gold)); }
+  .msg.user .ava { background:var(--surface2); border:1px solid rgba(255,77,0,.2); }
+  .bub { padding:9px 11px; font-size:12px; line-height:1.6; color:var(--ash); max-width:82%; }
+  .msg.ai .bub { background:var(--surface2); border:1px solid rgba(255,77,0,.15); border-radius:9px 9px 9px 2px; }
+  .msg.user .bub { background:linear-gradient(135deg,rgba(255,77,0,.2),rgba(255,179,71,.1)); border:1px solid rgba(255,77,0,.25); border-radius:9px 9px 2px 9px; }
+  .time { font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--smoke); margin-top:2px; }
+  .msg.ai .time { text-align:left; } .msg.user .time { text-align:right; }
+  .inrow { display:flex; border-top:1px solid var(--border); }
+  textarea { flex:1; background:transparent; border:none; outline:none; padding:11px 13px; font-family:inherit; font-size:12px; color:var(--ash); resize:none; }
+  textarea::placeholder { color:var(--smoke); }
+  .send { background:linear-gradient(135deg,var(--ember),var(--gold)); border:none; padding:0 16px; cursor:pointer; font-weight:700; font-size:10px; letter-spacing:.05em; color:var(--void); font-family:inherit; }
+  .send:disabled { opacity:.4; cursor:not-allowed; }
+  .err { background:rgba(255,107,107,.1); border-top:1px solid rgba(255,107,107,.2); padding:7px 13px; font-family:'JetBrains Mono',monospace; font-size:10px; color:#FF6B6B; }
+  .typing { display:flex; gap:4px; align-items:center; padding-top:8px; }
+  .td { width:6px; height:6px; border-radius:50%; background:var(--ember); animation:bounce 1.2s infinite; }
+  .td:nth-child(2){animation-delay:.2s} .td:nth-child(3){animation-delay:.4s}
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-5px);opacity:1} }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .pillar { background:var(--surface); border:1px solid var(--border); border-radius:11px; padding:14px; cursor:pointer; transition:all .2s; }
+  .pillar:hover { background:var(--surface2); border-color:rgba(255,77,0,.35); transform:translateY(-2px); }
+  .picon { font-size:18px; margin-bottom:7px; }
+  .ptitle { font-weight:700; font-size:12px; margin-bottom:4px; }
+  .pdesc { font-size:10px; color:var(--smoke); line-height:1.4; }
+  .ptag { margin-top:9px; display:inline-block; background:rgba(255,77,0,.1); border:1px solid rgba(255,77,0,.2); border-radius:3px; padding:2px 6px; font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:.1em; color:var(--ember); text-transform:uppercase; }
+  .fuel { background:var(--surface); border:1px solid var(--border); border-radius:11px; padding:18px; margin-bottom:9px; }
+  .fq { font-family:'Syne',sans-serif; font-weight:800; font-size:15px; line-height:1.4; margin-bottom:7px; }
+  .fa { color:var(--ember); }
+  .fattr { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--smoke); }
+  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:7px; }
+  .ins { background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:12px; }
+  .insn { font-family:'Syne',sans-serif; font-weight:800; font-size:18px; color:var(--cyan); }
+  .inst { font-size:10px; color:var(--smoke); margin-top:3px; line-height:1.4; }
+  footer { padding:20px 0; text-align:center; border-top:1px solid rgba(255,77,0,.1); }
+  .fb { font-weight:700; font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--smoke); margin-bottom:3px; }
+  .ft { font-family:'JetBrains Mono',monospace; font-size:8px; color:rgba(255,77,0,.4); letter-spacing:.2em; }
+  @media(max-width:560px){ .grid2,.grid3,.stats{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="brand">
+      <div class="mark">🐉</div>
+      <div><div class="bname">Dragon Phoenix</div><div class="btag">Ascension // Command</div></div>
+    </div>
+    <div class="status"><div class="dot"></div><span>ONLINE</span></div>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow">// Your Million-Dollar Operating System</div>
+    <h1><span class="fire">Fire Within.</span><span class="muted">Power Unleashed.</span></h1>
+    <p class="herosub">Your personal AI business mentor — elite financial intelligence, entrepreneurial strategy, and confidence architecture. Built for Courtney. Built to win.</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="statn">$1M</div><div class="statl">Target This Year</div></div>
+    <div class="stat"><div class="statn">∞</div><div class="statl">Streams Building</div></div>
+    <div class="stat"><div class="statn">NOW</div><div class="statl">Time to Execute</div></div>
+  </div>
+
+  <div class="sec">
+    <div class="sl">// AI Mentor Interface</div>
+    <div class="sh">Ask Your Advisor</div>
+    <div class="sd">World-class mentorship, financial strategy, and confidence coaching — on demand.</div>
+    <div class="qps" id="qps"></div>
+    <div class="chat">
+      <div class="chead">
+        <div class="cicon">🐉</div>
+        <div class="ctitle">DPA Business Mentor</div>
+        <div class="csub">Powered by Claude</div>
+      </div>
+      <div class="msgs" id="msgs"></div>
+      <div class="err" id="err" style="display:none"></div>
+      <div class="inrow">
+        <textarea id="input" rows="2" placeholder="Ask about business strategy, money, confidence, or execution..."></textarea>
+        <button class="send" id="send">SEND</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sl">// Core Focus Areas</div>
+    <div class="sh">Your Empire's Pillars</div>
+    <div class="sd">Tap any pillar for a targeted briefing.</div>
+    <div class="grid2" id="pillars"></div>
+  </div>
+
+  <div class="sec" style="border-bottom:none">
+    <div class="sl">// Daily Intelligence</div>
+    <div class="sh">Power Fuel</div>
+    <div class="sd">The beliefs elite entrepreneurs live by.</div>
+    <div class="fuel">
+      <div class="fq">"Your identity is your <span class="fa">operating system.</span> Change the story you tell about yourself, and you change every result that follows."</div>
+      <div class="fattr">— DPA Advisor // Confidence Protocol</div>
+    </div>
+    <div class="grid3">
+      <div class="ins"><div class="insn">$0→$1M</div><div class="inst">Solopreneurs with 3+ digital income streams avg 18–24 months to seven figures</div></div>
+      <div class="ins"><div class="insn">72hrs</div><div class="inst">Window to act before your brain rationalizes inaction. Launch before perfect.</div></div>
+      <div class="ins"><div class="insn">1%</div><div class="inst">Daily improvement compounds to 37x in a year. You need a streak, not a leap.</div></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="fb">Dragon Phoenix Ascension</div>
+    <div class="ft">Fire Within // Power Unleashed // 2026</div>
+  </footer>
+</div>
+
+<script>
+  const SYSTEM = `You are the world's top business mentor, financial strategist, and confidence coach. You are advising Courtney McNair, a 48-year-old entrepreneur in Birmingham, AL building Dragon Phoenix Ascension toward $1M this year. His projects include kawaii clip art on Etsy, React apps, AutoPilot Digest newsletter, Voice Bridge startup, and a children's graphic novel. He has 20+ years hospitality experience and values accountability. He learns visually and struggles with project completion. Be direct, specific, sharp, and inspiring. End with ONE bold action for the next 24 hours. No corporate speak.`;
+
+  const QUICK = [
+    ["🎯","This week's priority","What should I prioritize this week to hit my $1M goal for Dragon Phoenix Ascension?"],
+    ["🔥","Confidence boost","Give me a powerful belief reframe for when I feel stuck and doubt myself as an entrepreneur."],
+    ["💡","Highest ROI moves","What are the top 3 highest-ROI moves for Dragon Phoenix Ascension right now?"],
+    ["📈","Scale Etsy to $10K","Break down exactly how I scale my kawaii clip art Etsy business to $10K/month."],
+    ["⚡","Elite daily habits","What daily habits do the most successful solopreneurs share?"]
+  ];
+
+  const PILLARS = [
+    ["🐉","DPA Empire","Digital products, apps, brand growth.","Primary Brand","Give me a 90-day execution plan for Dragon Phoenix Ascension — clip art, React apps, AutoPilot Digest. What do I do first?"],
+    ["🎨","Etsy Clip Art","Kawaii PNG packs, passive income at scale.","Active Launch","Fastest path to $10K/month from kawaii digital products on Etsy in 2026?"],
+    ["🍷","Hospitality Brand","20+ years F&B. Premium brand buried here.","Untapped Asset","I have 20+ years in craft beer and fine dining. How do I turn that into a premium brand generating real income?"],
+    ["⚡","Confidence Core","Identity shifts. The mental game of wealth.","Mindset","How do I install the identity of a $1M entrepreneur and eliminate self-doubt?"]
+  ];
+
+  // CHANGE THIS after you deploy — point it at your own Vercel URL + /api/chat
+  // While testing locally with the same deploy, "/api/chat" works automatically.
+  const API_ENDPOINT = "/api/chat";
+
+  const history = [];
+  const msgsEl = document.getElementById("msgs");
+  const errEl = document.getElementById("err");
+  const inputEl = document.getElementById("input");
+  const sendEl = document.getElementById("send");
+
+  function ts(){ return new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}); }
+
+  function addMsg(role, text, time){
+    const div = document.createElement("div");
+    div.className = "msg " + role;
+    div.innerHTML = `<div class="ava">${role==="ai"?"🐉":"🔥"}</div>
+      <div><div class="bub">${text.replace(/\n/g,"<br>")}</div><div class="time">${time||ts()}</div></div>`;
+    msgsEl.appendChild(div);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+
+  function showTyping(){
+    const div = document.createElement("div");
+    div.className = "msg ai"; div.id = "typing";
+    div.innerHTML = `<div class="ava">🐉</div><div class="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+    msgsEl.appendChild(div);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+  function hideTyping(){ document.getElementById("typing")?.remove(); }
+
+  async function send(text){
+    const msg = (text || inputEl.value).trim();
+    if(!msg) return;
+    inputEl.value = "";
+    errEl.style.display = "none";
+    addMsg("user", msg);
+    history.push({ role:"user", content:msg });
+    sendEl.disabled = true;
+    showTyping();
+
+    try {
+      const res = await fetch(API_ENDPOINT, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ messages: history, system: SYSTEM })
+      });
+      const data = await res.json();
+      hideTyping();
+      if(data.error){ throw new Error(data.error); }
+      const reply = data.reply || "No response.";
+      history.push({ role:"assistant", content:reply });
+      addMsg("ai", reply);
+    } catch(err){
+      hideTyping();
+      errEl.style.display = "block";
+      errEl.textContent = "⚠ " + err.message;
+    } finally {
+      sendEl.disabled = false;
+    }
+  }
+
+  // Build quick prompts
+  QUICK.forEach(([icon,label,prompt])=>{
+    const b = document.createElement("button");
+    b.className = "qp"; b.textContent = `${icon} ${label}`;
+    b.onclick = ()=>send(prompt);
+    document.getElementById("qps").appendChild(b);
+  });
+
+  // Build pillars
+  PILLARS.forEach(([icon,title,desc,tag,prompt])=>{
+    const d = document.createElement("div");
+    d.className = "pillar";
+    d.innerHTML = `<div class="picon">${icon}</div><div class="ptitle">${title}</div><div class="pdesc">${desc}</div><div class="ptag">${tag}</div>`;
+    d.onclick = ()=>send(prompt);
+    document.getElementById("pillars").appendChild(d);
+  });
+
+  sendEl.onclick = ()=>send();
+  inputEl.addEventListener("keydown", e=>{
+    if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); send(); }
+  });
+
+  // Welcome message
+  addMsg("ai", "Courtney — welcome to your command center. I'm your AI advisor: business strategist, financial architect, confidence coach. I know your brands and your $1M goal. What are we attacking today?", "Ready");
+</script>
+</body>
+</html>
