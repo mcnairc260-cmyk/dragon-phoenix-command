@@ -18,6 +18,7 @@ Tracks generated media assets for the DPA YouTube channel (Higgsfield generation
 - **Type:** Video, 5s, 16:9, silent (add music/VO in edit)
 - **Model:** Cinema Studio Video (start frame = asset 1) · **Cost:** 5 credits
 - **Job ID:** `61721354-dbb0-4322-a8bd-3801c20e4e64`
+- **URL:** https://d8j0ntlcm91z4.cloudfront.net/user_3EBystljmohKMm3qco5MDlkjHSE/hf_20260705_042435_61721354-dbb0-4322-a8bd-3801c20e4e64.mp4 (1344×768)
 - **Content:** Slow push-in on the command center; dragon and phoenix fire spiraling upward; embers drift; HUD pulses.
 - **Use for:** channel intro/outro sting, trailer closing beat (beats 12–14 of `scripts/00-channel-trailer.md`), Shorts end-card, website hero loop.
 - **Post:** add the ember-crackle audio signature + a low cinematic swell; fade from/to black.
