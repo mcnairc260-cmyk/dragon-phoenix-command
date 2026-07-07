@@ -14,6 +14,7 @@ Founding documents: the **DPA Constitution v1.0** and **Master Blueprint v1.0** 
 
 | Path | Contents |
 |---|---|
+| `docs/AI_ONBOARDING.md` | Start here (AI or human contributors): reading order, architecture, standards, safe-contribution rules |
 | `docs/founding/` | The founding documents: DPA Constitution v1.0 and Master Blueprint v1.0 (source of truth) |
 | `docs/PROJECT_CONTEXT.md` | Full project handoff: decision log, assumptions, tool intelligence, open decisions |
 | `brand/BRAND_BIBLE.md` | Brand identity: positioning, voice, visual system, vocabulary, guardrails, quality bar |
