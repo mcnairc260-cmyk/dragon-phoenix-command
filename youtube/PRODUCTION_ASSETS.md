@@ -1,0 +1,57 @@
+# PRODUCTION ASSETS LOG
+
+Tracks generated media assets for the DPA YouTube channel (Higgsfield generations, job IDs, and usage rights within the ecosystem).
+
+---
+
+## Generated 2026-07-05 (Higgsfield, free plan — 10 credits)
+
+### 1. Brand Key Art — "The Command Center" (v1)
+- **Type:** Image, 1376×768 (16:9), PNG
+- **Model:** Nano Banana Pro · **Cost:** 2 credits
+- **Job ID:** `49dd613a-071a-4444-8fa3-4573411e8f72`
+- **URL:** https://d8j0ntlcm91z4.cloudfront.net/user_3EBystljmohKMm3qco5MDlkjHSE/hf_20260705_041731_49dd613a-071a-4444-8fa3-4573411e8f72.png
+- **Content:** Dark command center, empty operator's chair, dragon of ember fire + phoenix of golden fire spiraling in a helix, cyan HUD lines, title lockup "DRAGON PHOENIX ASCENSION — FIRE WITHIN. POWER UNLEASHED."
+- **Use for:** channel banner base, video end-card, trailer key frame, website hero. Re-upscale to 4K before print/banner use.
+
+### 2. Brand Ident Video — 5s cinematic sting (v1)
+- **Type:** Video, 5s, 16:9, silent (add music/VO in edit)
+- **Model:** Cinema Studio Video (start frame = asset 1) · **Cost:** 5 credits
+- **Job ID:** `61721354-dbb0-4322-a8bd-3801c20e4e64`
+- **URL:** https://d8j0ntlcm91z4.cloudfront.net/user_3EBystljmohKMm3qco5MDlkjHSE/hf_20260705_042435_61721354-dbb0-4322-a8bd-3801c20e4e64.mp4 (1344×768)
+- **Content:** Slow push-in on the command center; dragon and phoenix fire spiraling upward; embers drift; HUD pulses.
+- **Use for:** channel intro/outro sting, trailer closing beat (beats 12–14 of `scripts/00-channel-trailer.md`), Shorts end-card, website hero loop.
+- **Post:** add the ember-crackle audio signature + a low cinematic swell; fade from/to black.
+
+> ⚠️ Generated asset URLs may expire — download and store originals in cloud storage (Drive/asset repo) promptly.
+
+---
+
+## Rendering the full 90-second trailer (when credits allow)
+
+The trailer script (`scripts/00-channel-trailer.md`) has 14 beats ≈ 9 × 10-second visual blocks + voiceover.
+
+**Estimated cost at current Higgsfield pricing:**
+- 9 video blocks (Cinema Studio / Seedance fast): ~45–90 credits
+- Start-frame images for consistency (Nano Banana Pro): ~18 credits (9 × 2)
+- Voiceover (seed_audio TTS) or record human VO (preferred per CHANNEL_STRATEGY §7): ~5–10 credits if AI
+- **Total: ~70–120 credits** → requires a Basic plan or credit top-up. Note: some models (e.g. Kling 3.0 Turbo) are plan-gated regardless of credits.
+
+**Recommended pipeline (uses the `video-explainer` workflow):**
+1. Lock the style key from asset 1 (dark command center, ember/gold fire, cyan HUD).
+2. Generate one start-frame image per beat group (7–9 images) for visual consistency.
+3. Animate each with Cinema Studio or Seedance (silent), 16:9, 1080p where budget allows.
+4. VO: record human read of the trailer script (~215 words) — human voice builds more trust for the flagship asset.
+5. Assemble in Descript/CapCut: VO-led timing, ember-crackle transitions, title cards in Space Grotesk/Sora, end on asset 2 (the ident sting).
+
+**Budget alternative (0 extra credits):** cut a 30s "teaser trailer" from assets 1–2 + kinetic typography of the script's strongest lines (beats 1, 6, 7, 14) in CapCut/Canva.
+
+---
+
+## Asset request queue (next generations, in priority order)
+
+1. Channel banner (2560×1440 safe-area composition) — variant of asset 1 without title text, logo added in Canva
+2. Profile avatar — dragon/phoenix fire mark, circular crop friendly, reads at 98px
+3. Thumbnail background plates ×3 (Void Black + ember gradient corners, per BRAND_BIBLE §5)
+4. Trailer beats 5, 8, 9–11 start frames (HUD brain, montage plates, dragon/phoenix/helix)
+5. End-screen template plate (two video slots + subscribe zone on command-center backdrop)
