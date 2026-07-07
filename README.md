@@ -14,6 +14,8 @@ Founding documents: the **DPA Constitution v1.0** and **Master Blueprint v1.0** 
 
 | Path | Contents |
 |---|---|
+| `docs/founding/` | The founding documents: DPA Constitution v1.0 and Master Blueprint v1.0 (source of truth) |
+| `docs/PROJECT_CONTEXT.md` | Full project handoff: decision log, assumptions, tool intelligence, open decisions |
 | `brand/BRAND_BIBLE.md` | Brand identity: positioning, voice, visual system, vocabulary, guardrails, quality bar |
 | `brand/STORY.md` | The brand narrative: short/medium/full origin story, viewer story, story rules |
 | `brand/LORE.md` | The mythology: Dragon, Phoenix, the Ascension Loop, Operators, the adversaries |
