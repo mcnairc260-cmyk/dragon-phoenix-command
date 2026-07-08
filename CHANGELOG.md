@@ -1,0 +1,10 @@
+# CHANGELOG
+
+One line per material change, newest first. Format: `date · scope · what` (PR # where applicable).
+
+- 2026-07-08 · architecture · Full ecosystem audit + architecture package: AUDIT_2026-07, SYSTEM_OVERVIEW, NOTION_ARCHITECTURE, DATABASE_SCHEMA, AI_WORKFLOW, AUTOMATION_ROADMAP, SOP_LIBRARY, ROADMAP, DOCUMENTATION_INDEX, this changelog. Discovered and documented the Notion Command Center (19 DBs) and the doctrine/operations split.
+- 2026-07-07 · governance · AI Onboarding Manual + AI Continuation Protocol + CLAUDE.md entry point (#4).
+- 2026-07-07 · knowledge · PROJECT_CONTEXT handoff doc; founding docs (Constitution, Blueprint) archived into docs/founding/ (#3).
+- 2026-07-05 · media · Brand key art + 5s cinematic ident generated (Higgsfield); PRODUCTION_ASSETS log added.
+- 2026-07-05 · brand+youtube · Brand bible, story, lore; channel strategy, 30-video backlog, 4 production scripts; README expanded (#1).
+- (pre-2026-07-05) · product · Initial web app: index.html mentor UI + api/chat.js Anthropic proxy on Vercel.
