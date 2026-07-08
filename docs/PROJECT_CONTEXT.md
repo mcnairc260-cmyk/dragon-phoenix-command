@@ -152,7 +152,11 @@ MCP servers connected to the AI session (availability may vary by session): **Hi
 5. Produce video 01 end-to-end as the pipeline pilot (script is render-ready after fact-verification pass).
 6. Fix `api/chat.js` model ID whenever the chat is next touched (it may currently be broken).
 
-## 14. Guide for a successor AI
+## 14. The Notion operations layer (discovered 2026-07-08)
+
+A full Notion workspace ("🐉 Dragon Phoenix Command Center", built 2026-07-07/08 by another AI session, likely ChatGPT per the AI Charter) exists alongside this repo: 19 databases (Projects hub, Tasks, Content Ideas, Knowledge Base, AI Agents, Automation Dashboard, Finance Ledger, etc.), an Operating Manual, and its own phased roadmap whose Phase 1 is **CLIPFORGE** (the kawaii clip-art Etsy business) — first Etsy sale as the success metric. The repo and workspace initially had zero cross-references (split-brain); the 2026-07-08 audit (`docs/architecture/AUDIT_2026-07.md`) defines the doctrine/operations split and the reconciliation plan. Key facts: Content Ideas held only 3 rows (30-video backlog not imported); the workspace bans secrets in Notion; its "Future Ideas" parking lot is the idea holding pen. Successors: read `docs/architecture/SYSTEM_OVERVIEW.md` §1 before touching either system.
+
+## 15. Guide for a successor AI
 
 - Load, in order: `docs/founding/DPA_CONSTITUTION.md` → `docs/founding/DPA_BLUEPRINT.md` → `brand/BRAND_BIBLE.md` → `brand/LORE.md` → this file. That is the full context; nothing else is hidden.
 - Honor the guardrails as hard constraints: no medical advice (ADHD content especially), no fear/urgency/clickbait, no unverified factual claims in published content, AI never presented as replacing human judgment, dark-mode-first design.
