@@ -1,6 +1,6 @@
 # CLAUDE.md — Dragon Phoenix Ascension
 
-**Before doing anything, read `docs/AI_ONBOARDING.md`.** It contains the required reading sequence, architecture, coding standards, hard constraints, active priorities, and the list of decisions reserved for the founder.
+**Before doing anything, read `docs/AI_ONBOARDING.md`** (what to know: reading sequence, architecture, coding standards, hard constraints, active priorities, founder-reserved decisions) **and `docs/AI_CONTINUATION_PROTOCOL.md`** (how to operate: session rituals, decision-authority tiers, prohibited behaviors, the idea-evaluation gauntlet).
 
 Non-negotiables (full detail in the onboarding manual):
 
