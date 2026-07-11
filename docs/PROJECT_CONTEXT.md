@@ -156,6 +156,9 @@ MCP servers connected to the AI session (availability may vary by session): **Hi
 
 A full Notion workspace ("🐉 Dragon Phoenix Command Center", built 2026-07-07/08 by another AI session, likely ChatGPT per the AI Charter) exists alongside this repo: 19 databases (Projects hub, Tasks, Content Ideas, Knowledge Base, AI Agents, Automation Dashboard, Finance Ledger, etc.), an Operating Manual, and its own phased roadmap whose Phase 1 is **CLIPFORGE** (the kawaii clip-art Etsy business) — first Etsy sale as the success metric. The repo and workspace initially had zero cross-references (split-brain); the 2026-07-08 audit (`docs/architecture/AUDIT_2026-07.md`) defines the doctrine/operations split and the reconciliation plan. Key facts: Content Ideas held only 3 rows (30-video backlog not imported); the workspace bans secrets in Notion; its "Future Ideas" parking lot is the idea holding pen. Successors: read `docs/architecture/SYSTEM_OVERVIEW.md` §1 before touching either system.
 
+### 14a. n8n (as of 2026-07-11)
+A live n8n instance is MCP-connected (founder's personal project) holding one Notion API credential (full-workspace access) and one active workflow: `DPA — Content Idea → Pipeline Tasks` (`XRCkhfHlZ5H4cLQr`), registered and verified in the Notion Automation Dashboard. Design rows exist there for A3/A4/A6. AI-session authority in n8n: read/test = Tier 1, create/update = Tier 2, publish/activate or money/external sends = Tier 3 (SOP 13). See `docs/architecture/AUDIT_2026-07_ADDENDUM.md`.
+
 ## 15. Guide for a successor AI
 
 - Load, in order: `docs/founding/DPA_CONSTITUTION.md` → `docs/founding/DPA_BLUEPRINT.md` → `brand/BRAND_BIBLE.md` → `brand/LORE.md` → this file. That is the full context; nothing else is hidden.

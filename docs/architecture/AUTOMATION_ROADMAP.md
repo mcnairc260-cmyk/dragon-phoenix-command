@@ -9,7 +9,9 @@ Every automation the system should eventually contain. **Design lives here; runt
 - *Gate:* an automation is built only when its manual version has been done 3+ times (no automating hypothetical work), except revenue/backup automations which may lead demand.
 - Difficulty scale: 🟢 trivial (< 1 evening) / 🟡 moderate (a weekend) / 🔴 hard (multi-week or fragile API).
 
-**Recommended build order: A1 → A2 → A3 → A4 → A5 → A14 → A6 → A7 → A9 → A8 → then by phase.**
+**Recommended build order (amended 2026-07-11, see AUDIT_2026-07_ADDENDUM §A2′): A23 ✅ → A3 → A1 → A2 → A14 → A4 → A5 → A6 → A7 → A9 → A8 → then by phase.**
+
+**Runtime status (2026-07-11):** n8n live under the founder's personal project with a Notion credential. A23 is **Live** (n8n workflow `XRCkhfHlZ5H4cLQr`). Design rows exist in the Notion Automation Dashboard for A3, A4, A6. n8n governance for AI sessions: read/test freely; create/update = act-and-flag; publish/activate or anything touching money/external sends = founder only (SOP 13).
 
 ---
 
@@ -24,6 +26,8 @@ Every automation the system should eventually contain. **Design lives here; runt
 **A4 · Quick Capture AI router** (Notion list #4) — *Purpose:* capture stays one-box; filing is machine work. *Trigger:* new block under Quick Capture (poll 15 min). *Inputs:* capture text. *Outputs:* Claude classifies → row in Content Ideas/Business Ideas/Tasks/Knowledge with correct minimal properties; original line struck through with link. *Deps:* Anthropic API key in n8n; capture conventions. *Errors:* default + unclassifiable items stay put with ⚠ marker (never guess-file). *Difficulty:* 🟡. *Recovery:* strike-through marker = processed (idempotency key). *Future:* voice capture via phone shortcut → same router.
 
 **A5 · Weekly Review auto-draft** (Notion list #5) — *Purpose:* review becomes 15 min of judgment, zero collation. *Trigger:* cron Sunday 07:00. *Inputs:* week's Done tasks, published content, Finance rows, Journal lines. *Outputs:* pre-filled Weekly Review page section. *Deps:* A1–A3 data flowing. *Errors:* default. *Difficulty:* 🟡. *Future:* month/quarter variants (same query, wider window).
+
+**A23 · Content Idea → Pipeline Tasks** ✅ LIVE (built 2026-07-09 outside this roadmap; adopted retroactively) — *Purpose:* a new Content Idea automatically gets its standard pipeline task set, so no video stalls for lack of a next action. *Trigger:* new/updated Content Ideas row (n8n `XRCkhfHlZ5H4cLQr`). *Inputs:* Content row. *Outputs:* ~5 linked Tasks rows (verified in test). *Deps:* Notion credential. *Errors/recovery:* defaults apply — verify idempotency (re-triggering must not duplicate tasks) at next touch. *Difficulty:* 🟢. *Future:* per-Format task templates (Short vs Video vs Newsletter).
 
 ## Wave 2 — Content pipeline (build alongside videos 2–10)
 
