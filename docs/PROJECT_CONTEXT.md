@@ -136,7 +136,7 @@ MCP servers connected to the AI session (availability may vary by session): **Hi
 ## 12. Open decisions for the founder (prioritized)
 
 1. **Palette & font reconciliation** (§6) — blocks thumbnail templates, banner, and any new design work.
-2. **Personal-mentor site vs. public platform** (§5.2) — determines the website's next iteration.
+2. ~~**Personal-mentor site vs. public platform** (§5.2)~~ — **resolved by founder instruction 2026-07-12**: the site becomes the DPA OS / Cognitive Command Center (see §16). Whether the personal mentor eventually moves behind auth remains open.
 3. **Rewrite STORY.md origin story autobiographically** (§5.1) — blocks the "why I started this" video and About-page authenticity.
 4. **Approve or revise the lore vocabulary** (Operators, room names, adversaries, ranks) before it ships in public video scripts.
 5. **VO strategy:** record own voice vs. clone it (Higgsfield `create_voice`) vs. generic AI voice for Shorts only.
@@ -150,7 +150,7 @@ MCP servers connected to the AI session (availability may vary by session): **Hi
 3. Create the YouTube channel; paste STORY.md's 150-word version into About; upload key art derivative as banner (asset queue in `PRODUCTION_ASSETS.md` item 1).
 4. Decide open decisions 1–3 above.
 5. Produce video 01 end-to-end as the pipeline pilot (script is render-ready after fact-verification pass).
-6. Fix `api/chat.js` model ID whenever the chat is next touched (it may currently be broken).
+6. ~~Fix `api/chat.js` model ID whenever the chat is next touched~~ — done 2026-07-12 (`claude-sonnet-5`, see §16).
 
 ## 14. The Notion operations layer (discovered 2026-07-08)
 
@@ -158,6 +158,20 @@ A full Notion workspace ("🐉 Dragon Phoenix Command Center", built 2026-07-07/
 
 ### 14a. n8n (as of 2026-07-11)
 A live n8n instance is MCP-connected (founder's personal project) holding one Notion API credential (full-workspace access) and one active workflow: `DPA — Content Idea → Pipeline Tasks` (`XRCkhfHlZ5H4cLQr`), registered and verified in the Notion Automation Dashboard. Design rows exist there for A3/A4/A6. AI-session authority in n8n: read/test = Tier 1, create/update = Tier 2, publish/activate or money/external sends = Tier 3 (SOP 13). See `docs/architecture/AUDIT_2026-07_ADDENDUM.md`.
+
+## 16. The DPA OS rebuild (2026-07-12)
+
+The founder instructed a session to "change this into the DPA OS" — resolving open decision §12.2 in favor of the Blueprint's Cognitive Command Center. What shipped (branch `claude/dpa-os-refactor-xppg4w`):
+
+- **`index.html` rewritten** as a four-view single-page OS (hash-routed: `#deck` `#mentor` `#tools` `#doctrine`), same stack (vanilla JS, zero deps, no build step, live-site palette + Syne/JetBrains Mono — palette reconciliation §6 still unresolved, site palette matched per rule).
+  - **Deck:** Ascension Loop, "Today's Three" (max-3 daily task list — the Operating Manual's max-3 rule, made concrete), honest ecosystem status board. All hype copy and unverified stats from the old page ("Million-Dollar Operating System", "$1M target", "72hrs", "37x") were **removed** per Constitution Art. V — this closes the §5.3 flag.
+  - **Mentor:** same chat mechanics and endpoint; system prompt rewritten in brand voice (amplifier-not-autopilot, Seven Laws, defends focus, one 24-hour action per reply, no medical advice). Founder's personal context retained client-side (no *new* personal data added; moving it server-side remains part of open hardening decision §12.7). HTML-escaping added to all user-content rendering.
+  - **Tools:** the three tools ROADMAP v2.0 names — **Fortress Hour** timer (25/50/60/90 min, timestamp-based so tab throttling can't skew it, distraction counter, session log), **Evidence Ledger** (proof-of-action log), **the Gauntlet** (7-gate idea evaluator compressed from AI_CONTINUATION_PROTOCOL §6, CLEARED/PARKED verdicts with history).
+  - **Doctrine:** Seven Laws verbatim, five content pillars, "What DPA is not" with the ADHD educational-only line.
+  - **Persistence is localStorage only** (keys `dpa.*`) — per-device, no accounts, no server state. Deliberate: smallest version first; a real datastore is a future founder decision.
+  - Lore room names (Forge/Archive/etc.) deliberately **not** used in the UI — lore vocabulary is still unapproved (§12.4); views use functional names.
+- **`api/chat.js`:** model ID fixed `claude-sonnet-4-6` → `claude-sonnet-5` (was active priority #4 / §13.6, sanctioned "next time the chat app is touched"). CORS `*`, no rate limiting, and the client-side system prompt are **unchanged** — security-hardening scope (§12.7) stays founder-reserved.
+- **Verification:** exercised end-to-end headless (task cap + carryover, timer run/pause/distraction log, ledger add/delete + XSS injection test, both gauntlet verdict paths, persistence across reload). The chat round-trip could not be tested locally (serverless function needs Vercel) — verify on the PR's preview deploy before merging.
 
 ## 15. Guide for a successor AI
 

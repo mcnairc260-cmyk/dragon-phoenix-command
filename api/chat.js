@@ -1,6 +1,9 @@
 // api/chat.js — Serverless function (runs on Vercel, holds your API key safely)
 // The phone NEVER sees the key. It only talks to this endpoint.
 
+// Model is swappable by design (Constitution Art. IX: capabilities over brand loyalty).
+const MODEL = "claude-sonnet-5";
+
 export default async function handler(req, res) {
   // Allow your app to call this from anywhere
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -31,7 +34,7 @@ export default async function handler(req, res) {
         "anthropic-version": "2023-06-01"
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: MODEL,
         max_tokens: 1024,
         system: system || "You are a helpful assistant.",
         messages: messages
