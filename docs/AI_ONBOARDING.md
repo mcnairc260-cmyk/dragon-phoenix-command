@@ -126,7 +126,7 @@ These come from the Constitution and are **not negotiable with anyone except the
 
 ## 6. The one live inconsistency you must know about
 
-Two palettes and two font stacks exist (full table in `PROJECT_CONTEXT.md` §6): the **live site** uses ember `#FF4D00` / gold `#FFB347` / cyan `#00E5FF` with **Syne**; the **Brand Bible** proposes `#FF6B2C` / `#FFB300` / `#22D3EE` with Space Grotesk/Sora. Until the founder reconciles them: **match whichever surface you're working in** (site work → site palette; brand-doc/YouTube packaging work → Brand Bible palette) and do not "fix" the other side.
+Two palettes exist (full table in `PROJECT_CONTEXT.md` §6): the **live site** uses ember `#FF4D00` / gold `#FFB347` / cyan `#00E5FF`; the **Brand Bible** proposes `#FF6B2C` / `#FFB300` / `#22D3EE`. Until the founder reconciles the colors: **match whichever surface you're working in** (site work → site palette; brand-doc/YouTube packaging work → Brand Bible palette) and do not "fix" the other side. **Typography is founder-decided for the site** (2026-07-14): Space Grotesk headings + Inter body + JetBrains Mono labels — this replaced Syne for readability and matches the Brand Bible's proposal; the Brand Bible itself still lists alternates pending full reconciliation.
 
 ---
 

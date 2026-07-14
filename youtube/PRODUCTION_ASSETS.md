@@ -27,6 +27,22 @@ Tracks generated media assets for the DPA YouTube channel (Higgsfield generation
 
 ---
 
+## Founder-supplied brand assets (2026-07-14)
+
+Two images uploaded by the founder for the website (provenance/generator unknown — not from this project's Higgsfield account; no job IDs). Originals processed into repo `assets/`:
+
+### 3. DPA Monogram Emblem ("trademark emblem")
+- **Source:** founder upload (white-on-black monogram: dragon + phoenix heads flanking a spear, "DPA" letters, wordmark below)
+- **Repo derivative:** `assets/dpa-emblem.png` — monogram cropped (wordmark excluded), black made transparent, tinted gold `#FFB347`, 160×160, ~7 KB
+- **Use:** website header logo, chat header icon, favicon. Founder holds the original.
+
+### 4. Amber Dragon-Phoenix Key Art
+- **Source:** founder upload (black winged dragon-phoenix with molten amber cracks, rising from rocks)
+- **Repo derivative:** `assets/dpa-keyart.jpg` — trimmed (top band + bottom-right watermark sparkle), 900px wide, q82, ~115 KB
+- **Use:** website Deck hero visual. Candidate for channel art if founder confirms rights/quality.
+
+---
+
 ## Rendering the full 90-second trailer (when credits allow)
 
 The trailer script (`scripts/00-channel-trailer.md`) has 14 beats ≈ 9 × 10-second visual blocks + voiceover.

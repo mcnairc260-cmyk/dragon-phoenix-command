@@ -75,6 +75,8 @@ The brand package was written **before** discovering the founder details embedde
 | Display font | **Syne** | Space Grotesk / Sora / Rajdhani (proposed) |
 | Mono | JetBrains Mono (same) | JetBrains Mono |
 
+**Update 2026-07-14:** the founder decided the site typography for readability — **Space Grotesk (display) + Inter (body) + JetBrains Mono (labels)**, replacing Syne. This effectively adopts the Brand Bible's font direction for the site; the *color* reconciliation below is still open. The site's `--smoke` muted-text gray was lightened `#6B6B7A` → `#8A8A99` for contrast at the same time (readability tweak, not a palette pick).
+
 **Founder must pick one palette** and update the loser (BRAND_BIBLE §5 or the site CSS). Recommendation from the session that discovered this: keep the site's `#FF4D00` ember (hotter, more distinctive) and **Syne** (already live, has character), port them into BRAND_BIBLE, and keep BRAND_BIBLE's naming system (Void/Carbon/Ember/Gold/Cyan/Ghost/Steel). The generated key art used the BRAND_BIBLE hexes — close enough that regeneration is not required.
 
 ## 7. Web app technical observations (read-only findings, nothing changed)
@@ -172,6 +174,8 @@ The founder instructed a session to "change this into the DPA OS" — resolving 
   - Lore room names (Forge/Archive/etc.) deliberately **not** used in the UI — lore vocabulary is still unapproved (§12.4); views use functional names.
 - **`api/chat.js`:** model ID fixed `claude-sonnet-4-6` → `claude-sonnet-5` (was active priority #4 / §13.6, sanctioned "next time the chat app is touched"). CORS `*`, no rate limiting, and the client-side system prompt are **unchanged** — security-hardening scope (§12.7) stays founder-reserved.
 - **Verification:** exercised end-to-end headless (task cap + carryover, timer run/pause/distraction log, ledger add/delete + XSS injection test, both gauntlet verdict paths, persistence across reload). The chat round-trip could not be tested locally (serverless function needs Vercel) — verify on the PR's preview deploy before merging.
+
+**Follow-up 2026-07-14 (same branch/PR):** founder asked for readable type and supplied two brand images. Shipped: Space Grotesk/Inter/JetBrains Mono with all sizes raised (body 12→14px, secondary 10→12px, mono labels 8–9→9–10px; inputs 16px on mobile so iOS doesn't zoom), `--smoke` lightened for contrast; `assets/dpa-emblem.png` (amber-tinted monogram from the founder's trademark emblem) as header logo + chat icon + favicon; `assets/dpa-keyart.jpg` (founder's amber dragon-phoenix art) as a masked Deck-hero visual. Asset provenance logged in `PRODUCTION_ASSETS.md` §3–4. Font choice recorded in §6 above.
 
 ## 15. Guide for a successor AI
 
