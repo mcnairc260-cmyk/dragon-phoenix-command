@@ -79,12 +79,12 @@ The brand package was written **before** discovering the founder details embedde
 
 **Founder must pick one palette** and update the loser (BRAND_BIBLE §5 or the site CSS). Recommendation from the session that discovered this: keep the site's `#FF4D00` ember (hotter, more distinctive) and **Syne** (already live, has character), port them into BRAND_BIBLE, and keep BRAND_BIBLE's naming system (Void/Carbon/Ember/Gold/Cyan/Ghost/Steel). The generated key art used the BRAND_BIBLE hexes — close enough that regeneration is not required.
 
-## 7. Web app technical observations (read-only findings, nothing changed)
+## 7. Web app technical observations
 
 - Stack: single static `index.html` + one Vercel serverless function `api/chat.js` proxying the Anthropic Messages API. `ANTHROPIC_API_KEY` lives in Vercel env vars (correctly server-side). `vercel.json` only rewrites `/` → `/index.html`. No framework, no build step, no dependencies.
-- ⚠️ **Privacy:** the client-side `SYSTEM` prompt in `index.html` exposes the founder's full name, age, city, projects, and personal struggles to anyone who views source. If the repo/site is public and this bothers the founder, move the system prompt server-side into `api/chat.js`.
-- ⚠️ **Security posture:** `Access-Control-Allow-Origin: *` + no rate limiting means anyone who finds the endpoint can spend the Anthropic API budget. Acceptable for a personal toy; fix before publicizing (lock CORS to the site origin, add basic rate limiting).
-- ⚠️ **Model ID:** `api/chat.js` calls `claude-sonnet-4-6`, which does not match current Anthropic model naming (current: `claude-sonnet-5`, `claude-opus-4-8`, `claude-haiku-4-5-20251001`). If chat requests fail with a model-not-found error, this is why.
+- ✅ **Privacy (fixed 2026-07-14):** the mentor system prompt was moved server-side into `api/chat.js`; the client now sends only `{ messages }`. The founder's personal profile is injected from the `MENTOR_PROFILE` env var (out of both page source *and* the repo). No PII remains in `index.html` (grep-verified). **Founder action:** set `MENTOR_PROFILE` in Vercel to re-personalize the Mentor — until then it runs full brand voice, un-personalized.
+- ✅ **Security posture (fixed 2026-07-14):** CORS locked to this project's own Vercel domains (regex on `dragon-phoenix-command*.vercel.app` + optional `ALLOWED_ORIGINS` env allow-list); basic per-IP in-memory rate limit (20/min → 429); input caps (≤40 messages, ≤24k chars → 400); client-supplied `system` is ignored server-side. Rate limit is best-effort (per-instance, resets on cold start) — durable limiting (Vercel KV/Upstash) is a future infra decision, not taken.
+- ✅ **Model ID (fixed 2026-07-12):** now `claude-sonnet-5` via the `MODEL` const.
 - The welcome message is hardcoded and the chat has no persistence; `history` is in-page memory only.
 
 ## 8. Higgsfield operational intelligence (hard-won, not written anywhere else)
@@ -143,7 +143,7 @@ MCP servers connected to the AI session (availability may vary by session): **Hi
 4. **Approve or revise the lore vocabulary** (Operators, room names, adversaries, ranks) before it ships in public video scripts.
 5. **VO strategy:** record own voice vs. clone it (Higgsfield `create_voice`) vs. generic AI voice for Shorts only.
 6. **Higgsfield plan:** stay free (images only, ~3 credits left) vs. Basic+credits to render the trailer (~70–120 credits, per `PRODUCTION_ASSETS.md`).
-7. Whether to harden `api/chat.js` (CORS, rate limit, model ID, server-side system prompt) — recommended before any traffic arrives from YouTube.
+7. ~~Whether to harden `api/chat.js` (CORS, rate limit, model ID, server-side system prompt)~~ — **founder authorized 2026-07-14; shipped** (see §7 and §16). Only remaining sub-item: durable (cross-instance) rate limiting, deferred as a future infra decision.
 
 ## 13. Immediate next-actions queue
 
@@ -176,6 +176,8 @@ The founder instructed a session to "change this into the DPA OS" — resolving 
 - **Verification:** exercised end-to-end headless (task cap + carryover, timer run/pause/distraction log, ledger add/delete + XSS injection test, both gauntlet verdict paths, persistence across reload). The chat round-trip could not be tested locally (serverless function needs Vercel) — verify on the PR's preview deploy before merging.
 
 **Follow-up 2026-07-14 (same branch/PR):** founder asked for readable type and supplied two brand images. Shipped: Space Grotesk/Inter/JetBrains Mono with all sizes raised (body 12→14px, secondary 10→12px, mono labels 8–9→9–10px; inputs 16px on mobile so iOS doesn't zoom), `--smoke` lightened for contrast; `assets/dpa-emblem.png` (amber-tinted monogram from the founder's trademark emblem) as header logo + chat icon + favicon; `assets/dpa-keyart.jpg` (founder's amber dragon-phoenix art) as a masked Deck-hero visual. Asset provenance logged in `PRODUCTION_ASSETS.md` §3–4. Font choice recorded in §6 above.
+
+**Security hardening 2026-07-14 (founder-authorized, same branch/PR):** closed the three §7 flags. `api/chat.js` rewritten: system prompt server-side (`BASE_SYSTEM` in-file + personal profile from `MENTOR_PROFILE` env var), client-supplied `system` ignored, CORS locked to `dragon-phoenix-command*.vercel.app` (+ `ALLOWED_ORIGINS` env), basic per-IP in-memory rate limit (20/min), input caps (≤40 msgs / ≤24k chars). `index.html` now sends only `{ messages }` — the `SYSTEM` const (all founder PII) deleted from page source. Verified with a mocked-`fetch` Node test (12 assertions: CORS echo/deny, system-ignored, profile-injection, 405/400/429 paths) + a Playwright check that the client posts a system-less body and renders the reply, and a grep confirming no PII in `index.html`. **Two things only the founder can finish:** (1) set `MENTOR_PROFILE` in Vercel to re-personalize the Mentor; (2) exercise the live chat round-trip on the PR preview (serverless fn can't run locally).
 
 ## 15. Guide for a successor AI
 

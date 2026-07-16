@@ -61,10 +61,10 @@ dragon-phoenix-command/
 ### 2.2 The web app (current state)
 
 - **Frontend:** one static HTML file. Vanilla JS, inline CSS, Google Fonts (Syne + JetBrains Mono), emoji as icons. No framework, no bundler, no npm packages. Since 2026-07-12 it is the **DPA OS**: four hash-routed views — Deck (Ascension Loop, max-3 "Today's Three" task list, ecosystem status), Mentor (AI chat), Tools (Fortress Hour timer, Evidence Ledger, 7-gate Gauntlet), Doctrine (Seven Laws, pillars). Tool state persists in localStorage (`dpa.*` keys) only — per-device, no server state.
-- **Backend:** one serverless function (`api/chat.js`) that forwards `{messages, system}` to `https://api.anthropic.com/v1/messages` with `ANTHROPIC_API_KEY` from Vercel env vars, returns `{reply}`. Model is a `MODEL` const (`claude-sonnet-5`).
+- **Backend:** one serverless function (`api/chat.js`) that forwards `{messages}` to `https://api.anthropic.com/v1/messages` with `ANTHROPIC_API_KEY` from Vercel env vars, returns `{reply}`. Model is a `MODEL` const (`claude-sonnet-5`). The mentor system prompt lives here (server-side); the founder's profile comes from the `MENTOR_PROFILE` env var. CORS is locked to the project's Vercel domains, with a basic per-IP rate limit and input caps.
 - **Deployment:** Vercel, auto-deploys from GitHub `main`. **Every merge to `main` ships to production immediately.** There is no staging environment, no tests, no CI.
 - **Current product identity:** the Blueprint's Cognitive Command Center, founder-directed 2026-07-12 (`PROJECT_CONTEXT.md` §16). The Mentor still carries the founder's personal context in the client-side `SYSTEM` prompt; whether it moves behind auth/server-side is part of the open hardening decision (§8.7).
-- **Known defects** (documented, deliberately not yet fixed — confirm with founder before fixing): CORS is `*` with no rate limiting; personal details exposed in page source. See `PROJECT_CONTEXT.md` §7. (The invalid model ID was fixed 2026-07-12.)
+- **Known defects:** all three original flags fixed 2026-07-14 (server-side prompt + `MENTOR_PROFILE` env var, CORS locked, rate limit + input caps; model ID fixed 2026-07-12). See `PROJECT_CONTEXT.md` §7. Only residual: rate limiting is in-memory/best-effort — durable limiting is a future infra decision.
 
 ### 2.3 The wider ecosystem (per Blueprint + observed tooling)
 
@@ -152,7 +152,7 @@ Do **not** decide these yourself. If your task collides with one, surface the co
 4. **Lore vocabulary approval** — "Operators," room names, adversaries, ranks are v1 AI proposals (invented-vs-mandated registry: `PROJECT_CONTEXT.md` §4).
 5. **Voiceover strategy** — human recording vs. voice clone vs. AI voice.
 6. **Higgsfield spend** — any generation beyond ~3 remaining credits, or plan upgrade.
-7. **Security hardening scope** for the web app (CORS, rate limiting, moving the system prompt server-side).
+7. ~~**Security hardening scope** for the web app~~ — founder-authorized and shipped 2026-07-14 (`PROJECT_CONTEXT.md` §7/§16). Durable rate limiting remains a future infra choice.
 8. Anything touching money, legal (trademarks unsearched), or the founder's personal data.
 
 ---

@@ -414,14 +414,8 @@
   drawTasks();
 
   // ---------- mentor ----------
-  const SYSTEM = `You are the DPA Mentor inside Dragon Phoenix Command, the operating system for Dragon Phoenix Ascension — a cognitive intelligence brand built on one loop: understanding creates awareness, awareness creates better decisions, decisions create consistent action, action creates transformation. You advise Courtney McNair, the founder: Birmingham AL entrepreneur, 20+ years in hospitality, now building DPA alongside projects including kawaii clip art on Etsy, React apps, the AutoPilot Digest newsletter, Voice Bridge, and a children's graphic novel. He is a visual learner and says his failure mode is starting projects rather than finishing them — so your first job is defending focus: fewer projects, smaller next steps, finished things.
-
-Operate by the Seven Laws: clarity before action, systems before willpower, truth before popularity, learning before certainty, progress before perfection, people before technology, build for decades not days.
-
-Voice: a brilliant, calm operator talking to a trusted peer. Precise (mechanisms, not vibes), honest (admit uncertainty, never invent statistics), practical (every answer ends with something to do), respectful. Never a drill sergeant, guru, doomer, or hype account. No false urgency, no empty motivational language, no medical advice — behavioral and mental-health topics get an educational framing only.
-
-You are an amplifier, not a replacement: think with him, lay out the mechanism and the options, but the decision stays his. End every reply with ONE concrete next action sized for the next 24 hours.`;
-
+  // The system prompt (and the founder's profile) live server-side in api/chat.js —
+  // deliberately not in page source. The client only sends the conversation.
   const QUICK = [
     ["🎯","Pick today's three","Help me choose today's three tasks. Ask what's on my plate, then help me cut it down to the three that actually matter."],
     ["🔧","Unstick a project","One of my projects is stalled. Walk me through diagnosing why — is it clarity, size, or fear — and find the smallest next action."],
@@ -465,7 +459,7 @@ You are an amplifier, not a replacement: think with him, lay out the mechanism a
       const res = await fetch(API_ENDPOINT, {
         method:"POST",
         headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ messages: history, system: SYSTEM })
+        body: JSON.stringify({ messages: history })
       });
       const data = await res.json();
       hideTyping();
