@@ -149,7 +149,7 @@ MCP servers connected to the AI session (availability may vary by session): **Hi
 
 1. **Download and archive the two generated assets** (URLs in `PRODUCTION_ASSETS.md`) — CDN links may expire. Put them in Drive or a repo `assets/` folder (mind repo size for video).
 2. Visually QA the key art (AI-rendered title text is the likely defect) and the ident video.
-3. Create the YouTube channel; paste STORY.md's 150-word version into About; upload key art derivative as banner (asset queue in `PRODUCTION_ASSETS.md` item 1).
+3. **Create the YouTube channel** — launch kit prepared 2026-07-14 (`youtube/CHANNEL_SETUP.md`: paste-ready About = STORY.md medium version, handle options, keywords, `assets/youtube/dpa-banner.png` + `dpa-avatar.png`). Founder executes the Studio setup (creation/upload/publish are Tier 3).
 4. Decide open decisions 1–3 above.
 5. Produce video 01 end-to-end as the pipeline pilot (script is render-ready after fact-verification pass).
 6. ~~Fix `api/chat.js` model ID whenever the chat is next touched~~ — done 2026-07-12 (`claude-sonnet-5`, see §16).

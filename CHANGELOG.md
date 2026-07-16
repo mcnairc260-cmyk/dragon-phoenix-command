@@ -2,6 +2,7 @@
 
 One line per material change, newest first. Format: `date · scope · what` (PR # where applicable).
 
+- 2026-07-14 · youtube · Channel launch kit: CHANNEL_SETUP.md (paste-ready About/keywords/handle + Studio checklist) and channel art (assets/youtube/ banner 2560×1440 + avatar 800×800). Prep only — channel creation/publishing stays founder-only.
 - 2026-07-14 · security · Hardened api/chat.js (founder-authorized): system prompt moved server-side with founder profile via MENTOR_PROFILE env var (PII out of page source), CORS locked to project domains, basic per-IP rate limit, input caps. Client sends only {messages}.
 - 2026-07-14 · product+brand · Site typography switched to Space Grotesk/Inter with larger sizes (founder-decided, readability); founder's DPA emblem (amber-tinted) added as logo/favicon and amber key art as Deck hero visual (assets/ folder; provenance in PRODUCTION_ASSETS §3–4).
 - 2026-07-12 · product · Site rebuilt as the DPA OS (founder-directed): four views — Deck (Ascension Loop + max-3 daily tasks), Mentor (brand-voice prompt), Tools (Fortress Hour, Evidence Ledger, 7-gate Gauntlet), Doctrine. Hype copy/unverified stats removed; api/chat.js model ID fixed to claude-sonnet-5.
