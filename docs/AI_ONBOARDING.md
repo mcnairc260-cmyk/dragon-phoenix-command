@@ -60,11 +60,11 @@ dragon-phoenix-command/
 
 ### 2.2 The web app (current state)
 
-- **Frontend:** one static HTML file. Vanilla JS, inline CSS, Google Fonts (Syne + JetBrains Mono), emoji as icons. No framework, no bundler, no npm packages. Chat UI + quick prompts + "pillar" cards, all driven by three JS arrays (`QUICK`, `PILLARS`, `SYSTEM`).
-- **Backend:** one serverless function (`api/chat.js`) that forwards `{messages, system}` to `https://api.anthropic.com/v1/messages` with `ANTHROPIC_API_KEY` from Vercel env vars, returns `{reply}`.
+- **Frontend:** one static HTML file. Vanilla JS, inline CSS, Google Fonts (Syne + JetBrains Mono), emoji as icons. No framework, no bundler, no npm packages. Since 2026-07-12 it is the **DPA OS**: four hash-routed views — Deck (Ascension Loop, max-3 "Today's Three" task list, ecosystem status), Mentor (AI chat), Tools (Fortress Hour timer, Evidence Ledger, 7-gate Gauntlet), Doctrine (Seven Laws, pillars). Tool state persists in localStorage (`dpa.*` keys) only — per-device, no server state.
+- **Backend:** one serverless function (`api/chat.js`) that forwards `{messages}` to `https://api.anthropic.com/v1/messages` with `ANTHROPIC_API_KEY` from Vercel env vars, returns `{reply}`. Model is a `MODEL` const (`claude-sonnet-5`). The mentor system prompt lives here (server-side); the founder's profile comes from the `MENTOR_PROFILE` env var. CORS is locked to the project's Vercel domains, with a basic per-IP rate limit and input caps.
 - **Deployment:** Vercel, auto-deploys from GitHub `main`. **Every merge to `main` ships to production immediately.** There is no staging environment, no tests, no CI.
-- **Current product identity:** a *personal* AI business mentor for the founder (his profile is hard-coded in the client-side `SYSTEM` prompt). The Blueprint's *public* Cognitive Command Center is the destination; migration is an unresolved decision (§8.2).
-- **Known defects** (documented, deliberately not yet fixed — confirm with founder before fixing): model ID `claude-sonnet-4-6` is likely invalid; CORS is `*` with no rate limiting; personal details exposed in page source. See `PROJECT_CONTEXT.md` §7.
+- **Current product identity:** the Blueprint's Cognitive Command Center, founder-directed 2026-07-12 (`PROJECT_CONTEXT.md` §16). The Mentor still carries the founder's personal context in the client-side `SYSTEM` prompt; whether it moves behind auth/server-side is part of the open hardening decision (§8.7).
+- **Known defects:** all three original flags fixed 2026-07-14 (server-side prompt + `MENTOR_PROFILE` env var, CORS locked, rate limit + input caps; model ID fixed 2026-07-12). See `PROJECT_CONTEXT.md` §7. Only residual: rate limiting is in-memory/best-effort — durable limiting is a future infra decision.
 
 ### 2.3 The wider ecosystem (per Blueprint + observed tooling)
 
@@ -126,7 +126,7 @@ These come from the Constitution and are **not negotiable with anyone except the
 
 ## 6. The one live inconsistency you must know about
 
-Two palettes and two font stacks exist (full table in `PROJECT_CONTEXT.md` §6): the **live site** uses ember `#FF4D00` / gold `#FFB347` / cyan `#00E5FF` with **Syne**; the **Brand Bible** proposes `#FF6B2C` / `#FFB300` / `#22D3EE` with Space Grotesk/Sora. Until the founder reconciles them: **match whichever surface you're working in** (site work → site palette; brand-doc/YouTube packaging work → Brand Bible palette) and do not "fix" the other side.
+Two palettes exist (full table in `PROJECT_CONTEXT.md` §6): the **live site** uses ember `#FF4D00` / gold `#FFB347` / cyan `#00E5FF`; the **Brand Bible** proposes `#FF6B2C` / `#FFB300` / `#22D3EE`. Until the founder reconciles the colors: **match whichever surface you're working in** (site work → site palette; brand-doc/YouTube packaging work → Brand Bible palette) and do not "fix" the other side. **Typography is founder-decided for the site** (2026-07-14): Space Grotesk headings + Inter body + JetBrains Mono labels — this replaced Syne for readability and matches the Brand Bible's proposal; the Brand Bible itself still lists alternates pending full reconciliation.
 
 ---
 
@@ -137,7 +137,7 @@ In order (from `PROJECT_CONTEXT.md` §13):
 1. **Archive the two generated media assets** (URLs in `youtube/PRODUCTION_ASSETS.md`) before the CDN links expire, and visually QA them (AI-rendered title text never verified).
 2. **Launch the YouTube channel shell:** create channel, About text = `brand/STORY.md` medium version, banner from key art (asset queue item 1).
 3. **Produce video 01 end-to-end** (`youtube/scripts/01-...md`) as the pipeline pilot — after a human fact-verification pass.
-4. **Fix `api/chat.js` model ID** next time the chat app is touched (likely broken now).
+4. ~~Fix `api/chat.js` model ID~~ — done 2026-07-12 with the DPA OS rebuild (`PROJECT_CONTEXT.md` §16).
 5. Full trailer render awaits Higgsfield budget (~70–120 credits + Basic plan; plan in `PRODUCTION_ASSETS.md`).
 
 ---
@@ -147,12 +147,12 @@ In order (from `PROJECT_CONTEXT.md` §13):
 Do **not** decide these yourself. If your task collides with one, surface the collision and ask (or route around it):
 
 1. **Palette/typography reconciliation** (§6).
-2. **Personal mentor site vs. public platform** — which direction `index.html` evolves; whether the personal mentor moves behind auth.
+2. ~~**Personal mentor site vs. public platform**~~ — direction resolved by founder 2026-07-12: the site is the DPA OS / Cognitive Command Center (`PROJECT_CONTEXT.md` §16). Whether the personal mentor moves behind auth is still open (see #7).
 3. **Origin-story rewrite** — `brand/STORY.md` founder narrative must be personalized with the founder's real biography; only he can supply/approve it.
 4. **Lore vocabulary approval** — "Operators," room names, adversaries, ranks are v1 AI proposals (invented-vs-mandated registry: `PROJECT_CONTEXT.md` §4).
 5. **Voiceover strategy** — human recording vs. voice clone vs. AI voice.
 6. **Higgsfield spend** — any generation beyond ~3 remaining credits, or plan upgrade.
-7. **Security hardening scope** for the web app (CORS, rate limiting, moving the system prompt server-side).
+7. ~~**Security hardening scope** for the web app~~ — founder-authorized and shipped 2026-07-14 (`PROJECT_CONTEXT.md` §7/§16). Durable rate limiting remains a future infra choice.
 8. Anything touching money, legal (trademarks unsearched), or the founder's personal data.
 
 ---

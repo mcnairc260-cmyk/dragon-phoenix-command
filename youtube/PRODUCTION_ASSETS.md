@@ -27,6 +27,36 @@ Tracks generated media assets for the DPA YouTube channel (Higgsfield generation
 
 ---
 
+## Founder-supplied brand assets (2026-07-14)
+
+Two images uploaded by the founder for the website (provenance/generator unknown — not from this project's Higgsfield account; no job IDs). Originals processed into repo `assets/`:
+
+### 3. DPA Monogram Emblem ("trademark emblem")
+- **Source:** founder upload (white-on-black monogram: dragon + phoenix heads flanking a spear, "DPA" letters, wordmark below)
+- **Repo derivative:** `assets/dpa-emblem.png` — monogram cropped (wordmark excluded), black made transparent, tinted gold `#FFB347`, 160×160, ~7 KB
+- **Use:** website header logo, chat header icon, favicon. Founder holds the original.
+
+### 4. Amber Dragon-Phoenix Key Art
+- **Source:** founder upload (black winged dragon-phoenix with molten amber cracks, rising from rocks)
+- **Repo derivative:** `assets/dpa-keyart.jpg` — trimmed (top band + bottom-right watermark sparkle), 900px wide, q82, ~115 KB
+- **Use:** website Deck hero visual; source for the YouTube banner (asset 5).
+
+---
+
+## Channel art (2026-07-14, built with Pillow — no credits spent)
+
+Brand Bible packaging palette (Void `#0A0A0F`, Ember `#FF6B2C`, Gold `#FFB300`, Ghost White `#F4F4F5`); type = Space Grotesk (wordmark) + JetBrains Mono (labels). Delivered as the YouTube launch kit (`youtube/CHANNEL_SETUP.md`).
+
+### 5. YouTube Banner
+- **File:** `assets/youtube/dpa-banner.png` — 2560×1440 (YouTube channel-art spec). All text inside the centered 1546×423 safe area; key art (asset 4) screen-blended and mask-faded into the void on the right.
+- **Use:** YouTube channel banner. Content: wordmark, `FIRE WITHIN. POWER UNLEASHED.`, and the CHANNEL_STRATEGY §1 one-liner.
+
+### 6. YouTube Avatar
+- **File:** `assets/youtube/dpa-avatar.png` — 800×800. Amber DPA emblem (asset 3) on a void disc with ember glow; sized to survive YouTube's circular crop and read at 48px.
+- **Use:** YouTube profile picture; reusable as a general square brand mark.
+
+---
+
 ## Rendering the full 90-second trailer (when credits allow)
 
 The trailer script (`scripts/00-channel-trailer.md`) has 14 beats ≈ 9 × 10-second visual blocks + voiceover.
