@@ -159,7 +159,15 @@ A full Notion workspace ("🐉 Dragon Phoenix Command Center", built 2026-07-07/
 ### 14a. n8n (as of 2026-07-11)
 A live n8n instance is MCP-connected (founder's personal project) holding one Notion API credential (full-workspace access) and one active workflow: `DPA — Content Idea → Pipeline Tasks` (`XRCkhfHlZ5H4cLQr`), registered and verified in the Notion Automation Dashboard. Design rows exist there for A3/A4/A6. AI-session authority in n8n: read/test = Tier 1, create/update = Tier 2, publish/activate or money/external sends = Tier 3 (SOP 13). See `docs/architecture/AUDIT_2026-07_ADDENDUM.md`.
 
-## 15. Guide for a successor AI
+## 15. Session log — 2026-07-24: the 30s teaser trailer (draft v1)
+
+- **What:** built the PRODUCTION_ASSETS "budget alternative" teaser (30s, 0 credits) as an in-repo browser animatic (`youtube/teaser/dpa-teaser-30s.html`) + rebuildable edit spec (`youtube/teaser/TEASER_CUT_SPEC.md`). All copy is verbatim from `youtube/scripts/00-channel-trailer.md` beats 1/6/7/14 — no new claims, no new lore.
+- **Route decision:** the session first attempted assembly in Descript (import assets → edit-by-text); the founder **declined the Descript tool call in-session**. Treat that as a live signal: don't push DPA media into Descript without asking first. The in-repo animatic route was used instead — zero external services, zero spend, nothing published.
+- **Deliberately unresolved (founder-only, unchanged):** no VO (open decision §12.5), no music (licensing unaddressed, §10.3), assets 1–2 still not visually QA'd or archived (§13.1–2). The animatic watermarks itself `DRAFT // NOT FOR PUBLICATION`.
+- **Verification:** headless-Chromium playthrough — all 6 scenes advance on schedule over exactly 30s; CDN-failure fallbacks engage (scenes 4–5 degrade to CSS stand-ins). The real CDN assets remain unverifiable from the sandbox (proxy block, §8.5); whether the links are still live is unknown as of 2026-07-24.
+- **Note if merged to `main`:** Vercel will serve the animatic at `/youtube/teaser/dpa-teaser-30s.html` (unpromoted path, watermarked). If that's unwanted, exclude it in `vercel.json` or keep the branch unmerged.
+
+## 16. Guide for a successor AI
 
 - Load, in order: `docs/founding/DPA_CONSTITUTION.md` → `docs/founding/DPA_BLUEPRINT.md` → `brand/BRAND_BIBLE.md` → `brand/LORE.md` → this file. That is the full context; nothing else is hidden.
 - Honor the guardrails as hard constraints: no medical advice (ADHD content especially), no fear/urgency/clickbait, no unverified factual claims in published content, AI never presented as replacing human judgment, dark-mode-first design.

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DPA Teaser Trailer — 30s Animatic (draft v1)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@300;400&display=swap');
+  /* Brand Bible §5 palette — this is YouTube-packaging surface, not the live-site palette (AI_ONBOARDING §6) */
+  :root {
+    --void:#0A0A0F; --carbon:#14141C; --ember:#FF6B2C; --gold:#FFB300;
+    --cyan:#22D3EE; --ghost:#F4F4F5; --steel:#8B8B99;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:#000; color:var(--ghost); font-family:'Space Grotesk',sans-serif; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+  /* 16:9 stage, letterboxed */
+  .stage { position:relative; width:100vw; max-width:calc(100vh*16/9); aspect-ratio:16/9; background:var(--void); overflow:hidden; }
+  .scene { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:4%; opacity:0; visibility:hidden; transition:opacity .8s ease; }
+  .scene.on { opacity:1; visibility:visible; }
+  .scene.cut { transition:none; } /* hard cut, no cross-fade */
+
+  /* shared type */
+  .line { font-size:clamp(18px,4.2vmin,44px); font-weight:500; letter-spacing:.01em; line-height:1.3; opacity:0; }
+  .sub { font-size:clamp(12px,2.4vmin,24px); color:var(--steel); font-weight:400; margin-top:2.2vmin; opacity:0; }
+  .on .rise { animation:rise 1.2s ease forwards; }
+  .on .rise2 { animation:rise 1.2s ease 1.6s forwards; }
+  @keyframes rise { from{opacity:0; transform:translateY(2.5vmin)} to{opacity:1; transform:none} }
+
+  /* S1 — beat 1: black, single ember, "You're not lazy." */
+  .emb { position:absolute; bottom:-2vmin; width:.7vmin; height:.7vmin; border-radius:50%; background:var(--ember); box-shadow:0 0 1.6vmin var(--ember); opacity:0; }
+  .on .emb { animation:drift 6s linear infinite; }
+  .emb:nth-child(2){ left:38%; animation-delay:.4s!important; } .emb:nth-child(3){ left:55%; animation-delay:2.2s!important; width:.45vmin; height:.45vmin; } .emb:nth-child(4){ left:70%; animation-delay:3.4s!important; width:.4vmin; height:.4vmin; }
+  @keyframes drift { 0%{opacity:0; transform:translateY(0)} 12%{opacity:.9} 100%{opacity:0; transform:translateY(-58vmin) translateX(3vmin)} }
+
+  /* S2 — beat 6: TRY HARDER glitches red, then the line stabilizes */
+  .tryhard { font-family:'JetBrains Mono',monospace; font-size:clamp(14px,3.2vmin,32px); letter-spacing:.35em; color:#FF3B30; opacity:0; }
+  .on .tryhard { animation:glitch 2.2s steps(1) forwards; }
+  @keyframes glitch { 0%{opacity:0} 8%{opacity:1; transform:translateX(.4vmin)} 16%{opacity:.25; transform:translateX(-.5vmin)} 24%{opacity:1; transform:none} 38%{opacity:.35; transform:translateX(.3vmin)} 52%{opacity:1} 78%{opacity:.5} 100%{opacity:0} }
+  .s2 .line { margin-top:3vmin; }
+  .s2 .on-delay { animation-delay:2.3s!important; }
+  .s2 .sub.rise2 { animation-delay:3.4s!important; }
+
+  /* S3 — beat 7: UNDERSTAND FIRST. title card */
+  .title { font-size:clamp(30px,8.5vmin,92px); font-weight:700; letter-spacing:.02em; background:linear-gradient(90deg,var(--ember),var(--gold)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; opacity:0; }
+  .on .title { animation:rise 1s ease forwards; }
+  .hud { position:absolute; left:6%; bottom:8%; font-family:'JetBrains Mono',monospace; font-size:clamp(8px,1.4vmin,13px); letter-spacing:.3em; color:var(--cyan); opacity:0; }
+  .on .hud { animation:rise .8s ease 1.2s forwards; }
+
+  /* S4 — ident video (asset 2), CSS fallback scene behind it */
+  .s4 video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .fallback { position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:radial-gradient(ellipse 70% 55% at 50% 62%, rgba(255,107,44,.22), transparent 65%), radial-gradient(ellipse 45% 35% at 50% 30%, rgba(34,211,238,.10), transparent 60%), var(--void); }
+  .s4.nofx .fallback, .s5.nofx .fallback { display:flex; }
+  .s4.nofx video, .s5.nofx img { display:none; }
+  .on .zoomin { animation:zoom 6s ease-out forwards; }
+  @keyframes zoom { from{transform:scale(1.04)} to{transform:scale(1.14)} }
+
+  /* S5 — key art (asset 1) slow zoom; contains the title lockup (beat 14) */
+  .s5 img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .s5 .fallback .title { animation:rise 1s ease forwards; }
+
+  /* S6 — end card */
+  .welcome { font-size:clamp(16px,3.4vmin,36px); font-weight:400; color:var(--ghost); opacity:0; }
+  .motto { font-size:clamp(22px,5.5vmin,60px); font-weight:700; letter-spacing:.06em; margin-top:2.4vmin; background:linear-gradient(90deg,var(--ember),var(--gold)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; opacity:0; }
+  .brandline { font-family:'JetBrains Mono',monospace; font-size:clamp(8px,1.5vmin,14px); letter-spacing:.4em; color:var(--steel); margin-top:4vmin; opacity:0; }
+  .on .welcome { animation:rise 1.2s ease forwards; }
+  .on .motto { animation:rise 1.2s ease 1.4s forwards; }
+  .on .brandline { animation:rise 1.2s ease 2.4s forwards; }
+
+  /* chrome: play overlay, timecode, draft watermark */
+  .play { position:absolute; inset:0; z-index:5; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2.4vmin; background:var(--void); cursor:pointer; border:none; color:var(--ghost); font-family:inherit; }
+  .play .ring { width:11vmin; height:11vmin; border-radius:50%; border:1px solid var(--ember); display:flex; align-items:center; justify-content:center; font-size:3.6vmin; color:var(--ember); box-shadow:0 0 3vmin rgba(255,107,44,.35); }
+  .play .pl { font-family:'JetBrains Mono',monospace; font-size:clamp(9px,1.6vmin,14px); letter-spacing:.35em; color:var(--steel); }
+  .play.gone { display:none; }
+  .tc { position:absolute; right:2.2%; bottom:3.4%; z-index:4; font-family:'JetBrains Mono',monospace; font-size:clamp(8px,1.4vmin,13px); letter-spacing:.2em; color:var(--steel); opacity:.85; }
+  .draft { position:absolute; left:2.2%; top:3.4%; z-index:4; font-family:'JetBrains Mono',monospace; font-size:clamp(8px,1.3vmin,12px); letter-spacing:.25em; color:var(--steel); opacity:.6; } /* remove for final export */
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+
+  <!-- S1 · 0.0–4.0 · trailer beat 1 -->
+  <div class="scene s1" data-t="0">
+    <span class="emb" style="left:47%"></span><span class="emb"></span><span class="emb"></span><span class="emb"></span>
+    <div class="line rise" style="animation-delay:1s">You're not lazy.</div>
+  </div>
+
+  <!-- S2 · 4.0–10.0 · trailer beat 6 -->
+  <div class="scene s2 cut" data-t="4">
+    <div class="tryhard">TRY&nbsp;HARDER</div>
+    <div class="line rise on-delay">Trying harder isn't a strategy.</div>
+    <div class="sub rise2">It's what you do when you don't understand the machine.</div>
+  </div>
+
+  <!-- S3 · 10.0–14.0 · trailer beat 7 -->
+  <div class="scene s3" data-t="10">
+    <div class="title">UNDERSTAND FIRST.</div>
+    <div class="sub rise2" style="animation-delay:1.4s!important">This channel is the manual.</div>
+    <div class="hud">DRAGON&nbsp;PHOENIX&nbsp;ASCENSION&nbsp;//&nbsp;SYSTEM&nbsp;ONLINE</div>
+  </div>
+
+  <!-- S4 · 14.0–19.0 · asset 2: 5s brand ident sting (silent) -->
+  <div class="scene s4" data-t="14">
+    <video id="ident" muted playsinline preload="auto"
+      src="https://d8j0ntlcm91z4.cloudfront.net/user_3EBystljmohKMm3qco5MDlkjHSE/hf_20260705_042435_61721354-dbb0-4322-a8bd-3801c20e4e64.mp4"></video>
+    <div class="fallback"><div class="hud" style="position:static">COMMAND&nbsp;CENTER&nbsp;//&nbsp;RESOLVING</div></div>
+  </div>
+
+  <!-- S5 · 19.0–25.0 · asset 1: key art with title lockup (beat 14) -->
+  <div class="scene s5" data-t="19">
+    <img id="keyart" class="zoomin" alt="DPA key art"
+      src="https://d8j0ntlcm91z4.cloudfront.net/user_3EBystljmohKMm3qco5MDlkjHSE/hf_20260705_041731_49dd613a-071a-4444-8fa3-4573411e8f72.png">
+    <div class="fallback"><div class="title">DRAGON&nbsp;PHOENIX&nbsp;ASCENSION</div></div>
+  </div>
+
+  <!-- S6 · 25.0–30.0 · trailer beat 14 close -->
+  <div class="scene s6" data-t="25">
+    <div class="welcome">Welcome to the command center.</div>
+    <div class="motto">FIRE&nbsp;WITHIN.&nbsp;POWER&nbsp;UNLEASHED.</div>
+    <div class="brandline">DRAGON&nbsp;PHOENIX&nbsp;ASCENSION</div>
+  </div>
+
+  <div class="draft">DRAFT&nbsp;v1&nbsp;//&nbsp;NOT&nbsp;FOR&nbsp;PUBLICATION</div>
+  <div class="tc" id="tc">00.0&nbsp;/&nbsp;30.0</div>
+  <button class="play" id="play">
+    <span class="ring">▶</span>
+    <span class="pl">DPA&nbsp;TEASER&nbsp;//&nbsp;30s&nbsp;//&nbsp;PRESS&nbsp;PLAY</span>
+  </button>
+
+</div>
+<script>
+  const DUR = 30, scenes = [...document.querySelectorAll('.scene')];
+  const ident = document.getElementById('ident'), keyart = document.getElementById('keyart');
+  const tc = document.getElementById('tc'), play = document.getElementById('play');
+  // CDN assets may have expired (PRODUCTION_ASSETS.md warning) — fall back to CSS scenes.
+  // Load errors can fire during parse, before listeners attach, so also poll current state.
+  const fail = n => document.querySelector('.s' + n).classList.add('nofx');
+  ident.addEventListener('error', () => fail(4));
+  keyart.addEventListener('error', () => fail(5));
+  const preflight = setInterval(() => {
+    if (ident.error || ident.networkState === 3) fail(4);
+    if (keyart.complete && !keyart.naturalWidth) fail(5);
+  }, 500);
+  setTimeout(() => clearInterval(preflight), 15000);
+  let t0 = null, identStarted = false;
+  function tick(now) {
+    const t = (now - t0) / 1000;
+    if (t >= DUR) { finish(); return; }
+    scenes.forEach(s => s.classList.toggle('on', t >= +s.dataset.t && (s === scenes.at(-1) || t < +s.nextElementSibling.dataset.t)));
+    if (t >= 14 && !identStarted) { identStarted = true; ident.play().catch(() => {}); }
+    tc.textContent = t.toFixed(1).padStart(4, '0') + ' / 30.0';
+    requestAnimationFrame(tick);
+  }
+  function finish() {
+    scenes.forEach(s => s.classList.remove('on'));
+    scenes.at(-1).classList.add('on');
+    tc.textContent = '30.0 / 30.0';
+    play.classList.remove('gone');
+    play.querySelector('.pl').textContent = 'REPLAY';
+  }
+  play.addEventListener('click', () => {
+    play.classList.add('gone');
+    identStarted = false; ident.currentTime = 0;
+    scenes.forEach(s => s.classList.remove('on'));
+    requestAnimationFrame(now => { t0 = now; tick(now); });
+  });
+</script>
+</body>
+</html>

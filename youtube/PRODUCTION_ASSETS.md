@@ -44,7 +44,17 @@ The trailer script (`scripts/00-channel-trailer.md`) has 14 beats ≈ 9 × 10-se
 4. VO: record human read of the trailer script (~215 words) — human voice builds more trust for the flagship asset.
 5. Assemble in Descript/CapCut: VO-led timing, ember-crackle transitions, title cards in Space Grotesk/Sora, end on asset 2 (the ident sting).
 
-**Budget alternative (0 extra credits):** cut a 30s "teaser trailer" from assets 1–2 + kinetic typography of the script's strongest lines (beats 1, 6, 7, 14) in CapCut/Canva.
+**Budget alternative (0 extra credits):** cut a 30s "teaser trailer" from assets 1–2 + kinetic typography of the script's strongest lines (beats 1, 6, 7, 14) in CapCut/Canva. → **Built 2026-07-24, see next section.**
+
+---
+
+## Teaser trailer — 30s (v1 draft, 2026-07-24, 0 credits)
+
+The budget-alternative teaser exists as an in-repo browser animatic + edit spec (no external tools, no credits spent, nothing published):
+
+- **`youtube/teaser/dpa-teaser-30s.html`** — self-contained 30s animatic (vanilla HTML/CSS/JS, Brand Bible palette, Space Grotesk + JetBrains Mono). Plays the full cut: kinetic typography of beats 1/6/7/14 → asset 2 (ident video) → asset 1 (key art zoom) → end card. Loads assets 1–2 from their CDN URLs; if they fail (links expired), scenes 4–5 fall back to CSS stand-ins so the cut still plays. Carries a `DRAFT // NOT FOR PUBLICATION` watermark until founder approval.
+- **`youtube/teaser/TEASER_CUT_SPEC.md`** — the edit decision list to rebuild the same cut at final quality in CapCut/Canva/Descript, plus export instructions and the founder-only gates (asset QA, archive, licensed music, pre-publish checklist, explicit upload approval).
+- **Status:** silent by design (VO strategy and music licensing are unresolved founder decisions). Verified by headless-browser playthrough (scene timing + fallback path); the CDN-asset path could not be verified from the sandbox (proxy blocks the CDN — known issue, PROJECT_CONTEXT §8.5) — founder's browser will show the real assets if the links are still live.
 
 ---
 

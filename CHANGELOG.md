@@ -2,6 +2,7 @@
 
 One line per material change, newest first. Format: `date · scope · what` (PR # where applicable).
 
+- 2026-07-24 · media · 30s teaser trailer draft v1: in-repo animatic (youtube/teaser/dpa-teaser-30s.html) + cut spec, 0 credits, from existing assets + trailer-script beats 1/6/7/14. Silent/watermarked pending founder gates.
 - 2026-07-11 · architecture · Second-pass audit addendum: n8n live (first workflow A23 adopted into roadmap), amended build order, n8n AI-session authority rules in SOP 13.
 - 2026-07-08 · architecture · Full ecosystem audit + architecture package: AUDIT_2026-07, SYSTEM_OVERVIEW, NOTION_ARCHITECTURE, DATABASE_SCHEMA, AI_WORKFLOW, AUTOMATION_ROADMAP, SOP_LIBRARY, ROADMAP, DOCUMENTATION_INDEX, this changelog. Discovered and documented the Notion Command Center (19 DBs) and the doctrine/operations split.
 - 2026-07-07 · governance · AI Onboarding Manual + AI Continuation Protocol + CLAUDE.md entry point (#4).
