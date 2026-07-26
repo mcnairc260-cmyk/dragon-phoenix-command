@@ -12,6 +12,22 @@ Personal project — not part of the Dragon Phoenix Ascension site content.
 - `print.html` — the print layout used to render the PDF. Regenerate with:
   `chromium --headless --no-pdf-header-footer --print-to-pdf=out.pdf print.html`
 
+## Painted edition (Higgsfield AI artwork)
+
+A fully AI-painted edition (Disney/Pixar-style, characters based on the
+animated reference portraits) was generated with Higgsfield `nano_banana_pro`
+and lives in the owner's Higgsfield media library. The finished painted PDF
+and a web-book zip were exported there as well (download links shared
+privately). Generation job IDs, in page order (cover, then pages 1–14):
+
+79f6d021, 3475bad5, 063dca63, fa46329f, bb737c0b, a22f2316, 4bed862d,
+55ac8aaf, f6ee0b33, 424dab12, 1c6dd6da, 243627f4, 5b15958b, 85dd30d4,
+27034fae
+
+Any single page can be regenerated for ~2 credits using the matching brief in
+`story.md` plus the cover image as a style reference. The files in this folder
+remain the vector-art edition, which works fully offline in the repo.
+
 ## Swapping in AI-painted artwork later
 
 The illustrations are hand-built vector art in a flat storybook style. To swap
