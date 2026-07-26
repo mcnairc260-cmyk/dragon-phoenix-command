@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Princess Lia and the Littlest Knight</title>
+<style>
+  :root {
+    --paper: #FFF9EE;
+    --ink: #4A3C63;
+    --gold: #C9A227;
+    --pink: #E8629A;
+    --night: #221B44;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: radial-gradient(120% 100% at 50% 0%, #3A2E66 0%, var(--night) 70%);
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #twinkles { position: fixed; inset: 0; pointer-events: none; }
+  #twinkles span {
+    position: absolute; border-radius: 50%; background: #FFF3C9;
+    animation: tw 3s ease-in-out infinite alternate;
+  }
+  @keyframes tw { from { opacity: .15; } to { opacity: .8; } }
+
+  #stage {
+    position: relative;
+    width: min(94vw, calc((100vh - 90px) * 0.72), 560px);
+    aspect-ratio: 0.78;
+    perspective: 2200px;
+    z-index: 2;
+  }
+  .page {
+    position: absolute; inset: 0;
+    background: var(--paper);
+    border-radius: 14px;
+    box-shadow: 0 18px 50px rgba(0,0,0,.5), 0 2px 0 rgba(255,255,255,.08) inset;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    backface-visibility: hidden;
+    transform-origin: left center;
+    transition: transform .65s cubic-bezier(.4,.1,.2,1), opacity .65s ease;
+  }
+  .page.hidden { visibility: hidden; }
+  .page.turn-out-fwd { transform: rotateY(-78deg) translateZ(30px); opacity: 0; }
+  .page.turn-out-back { transform: rotateY(12deg) scale(.94); opacity: 0; }
+  .page.turn-in { transform: none; opacity: 1; }
+
+  .art { flex: 0 0 68%; position: relative; overflow: hidden; }
+  .art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .art::after {
+    content: ""; position: absolute; inset: 0;
+    box-shadow: inset 0 -14px 22px -14px rgba(34,27,68,.45);
+  }
+  .words {
+    flex: 1 1 auto;
+    padding: 4.2% 7% 5.5%;
+    display: flex; flex-direction: column; justify-content: center; gap: .4em;
+    background:
+      radial-gradient(120% 140% at 50% -20%, #FFFdf4 0%, var(--paper) 60%);
+    text-align: center;
+    position: relative;
+  }
+  .words::before {
+    content: "✦"; color: var(--gold); font-size: .8rem; opacity: .8;
+  }
+  .words p {
+    font-size: clamp(.86rem, 2.5vmin, 1.06rem);
+    line-height: 1.5;
+  }
+  .words .pgnum {
+    position: absolute; bottom: 6px; left: 0; right: 0;
+    font-size: .62rem; color: #A79EB4; letter-spacing: .2em;
+  }
+
+  /* cover */
+  .page.cover .art { flex: 1 1 auto; }
+  .cover-title {
+    position: absolute; inset: auto 0 0 0; padding: 7% 8% 9%;
+    background: linear-gradient(transparent, rgba(20,14,44,.82) 42%);
+    text-align: center; color: #FFF6DF;
+  }
+  .cover-title h1 {
+    font-size: clamp(1.5rem, 6.2vmin, 2.3rem);
+    line-height: 1.15; font-weight: 700; letter-spacing: .01em;
+    text-shadow: 0 2px 14px rgba(0,0,0,.55);
+  }
+  .cover-title .sub {
+    margin-top: .7em; font-style: italic; font-size: clamp(.8rem, 2.6vmin, 1rem);
+    color: #FFE9A0;
+  }
+  .cover-title .rule { margin: .8em auto 0; width: 120px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+
+  /* dedication */
+  .page.dedication { justify-content: center; text-align: center;
+    background:
+      radial-gradient(100% 90% at 50% 10%, #FFFDF4 0%, var(--paper) 70%); }
+  .page.dedication .words { flex: 0 0 auto; background: none; }
+  .page.dedication .star-big { font-size: 2.2rem; color: var(--gold); }
+  .page.dedication p { font-style: italic; font-size: clamp(.95rem, 3vmin, 1.15rem); }
+
+  #bar {
+    z-index: 2; margin-top: 16px;
+    display: flex; align-items: center; gap: 14px;
+    color: #CFC8E2; font-size: .8rem; user-select: none;
+  }
+  #bar button {
+    background: rgba(255,249,238,.1); color: #FFE9A0;
+    border: 1px solid rgba(255,233,160,.35); border-radius: 999px;
+    width: 42px; height: 42px; font-size: 1.05rem; cursor: pointer;
+    transition: background .2s;
+    font-family: inherit;
+  }
+  #bar button:hover { background: rgba(255,249,238,.22); }
+  #bar button:disabled { opacity: .3; cursor: default; }
+  #dots { display: flex; gap: 5px; }
+  #dots i { width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,249,238,.25); transition: background .2s, transform .2s; }
+  #dots i.on { background: var(--gold); transform: scale(1.35); }
+
+  #hint { z-index: 2; margin-top: 8px; color: rgba(207,200,226,.55);
+    font-size: .68rem; font-style: italic; }
+</style>
+</head>
+<body>
+<div id="twinkles"></div>
+<div id="stage" aria-live="polite"></div>
+<div id="bar">
+  <button id="prev" aria-label="Previous page">❮</button>
+  <div id="dots"></div>
+  <button id="next" aria-label="Next page">❯</button>
+</div>
+<div id="hint">tap the sides, swipe, or use arrow keys to turn the page</div>
+
+<script>
+const PAGES = [
+  { type: "cover", img: "images/cover.svg",
+    title: "Princess Lia and the Littlest Knight",
+    sub: "A tale of two brave hearts" },
+  { type: "dedication",
+    text: "For Lia and Laughlin — may you always be as brave as you are kind, and may every star you wish on shine right back at you." },
+  { img: "images/page-01.svg", text: "Once upon a time, in the golden Kingdom of Everbright, there lived a little princess named Lia. She had sunshine hair, sky-blue eyes, and the kindest heart in all the land." },
+  { img: "images/page-02.svg", text: "And wherever Princess Lia went, there toddled her favorite knight in the whole wide world — Sir Laughlin the Littlest. His sword was wooden. His helmet was wobbly. But his heart was as big as the castle. “Go-go!” he cheered. It was his favorite word." },
+  { img: "images/page-03.svg", text: "Every night, the Great Star above the castle filled Everbright with light and color. But one morning, Lia looked out her window and gasped. The roses were turning gray! The banners drooped! High above the tallest tower, the Great Star had gone dim." },
+  { img: "images/page-04.svg", text: "“Someone has to bring back the light,” said Princess Lia, putting on her bravest face. Sir Laughlin lifted his little wooden sword. “Go-go!” And so, hand in hand, the two marched out through the great castle gates." },
+  { img: "images/page-05.svg", text: "They tramped into the Whispering Woods, where the trees hummed lullabies and fireflies lit the path like tiny floating lanterns. “Hello, trees!” called Lia. The leaves waved back." },
+  { img: "images/page-06.svg", text: "At the Giggling Brook, they hopped from stone to stone. Hop! Hop! Whoops — Laughlin slipped! But quick as a wish, Lia caught his hand. “I’ve got you, little knight,” she said. “We stick together.”" },
+  { img: "images/page-07.svg", text: "Deep in the woods, a silver owl swooped down. “Whoo seeks the light?” she asked. “We do!” said Lia. The owl blinked her moon-round eyes. “The Great Star fell from the sky… into the Dragon’s Cave on Moonberry Hill.”" },
+  { img: "images/page-08.svg", text: "A dragon?! Lia’s tummy did a flip-flop. But she squeezed Laughlin’s hand, and Laughlin squeezed right back. That is how brave works — it’s easier when you hold hands. Up, up Moonberry Hill they climbed, all the way to the deep, dark cave." },
+  { img: "images/page-09.svg", text: "But inside the cave there was no big scary dragon at all. There was a baby dragon — small and round as a puppy — curled around the glowing Great Star. And the baby dragon was… crying. Plip. Plip. Plip." },
+  { img: "images/page-10.svg", text: "“I’m sorry,” sniffled the little dragon. “My name is Ember. I was cold, and I was lonely, and the star was so warm… I didn’t know the whole kingdom would go gray.”" },
+  { img: "images/page-11.svg", text: "Princess Lia did not draw a sword. Princesses like Lia know a better magic. She wrapped Ember in the biggest, warmest hug. “You don’t have to be lonely anymore,” she said. “Come home with us.” Laughlin patted Ember’s nose. “Go-go!”" },
+  { img: "images/page-12.svg", text: "So Ember stretched her little wings — flap, flap, WHOOSH! — and flew Lia and Laughlin up, up, past the clouds, to hang the Great Star back in the sky. It burst into light! And every color came flooding home: pink for the roses, purple for the banners, gold for every tower." },
+  { img: "images/page-13.svg", text: "That night, the castle held the grandest ball Everbright had ever seen — for Princess Lia, Sir Laughlin the Littlest, and Ember, the newest friend of the kingdom. Because the bravest thing of all isn’t a sword or a crown. It’s a kind heart." },
+  { img: "images/page-14.svg", text: "And when the music grew soft and the candles grew sleepy, the littlest knight climbed onto the princess’s shoulder and closed his eyes. High above the castle, the Great Star shone its brightest — right over two brave hearts. Goodnight, Lia. Goodnight, Laughlin. The end." },
+];
+
+const stage = document.getElementById("stage");
+const dots = document.getElementById("dots");
+const prevB = document.getElementById("prev");
+const nextB = document.getElementById("next");
+let cur = 0, animating = false;
+
+function makePage(p, idx) {
+  const el = document.createElement("div");
+  if (p.type === "cover") {
+    el.className = "page cover";
+    el.innerHTML = `<div class="art"><img src="${p.img}" alt="">
+      <div class="cover-title"><h1>${p.title}</h1>
+      <div class="rule"></div><div class="sub">${p.sub} ✦ starring Lia &amp; Laughlin</div></div></div>`;
+  } else if (p.type === "dedication") {
+    el.className = "page dedication";
+    el.innerHTML = `<div class="words"><div class="star-big">✦</div><p>${p.text}</p></div>`;
+  } else {
+    el.className = "page";
+    el.innerHTML = `<div class="art"><img src="${p.img}" alt=""></div>
+      <div class="words"><p>${p.text}</p><span class="pgnum">— ${idx - 1} —</span></div>`;
+  }
+  return el;
+}
+
+const els = PAGES.map(makePage);
+els.forEach((el, i) => { if (i !== 0) el.classList.add("hidden"); stage.appendChild(el); });
+PAGES.forEach((_, i) => { const d = document.createElement("i"); if (i === 0) d.className = "on"; dots.appendChild(d); });
+
+function update() {
+  [...dots.children].forEach((d, i) => d.className = i === cur ? "on" : "");
+  prevB.disabled = cur === 0;
+  nextB.disabled = cur === PAGES.length - 1;
+}
+
+function go(dir) {
+  const nxt = cur + dir;
+  if (animating || nxt < 0 || nxt >= PAGES.length) return;
+  animating = true;
+  const out = els[cur], inn = els[nxt];
+  inn.classList.remove("hidden");
+  inn.style.zIndex = 1; out.style.zIndex = 2;
+  out.classList.add(dir > 0 ? "turn-out-fwd" : "turn-out-back");
+  setTimeout(() => {
+    out.classList.remove("turn-out-fwd", "turn-out-back");
+    out.classList.add("hidden");
+    cur = nxt; animating = false; update();
+  }, 660);
+}
+
+prevB.onclick = () => go(-1);
+nextB.onclick = () => go(1);
+stage.onclick = (e) => {
+  const r = stage.getBoundingClientRect();
+  go(e.clientX - r.left < r.width / 2 ? -1 : 1);
+};
+document.onkeydown = (e) => {
+  if (e.key === "ArrowRight" || e.key === " ") go(1);
+  if (e.key === "ArrowLeft") go(-1);
+};
+let tx = null;
+stage.addEventListener("touchstart", e => tx = e.touches[0].clientX, { passive: true });
+stage.addEventListener("touchend", e => {
+  if (tx === null) return;
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+  tx = null;
+}, { passive: true });
+
+const tw = document.getElementById("twinkles");
+for (let i = 0; i < 40; i++) {
+  const s = document.createElement("span");
+  const z = 1 + Math.random() * 2.4;
+  s.style.cssText = `left:${Math.random() * 100}%;top:${Math.random() * 100}%;` +
+    `width:${z}px;height:${z}px;animation-delay:${(Math.random() * 3).toFixed(2)}s;` +
+    `animation-duration:${(2 + Math.random() * 3).toFixed(2)}s`;
+  tw.appendChild(s);
+}
+const m = location.hash.match(/^#p(\d+)$/);
+if (m) {
+  const target = Math.min(Math.max(+m[1], 0), PAGES.length - 1);
+  els[cur].classList.add("hidden");
+  cur = target;
+  els[cur].classList.remove("hidden");
+}
+update();
+</script>
+</body>
+</html>
