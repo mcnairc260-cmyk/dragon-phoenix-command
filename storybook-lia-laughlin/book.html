@@ -108,6 +108,8 @@
   .page.dedication .words { flex: 0 0 auto; background: none; }
   .page.dedication .star-big { font-size: 2.2rem; color: var(--gold); }
   .page.dedication p { font-style: italic; font-size: clamp(.95rem, 3vmin, 1.15rem); }
+  .page.dedication .sign { margin-top: 1.4em; color: var(--gold);
+    font-size: clamp(.85rem, 2.6vmin, 1rem); line-height: 1.6; }
 
   #bar {
     z-index: 2; margin-top: 16px;
@@ -148,7 +150,8 @@ const PAGES = [
     title: "Princess Lia and the Littlest Knight",
     sub: "A tale of two brave hearts" },
   { type: "dedication",
-    text: "For Lia and Laughlin — may you always be as brave as you are kind, and may every star you wish on shine right back at you." },
+    text: "For Lia and Laughlin — may you always be as brave as you are kind, and may every star you wish on shine right back at you.",
+    sign: "With all my love,<br>your Uncle Courtney,<br>who loves you both dearly." },
   { img: "images/page-01.svg", text: "Once upon a time, in the golden Kingdom of Everbright, there lived a little princess named Lia. She had sunshine hair, sky-blue eyes, and the kindest heart in all the land." },
   { img: "images/page-02.svg", text: "And wherever Princess Lia went, there toddled her favorite knight in the whole wide world — Sir Laughlin the Littlest. His sword was wooden. His helmet was wobbly. But his heart was as big as the castle. “Go-go!” he cheered. It was his favorite word." },
   { img: "images/page-03.svg", text: "Every night, the Great Star above the castle filled Everbright with light and color. But one morning, Lia looked out her window and gasped. The roses were turning gray! The banners drooped! High above the tallest tower, the Great Star had gone dim." },
@@ -180,7 +183,8 @@ function makePage(p, idx) {
       <div class="rule"></div><div class="sub">${p.sub} ✦ starring Lia &amp; Laughlin</div></div></div>`;
   } else if (p.type === "dedication") {
     el.className = "page dedication";
-    el.innerHTML = `<div class="words"><div class="star-big">✦</div><p>${p.text}</p></div>`;
+    el.innerHTML = `<div class="words"><div class="star-big">✦</div><p>${p.text}</p>
+      <p class="sign">${p.sign}</p></div>`;
   } else {
     el.className = "page";
     el.innerHTML = `<div class="art"><img src="${p.img}" alt=""></div>

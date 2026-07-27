@@ -22,6 +22,9 @@
 
 **Text:** For Lia and Laughlin — may you always be as brave as you are kind, and may every star you wish on shine right back at you.
 
+With all my love,
+your Uncle Courtney, who loves you both dearly.
+
 **Illustration:** none (decorative star motif).
 
 ## Page 1
