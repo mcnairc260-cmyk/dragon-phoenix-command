@@ -15,54 +15,13 @@ import uuid
 import zipfile
 
 # ---------------------------------------------------------------- book text
-T = u"Princess Lia and the Littlest Knight"
-SUB = u"A tale of two brave hearts"
-AU = u"Uncle Courtney"          # <- set to the author name you want published
-DED = (u"For Lia and Laughlin — may you always be as brave as you are kind, "
-       u"and may every star you wish on shine right back at you.")
-SIGN = u"With all my love,<br/>your Uncle Courtney,<br/>who loves you both dearly."
-B1 = (u"When the Great Star above the Kingdom of Everbright goes dim, it takes a brave "
-      u"princess, the littlest knight, and one very lonely baby dragon to light it up again.")
-B2 = (u"A bedtime adventure about holding hands, being brave, and the magic of a kind heart.")
-CALT = (u"Princess Lia and Sir Laughlin stand hand in hand on a hilltop at night before a "
-        u"glowing fairy-tale castle, a baby dragon peeking over the boy's shoulder and a "
-        u"great golden star shining above the tallest tower.")
-
-# (story text, alt text) for pages 1..14
-P = [
-    (u"Once upon a time, in the golden Kingdom of Everbright, there lived a little princess named Lia. She had sunshine hair, sky-blue eyes, and the kindest heart in all the land.",
-     u"Princess Lia twirls in her rose-pink gown in a sunny castle garden full of pink roses and butterflies."),
-    (u"And wherever Princess Lia went, there toddled her favorite knight in the whole wide world — Sir Laughlin the Littlest. His sword was wooden. His helmet was wobbly. But his heart was as big as the castle. “Go-go!” he cheered. It was his favorite word.",
-     u"Sir Laughlin marches proudly across a castle courtyard, his helmet over one eye and his wooden sword raised, while Lia giggles behind him."),
-    (u"Every night, the Great Star above the castle filled Everbright with light and color. But one morning, Lia looked out her window and gasped. The roses were turning gray! The banners drooped! High above the tallest tower, the Great Star had gone dim.",
-     u"Lia looks worried at an arched castle window while the kingdom outside fades to gray beneath a dim star."),
-    (u"“Someone has to bring back the light,” said Princess Lia, putting on her bravest face. Sir Laughlin lifted his little wooden sword. “Go-go!” And so, hand in hand, the two marched out through the great castle gates.",
-     u"Lia and Laughlin walk hand in hand through enormous open castle gates toward a winding path and golden morning light."),
-    (u"They tramped into the Whispering Woods, where the trees hummed lullabies and fireflies lit the path like tiny floating lanterns. “Hello, trees!” called Lia. The leaves waved back.",
-     u"The two children walk a mossy forest path lit by hundreds of golden fireflies beneath giant friendly trees."),
-    (u"At the Giggling Brook, they hopped from stone to stone. Hop! Hop! Whoops — Laughlin slipped! But quick as a wish, Lia caught his hand. “I’ve got you, little knight,” she said. “We stick together.”",
-     u"Laughlin wobbles on a stepping stone in a sparkling brook while Lia catches his hand to steady him."),
-    (u"Deep in the woods, a silver owl swooped down. “Whoo seeks the light?” she asked. “We do!” said Lia. The owl blinked her moon-round eyes. “The Great Star fell from the sky… into the Dragon’s Cave on Moonberry Hill.”",
-     u"A silver owl on a low branch speaks to the two children at twilight among glowing purple moonberry bushes."),
-    (u"A dragon?! Lia’s tummy did a flip-flop. But she squeezed Laughlin’s hand, and Laughlin squeezed right back. That is how brave works — it’s easier when you hold hands. Up, up Moonberry Hill they climbed, all the way to the deep, dark cave.",
-     u"Lia and Laughlin climb a purple flowered hillside at night toward a cave mouth glowing with warm light."),
-    (u"But inside the cave there was no big scary dragon at all. There was a baby dragon — small and round as a puppy — curled around the glowing Great Star. And the baby dragon was… crying. Plip. Plip. Plip.",
-     u"A tiny pink and gold baby dragon curls around a radiant golden star inside a cave, crying sparkling tears."),
-    (u"“I’m sorry,” sniffled the little dragon. “My name is Ember. I was cold, and I was lonely, and the star was so warm… I didn’t know the whole kingdom would go gray.”",
-     u"Ember the baby dragon looks up with a tear on its cheek as Lia kneels to listen and Laughlin peeks from behind her."),
-    (u"Princess Lia did not draw a sword. Princesses like Lia know a better magic. She wrapped Ember in the biggest, warmest hug. “You don’t have to be lonely anymore,” she said. “Come home with us.” Laughlin patted Ember’s nose. “Go-go!”",
-     u"Lia hugs Ember the baby dragon in a burst of golden light while Laughlin gently pats the dragon's nose."),
-    (u"So Ember stretched her little wings — flap, flap, WHOOSH! — and flew Lia and Laughlin up, up, past the clouds, to hang the Great Star back in the sky. It burst into light! And every color came flooding home: pink for the roses, purple for the banners, gold for every tower.",
-     u"The children ride the flying baby dragon high above the kingdom, placing the blazing golden star back in the starry sky as color floods the land below."),
-    (u"That night, the castle held the grandest ball Everbright had ever seen — for Princess Lia, Sir Laughlin the Littlest, and Ember, the newest friend of the kingdom. Because the bravest thing of all isn’t a sword or a crown. It’s a kind heart.",
-     u"Lia twirls at a joyful castle ball with Laughlin dancing beside her and Ember wearing a tiny bow, under glowing chandeliers and confetti."),
-    (u"And when the music grew soft and the candles grew sleepy, the littlest knight climbed onto the princess’s shoulder and closed his eyes. High above the castle, the Great Star shone its brightest — right over two brave hearts. Goodnight, Lia. Goodnight, Laughlin. The end.",
-     u"On a quiet castle balcony at night, Laughlin sleeps against Lia's shoulder with Ember curled at their feet beneath a huge glowing star."),
-]
+from story_text import (TITLE as T, SUBTITLE as SUB, AUTHOR as AU, DEDICATION as DED,
+                        SIGNATURE as SIGN, BLURB_1 as B1, BLURB_2 as B2,
+                        BACK_CREDIT, COVER_ALT as CALT, PAGES as P)
 
 # ---------------------------------------------------------------- build
 W, H = 1200, 1500
-UID = 'urn:uuid:' + str(uuid.uuid5(uuid.NAMESPACE_URL, 'lia-laughlin-storybook-v1'))
+UID = 'urn:uuid:' + str(uuid.uuid5(uuid.NAMESPACE_URL, 'lia-lachlan-storybook-v1'))
 MOD = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 YEAR = datetime.datetime.now().year
 
@@ -120,8 +79,7 @@ for i, (txt, alt) in enumerate(P, 1):
     files['text/p%02d.xhtml' % i] = doc(u'Page %d' % i, '', body)
 
 bk = (u'<div class="page"><div class="backbox"><p class="star2">&#9733;</p><p class="b">%s</p><p class="b">%s</p>'
-      u'<p class="names">&#10022; MADE WITH LOVE FOR LIA &amp; LAUGHLIN<br/>BY THEIR UNCLE COURTNEY &#10022;</p>'
-      u'</div></div>') % (html.escape(B1), html.escape(B2))
+      u'<p class="names">%s</p></div></div>') % (html.escape(B1), html.escape(B2), BACK_CREDIT)
 files['text/backcover.xhtml'] = doc(u'The End', 'back', bk)
 
 order = ['cover', 'dedication'] + ['p%02d' % i for i in range(1, 15)] + ['backcover']

@@ -1,6 +1,6 @@
 # Princess Lia and the Littlest Knight
 
-A personalized children's picture book starring Lia (4) and Laughlin (2).
+A personalized children's picture book starring Lia (4) and Lachlan (2).
 Personal project — not part of the Dragon Phoenix Ascension site content.
 
 ## Files
