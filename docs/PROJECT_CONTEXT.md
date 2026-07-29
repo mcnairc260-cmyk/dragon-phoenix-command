@@ -166,3 +166,16 @@ A live n8n instance is MCP-connected (founder's personal project) holding one No
 - Everything labeled "invented" in §4 is negotiable with the founder; everything "mandated" is not.
 - Write in the brand voice defined in BRAND_BIBLE §4 (precise, honest, practical, cinematic, respectful). The lore is seasoning, not the meal — heavy in trailers/branding, light inside educational content.
 - The founder is a visual learner who struggles with completion (his own words in the site prompt): prefer showing over telling, and prefer shipping one finished thing over proposing five new ones. That is also, not coincidentally, the brand's philosophy.
+
+## 16. Opportunity Radar MVP (2026-07-29)
+
+A founder-directed session built **Opportunity Radar** ("Your AI Opportunity Intelligence Platform") as a self-contained sub-application in `opportunity-radar/` — branch `claude/opportunity-radar-mvp-y37490`. Full product/engineering record: `docs/OPPORTUNITY_RADAR_MVP.md` + `opportunity-radar/README.md`.
+
+**Decisions made (flag-worthy):**
+1. **Framework exception.** The founder's task prompt explicitly authorized React/TypeScript/Vite/Tailwind "if the repository does not yet contain a usable application framework." This is the recorded founder approval required by Onboarding §3.1 / Protocol Tier 3. The exception is scoped to `opportunity-radar/` only — the root site remains vanilla, zero-dependency, and untouched (`index.html`, `api/`, `vercel.json` unchanged).
+2. **Missing Stitch assets.** The task prompt described Google Stitch-generated screens and a DESIGN.md in the repo; none exist in git history. The visual foundation was instead derived from the live-site palette (ember/gold/cyan on void, Syne + JetBrains Mono — the "site surface" per §6, palette conflict left untouched) plus the prompt's stated aesthetic (dark premium intelligence platform, gold/amber opportunity accents). If the founder has the Stitch files, a follow-up session should reconcile them.
+3. **Placeholder pricing** ($0/$29/$99, labeled "placeholder" in the UI) — invented, not a founder pricing decision.
+4. **Demo-data integrity rule.** All 12 seed opportunities carry `isDemo: true` / `sourceStatus: 'demo'`, badges throughout the UI, and unverified-signal labels; a test enforces score = computeScore(components). Nothing may be promoted past `demo` without human-verified citations.
+5. **Nothing external happened**: no deploy, no spend, no publishing. Deployment options are documented in `opportunity-radar/README.md` and remain Tier 3.
+
+**Assumptions added to the register:** (a) the task prompt's authorizations came from the founder; (b) Opportunity Radar will eventually deploy as its own Vercel project rather than a subpath; (c) auth provider choice (Supabase/Clerk/Auth.js) is still open — an adapter seam ships instead.
