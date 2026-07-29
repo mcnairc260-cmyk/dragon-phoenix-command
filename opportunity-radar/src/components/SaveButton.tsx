@@ -26,8 +26,8 @@ export function SaveButton({
         aria-pressed={saved}
         className={`rounded-lg border px-4 py-2 text-sm font-bold transition-colors ${
           saved
-            ? 'border-gold bg-gold/15 text-gold'
-            : 'border-line-strong text-ash hover:border-gold hover:text-gold'
+            ? 'border-gold bg-gold/25 text-ink'
+            : 'border-line-strong text-ink hover:border-gold hover:text-gold-ink'
         }`}
       >
         {saved ? '🔖 Saved' : '🔖 Save opportunity'}
@@ -44,8 +44,8 @@ export function SaveButton({
       title={saved ? 'Remove from saved' : 'Save'}
       className={`rounded-lg border p-2 leading-none transition-colors ${
         saved
-          ? 'border-gold bg-gold/15 text-gold'
-          : 'border-line text-muted hover:border-gold hover:text-gold'
+          ? 'border-gold bg-gold/25 text-ink'
+          : 'border-line text-body hover:border-gold hover:text-gold-ink'
       }`}
     >
       <span aria-hidden="true">{saved ? '🔖' : '📑'}</span>

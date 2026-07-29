@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { PricingCard, type PricingTier } from '../components/PricingCard';
 
 const TIERS: PricingTier[] = [
   {
     name: 'Free',
+    subtitle: 'Validate your first ideas.',
     price: '$0',
     priceNote: 'forever',
     description: 'Get a feel for the radar and follow a handful of opportunities.',
@@ -17,8 +19,9 @@ const TIERS: PricingTier[] = [
   },
   {
     name: 'Pro',
+    subtitle: 'Professional market intelligence.',
     price: '$29',
-    priceNote: '/month · placeholder',
+    priceNote: '/mo · placeholder',
     description: 'The full intelligence layer for operators actively hunting their next move.',
     features: [
       'Full opportunity database',
@@ -33,8 +36,9 @@ const TIERS: PricingTier[] = [
   },
   {
     name: 'Founder',
+    subtitle: 'The elite intelligence layer.',
     price: '$99',
-    priceNote: '/month · placeholder',
+    priceNote: '/mo · placeholder',
     description: 'For teams and serious builders who share research and move together.',
     features: [
       'Everything in Pro',
@@ -49,23 +53,138 @@ const TIERS: PricingTier[] = [
   },
 ];
 
+const COMPARISON: { feature: string; free: string; pro: string; founder: string }[] = [
+  { feature: 'Opportunity feed', free: 'Limited', pro: 'Full database', founder: 'Full database' },
+  { feature: 'Filters & sorting', free: 'Basic', pro: 'Advanced', founder: 'Advanced' },
+  { feature: 'Score breakdown', free: '—', pro: 'Full', founder: 'Full' },
+  { feature: 'Saved opportunities', free: '5', pro: 'Unlimited', founder: 'Unlimited' },
+  { feature: 'Action plans', free: '—', pro: '7 & 30 day', founder: '7 & 30 day' },
+  { feature: 'Team workspace', free: '—', pro: '—', founder: 'Included' },
+  { feature: 'Exportable reports', free: '—', pro: '—', founder: 'Included' },
+];
+
+const FAQS: { q: string; a: string }[] = [
+  {
+    q: 'Can I change plans later?',
+    a: 'Yes. Plans will be upgradeable and downgradeable at any time once billing is live. Nothing is charged in this MVP — paid tiers currently open a waitlist.',
+  },
+  {
+    q: 'Is the opportunity data real?',
+    a: 'No. Every opportunity in this build is clearly labeled demonstration data written to exercise the product. It is not verified market research, and none of it is investment advice.',
+  },
+  {
+    q: 'Why is pricing marked as placeholder?',
+    a: 'Launch pricing has not been finalized. The numbers shown illustrate the intended tier structure and will be confirmed before any payment processing goes live.',
+  },
+];
+
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-xl border border-line bg-card">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+      >
+        <span className="text-sm font-bold text-ink">{q}</span>
+        <span aria-hidden="true" className="text-xs text-soft">
+          {open ? '▲' : '▼'}
+        </span>
+      </button>
+      {open && (
+        <p className="border-t border-line px-5 py-4 text-sm leading-relaxed text-body">{a}</p>
+      )}
+    </div>
+  );
+}
+
 export default function PricingPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-14">
-      <header className="mb-10 text-center">
-        <p className="mb-2 font-mono text-[10px] tracking-[0.24em] text-ember uppercase">// Plans</p>
-        <h1 className="font-display text-3xl font-extrabold">Pricing</h1>
-        <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted">
+      <header className="mb-12 text-center">
+        <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+          Choose your intelligence tier
+        </h1>
+        <p className="mx-auto mt-3 max-w-xl text-base leading-relaxed text-body">
+          Scale your market awareness from basic tracking to deep-pulse analysis.
+        </p>
+        <p className="mx-auto mt-5 max-w-xl rounded-lg bg-gold-soft px-4 py-2.5 text-xs leading-relaxed text-gold-ink">
           Prices shown are placeholders while launch pricing is finalized. Payments are not live in
           this MVP — paid tiers open a waitlist, and billing will run on Stripe when it ships.
         </p>
       </header>
-      <div className="grid gap-5 lg:grid-cols-3">
+
+      <div className="grid gap-6 lg:grid-cols-3">
         {TIERS.map((tier) => (
           <PricingCard key={tier.name} tier={tier} />
         ))}
       </div>
-      <p className="mt-8 text-center font-mono text-[10px] tracking-[0.12em] text-smoke uppercase">
+
+      <section className="mt-16">
+        <h2 className="mb-6 text-center text-2xl font-bold tracking-tight text-ink">
+          Compare features
+        </h2>
+        <div className="overflow-x-auto rounded-2xl bg-card shadow-card">
+          <table className="w-full min-w-lg border-collapse text-left">
+            <caption className="sr-only">Feature comparison across the three plans</caption>
+            <thead>
+              <tr className="border-b border-line">
+                <th
+                  scope="col"
+                  className="px-5 py-3 text-[10px] font-semibold tracking-[0.1em] text-soft uppercase"
+                >
+                  Core features
+                </th>
+                <th
+                  scope="col"
+                  className="px-5 py-3 text-[10px] font-semibold tracking-[0.1em] text-soft uppercase"
+                >
+                  Free
+                </th>
+                <th
+                  scope="col"
+                  className="px-5 py-3 text-[10px] font-semibold tracking-[0.1em] text-gold-ink uppercase"
+                >
+                  Pro
+                </th>
+                <th
+                  scope="col"
+                  className="px-5 py-3 text-[10px] font-semibold tracking-[0.1em] text-soft uppercase"
+                >
+                  Founder
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARISON.map((row) => (
+                <tr key={row.feature} className="border-b border-line last:border-0">
+                  <th scope="row" className="px-5 py-3.5 text-sm font-medium text-body">
+                    {row.feature}
+                  </th>
+                  <td className="px-5 py-3.5 text-sm text-body">{row.free}</td>
+                  <td className="px-5 py-3.5 text-sm font-semibold text-ink">{row.pro}</td>
+                  <td className="px-5 py-3.5 text-sm text-body">{row.founder}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="mt-16">
+        <h2 className="mb-6 text-center text-2xl font-bold tracking-tight text-ink">
+          Frequently asked questions
+        </h2>
+        <div className="mx-auto max-w-2xl space-y-3">
+          {FAQS.map((faq) => (
+            <FaqItem key={faq.q} {...faq} />
+          ))}
+        </div>
+      </section>
+
+      <p className="mt-12 text-center text-[10px] font-semibold tracking-[0.08em] text-soft uppercase">
         No dark patterns · Cancel anytime · Demo data clearly labeled at every tier
       </p>
     </div>

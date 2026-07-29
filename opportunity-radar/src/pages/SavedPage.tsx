@@ -17,9 +17,9 @@ export default function SavedPage() {
   return (
     <div>
       <header className="mb-6">
-        <p className="font-mono text-[10px] tracking-[0.24em] text-ember uppercase">// Watchlist</p>
-        <h1 className="font-display text-2xl font-extrabold">Saved opportunities</h1>
-        <p className="mt-1 text-sm text-muted">
+        <p className="text-[11px] font-semibold tracking-[0.1em] text-soft uppercase">Watchlist</p>
+        <h1 className="text-2xl font-bold tracking-tight text-ink">Saved opportunities</h1>
+        <p className="mt-1 text-sm text-body">
           Saved locally in this browser for the MVP — accounts will sync them across devices later.
         </p>
       </header>
@@ -35,7 +35,7 @@ export default function SavedPage() {
             action={
               <Link
                 to="/dashboard"
-                className="rounded-lg bg-gradient-to-r from-ember to-gold px-4 py-2 text-sm font-bold text-void"
+                className="rounded-lg bg-gold px-4 py-2 text-sm font-bold text-ink"
               >
                 Browse the radar
               </Link>

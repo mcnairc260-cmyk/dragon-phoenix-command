@@ -30,11 +30,11 @@ export interface ScoreBand {
 }
 
 export const SCORE_BANDS: ScoreBand[] = [
-  { min: 90, label: 'Exceptional', colorVar: '--or-gold' },
-  { min: 80, label: 'Strong', colorVar: '--or-cyan' },
-  { min: 70, label: 'Promising', colorVar: '--or-green' },
-  { min: 60, label: 'Watch', colorVar: '--or-muted' },
-  { min: 0, label: 'Early / Uncertain', colorVar: '--or-smoke' },
+  { min: 90, label: 'Exceptional', colorVar: '--or-exceptional' },
+  { min: 80, label: 'Strong', colorVar: '--or-strong' },
+  { min: 70, label: 'Promising', colorVar: '--or-promising' },
+  { min: 60, label: 'Watch', colorVar: '--or-watch' },
+  { min: 0, label: 'Early / Uncertain', colorVar: '--or-early' },
 ];
 
 function clamp(value: number): number {

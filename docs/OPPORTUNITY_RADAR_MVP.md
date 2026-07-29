@@ -97,4 +97,14 @@ Hard constraints: legal/ToS review per source **before** any collection; no scra
 
 ---
 
-*Verification record (2026-07-29): `npm run build` clean · `tsc -b` clean · `eslint src` clean · 41/41 Vitest tests pass · all 10 routes exercised headless (Chromium) at 1280px and 375px with search/filter/sort/save flows and no app console errors.*
+## 11. Design system
+
+The approved Google Stitch package (5 screens + `DESIGN.md`) is archived at `opportunity-radar/design/stitch/` and is the visual source of truth. It defines a **light, corporate-minimal** system — Cool Gray canvas, white cards, Deep Professional Blue ink, Star Gold accent, Fresh Emerald for growth, Inter throughout.
+
+This is a **product-scoped exception to DPA's dark-mode-first mandate**, flagged for founder confirmation in `PROJECT_CONTEXT.md` §16a. The root DPA site remains dark and untouched. Because every color is a CSS variable in `src/index.css`, reverting this product to dark is a token change, not a rewrite.
+
+Structural patterns adopted from Stitch: persistent desktop sidebar (Feed / Saved / Plans / Settings) with mobile bottom nav, dashboard stat tiles, the circular "Radar Score" gauge on detail pages, pricing comparison table and FAQ, two-column settings with toggle switches, and the split hero with a radar visualization plus dark conversion band. Accessibility adjustment on top of Stitch: gold is never used as body text (it fails contrast on white) — `--color-gold-ink` carries gold's meaning where text must read.
+
+---
+
+*Verification record (2026-07-29, updated after the Stitch reconciliation): `npm run build` clean · `tsc -b` clean · `eslint src` clean · 41/41 Vitest tests pass · all 8–10 routes exercised headless (Chromium) at 1280px and 375px with search/filter/sort/save flows, no horizontal overflow, and no app console errors.*

@@ -37,6 +37,7 @@ Node 20+ recommended (built and verified on Node 22).
 ## Architecture
 
 ```
+design/stitch/             # Approved Stitch screens + DESIGN.md (visual source of truth)
 src/
 ├── types/opportunity.ts   # Domain types — single source of truth
 ├── lib/
@@ -62,7 +63,13 @@ Three seams isolate the demo layer so it can be replaced without touching the UI
 
 ## Design
 
-Palette and typography follow the live DPA site surface (void black, ember `#FF4D00`, gold `#FFB347`, cyan `#00E5FF`; Syne + JetBrains Mono). All colors are CSS variables in `src/index.css` — never hard-code a hex in a component. Dark mode is the primary (and currently only) theme. Focus states, reduced-motion support, semantic HTML, and labeled controls are required in new components.
+The approved **Google Stitch design package** is archived at `design/stitch/` (5 screens with reference PNGs + `DESIGN.md`) and is the visual source of truth for this product.
+
+Its system is light and corporate-minimal: Cool Gray `#F8FAFC` canvas, white cards, Deep Professional Blue `#0F172A` ink, Star Gold `#FACC15` accent (accent surfaces only — never body text), Fresh Emerald `#10B981` for growth, **Inter exclusively**, 16–24px card radii, and soft ambient shadows.
+
+> **Note:** this light system is a product-scoped exception to DPA's dark-mode-first mandate, adopted because the founder supplied the Stitch package as the approved foundation. The root DPA site stays dark. Rationale and the path to revert are in `docs/PROJECT_CONTEXT.md` §16a.
+
+All colors are CSS variables in `src/index.css` (`@theme`) — never hard-code a hex in a component. Gold-on-white fails contrast, so `--color-gold-ink` (`#735C00`) is used wherever gold must read as text. Focus states, reduced-motion support, semantic HTML, and labeled controls are required in new components.
 
 ## Environment variables
 
@@ -81,4 +88,4 @@ Not yet deployed — deploying anything publicly is a founder decision (Continua
 - Auth and billing are integration points only; login/signup honestly report unavailability.
 - Saved items / preferences / recently-viewed are per-browser (localStorage).
 - "Alerts" and "export report" are labeled as future/Pro features, not functional.
-- No light theme yet; no i18n; no analytics (by policy, none added without documentation).
+- No dark theme yet (the Stitch system is light); no i18n; no analytics (by policy, none added without documentation).

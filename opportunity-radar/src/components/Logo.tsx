@@ -5,16 +5,14 @@ export function Logo({ to = '/' }: { to?: string }) {
     <Link to={to} className="flex items-center gap-2.5" aria-label="Opportunity Radar home">
       <span
         aria-hidden="true"
-        className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-ember to-gold text-base shadow-[0_0_12px_rgba(255,179,71,0.35)]"
+        className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink text-base"
       >
         📡
       </span>
       <span className="leading-tight">
-        <span className="block font-display text-xs font-extrabold tracking-[0.08em] uppercase">
-          Opportunity Radar
-        </span>
-        <span className="block font-mono text-[8px] tracking-[0.2em] text-gold uppercase">
-          AI Opportunity Intelligence
+        <span className="block text-sm font-bold tracking-tight text-ink">Opportunity Radar</span>
+        <span className="block text-[9px] font-semibold tracking-[0.12em] whitespace-nowrap text-soft uppercase">
+          Intelligence Layer
         </span>
       </span>
     </Link>

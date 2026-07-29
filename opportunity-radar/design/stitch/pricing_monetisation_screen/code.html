@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pricing | Opportunity Radar</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface": "#191c1e",
+                    "tertiary-fixed": "#6ffbbe",
+                    "on-error-container": "#93000a",
+                    "surface-dim": "#d8dadc",
+                    "on-tertiary-container": "#009668",
+                    "on-secondary-fixed-variant": "#574500",
+                    "on-secondary": "#ffffff",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "error": "#ba1a1a",
+                    "surface-container-low": "#f2f4f6",
+                    "outline-variant": "#c6c6cd",
+                    "inverse-primary": "#bec6e0",
+                    "on-secondary-fixed": "#231b00",
+                    "surface-container-high": "#e6e8ea",
+                    "outline": "#76777d",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "tertiary": "#000000",
+                    "surface-tint": "#565e74",
+                    "primary-fixed-dim": "#bec6e0",
+                    "on-tertiary-fixed": "#002113",
+                    "surface-container-lowest": "#ffffff",
+                    "primary": "#000000",
+                    "on-error": "#ffffff",
+                    "primary-container": "#131b2e",
+                    "tertiary-container": "#002113",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "surface-variant": "#e0e3e5",
+                    "on-primary-fixed": "#131b2e",
+                    "inverse-on-surface": "#eff1f3",
+                    "background": "#f7f9fb",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#7c839b",
+                    "surface-container": "#eceef0",
+                    "surface-bright": "#f7f9fb",
+                    "inverse-surface": "#2d3133",
+                    "on-background": "#191c1e",
+                    "secondary-fixed-dim": "#eec200",
+                    "on-surface-variant": "#45464d",
+                    "on-primary": "#ffffff",
+                    "primary-fixed": "#dae2fd",
+                    "surface": "#f7f9fb",
+                    "secondary-fixed": "#ffe083",
+                    "secondary": "#735c00",
+                    "error-container": "#ffdad6",
+                    "secondary-container": "#fed01b",
+                    "on-secondary-container": "#6f5900"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-sm": "8px",
+                    "margin-mobile": "16px",
+                    "gutter": "24px",
+                    "stack-md": "16px",
+                    "container-max": "1280px",
+                    "margin-desktop": "40px",
+                    "stack-lg": "32px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "caption": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(25, 28, 30, 0.05); }
+        .pulse-gold { animation: pulse-gold 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse-gold { 0%, 100% { opacity: 1; } 50% { opacity: .7; } }
+        .active-tab { position: relative; }
+        .active-tab::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 100%; height: 2px; background-color: #000; }
+    </style>
+</head>
+<body class="text-on-surface">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-50 bg-surface/80 backdrop-blur-md shadow-[0_4px_20px_rgba(15,23,42,0.05)] w-full h-16">
+<div class="flex justify-between items-center px-margin-desktop w-full max-w-container-max mx-auto h-full">
+<div class="flex items-center gap-stack-lg">
+<span class="text-headline-md font-headline-md font-bold text-on-surface">Opportunity Radar</span>
+<nav class="hidden md:flex gap-stack-md">
+<a class="text-on-surface-variant font-medium font-label-md text-label-md hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-primary font-bold font-label-md text-label-md border-b-2 border-primary pb-1" href="#">Pricing</a>
+<a class="text-on-surface-variant font-medium font-label-md text-label-md hover:text-primary transition-colors" href="#">Community</a>
+<a class="text-on-surface-variant font-medium font-label-md text-label-md hover:text-primary transition-colors" href="#">Resources</a>
+</nav>
+</div>
+<div class="flex items-center gap-stack-md">
+<div class="hidden sm:flex items-center gap-stack-sm mr-stack-md">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors" data-icon="help_outline">help_outline</span>
+</div>
+<button class="bg-primary text-on-primary px-stack-lg py-2 rounded-lg font-label-md text-label-md active:scale-95 transition-transform">Get Started</button>
+</div>
+</div>
+</header>
+<main class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-16">
+<!-- Header & Toggle -->
+<section class="text-center mb-16">
+<h1 class="font-display-lg text-display-lg mb-stack-sm">Choose Your Intelligence Tier</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">Scale your market awareness from basic tracking to deep-pulse AI analysis.</p>
+<div class="mt-12 flex justify-center items-center gap-4">
+<span class="font-label-md text-label-md font-bold" id="monthly-label">Monthly</span>
+<button class="relative w-14 h-7 bg-surface-container-highest rounded-full transition-colors duration-300 focus:outline-none" id="billing-toggle">
+<div class="absolute left-1 top-1 w-5 h-5 bg-on-surface rounded-full transition-transform duration-300" id="toggle-knob"></div>
+</button>
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-on-surface-variant" id="annual-label">Annual</span>
+<span class="bg-secondary-container text-on-secondary-container text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Save 20%</span>
+</div>
+</div>
+</section>
+<!-- Pricing Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24 items-end">
+<!-- Explorer Tier -->
+<div class="glass-card rounded-[16px] p-8 flex flex-col h-full hover:shadow-lg transition-shadow border-t-2 border-outline-variant">
+<div class="mb-8">
+<h3 class="font-headline-md text-headline-md mb-1">Explorer</h3>
+<p class="text-on-surface-variant font-body-md text-body-md">Validate your first ideas.</p>
+</div>
+<div class="mb-8">
+<span class="font-display-lg text-display-lg">$0</span>
+<span class="text-on-surface-variant font-body-md text-body-md">/mo</span>
+</div>
+<ul class="space-y-4 mb-8 flex-grow">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md">3 scans per day</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md">Basic keyword filters</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md">Community access</span>
+</li>
+</ul>
+<button class="w-full py-4 border-2 border-primary text-primary font-bold rounded-lg hover:bg-primary hover:text-on-primary transition-colors active:scale-[0.98]">Get Started</button>
+</div>
+<!-- Innovator Tier (Highlighted) -->
+<div class="relative glass-card rounded-[16px] p-8 flex flex-col h-[110%] bg-surface-container-lowest shadow-2xl border-t-4 border-secondary-container z-10">
+<div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-secondary-container text-on-secondary-container px-4 py-1 rounded-full text-label-md font-bold shadow-sm">MOST POPULAR</div>
+<div class="mb-8">
+<h3 class="font-headline-md text-headline-md mb-1">Innovator</h3>
+<p class="text-on-surface-variant font-body-md text-body-md">Professional market intelligence.</p>
+</div>
+<div class="mb-8">
+<span class="font-display-lg text-display-lg" id="innovator-price">$29</span>
+<span class="text-on-surface-variant font-body-md text-body-md" id="innovator-period">/mo</span>
+</div>
+<ul class="space-y-4 mb-8 flex-grow">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md"><b>Unlimited</b> scans</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md">Advanced AI analysis</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md">YouTube &amp; Reddit deep dives</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md">Real-time alerts</span>
+</li>
+</ul>
+<button class="w-full py-4 bg-secondary-container text-on-secondary-container font-bold rounded-lg hover:shadow-md transition-all active:scale-[0.98]">Go Pro</button>
+</div>
+<!-- Founder Tier -->
+<div class="glass-card rounded-[16px] p-8 flex flex-col h-full hover:shadow-lg transition-shadow border-t-2 border-primary">
+<div class="mb-8">
+<h3 class="font-headline-md text-headline-md mb-1">Empire Builder</h3>
+<p class="text-on-surface-variant font-body-md text-body-md">The elite intelligence layer.</p>
+</div>
+<div class="mb-8">
+<span class="font-display-lg text-display-lg" id="founder-price">$99</span>
+<span class="text-on-surface-variant font-body-md text-body-md" id="founder-period">/mo</span>
+</div>
+<ul class="space-y-4 mb-8 flex-grow">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md">Multi-seat Team access</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md">Custom API integration</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md">Early-access niches</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md">Affiliate program priority</span>
+</li>
+</ul>
+<button class="w-full py-4 bg-primary text-on-primary font-bold rounded-lg hover:opacity-90 transition-all active:scale-[0.98]">Claim Founder Slot</button>
+</div>
+</div>
+<!-- Comparison Table -->
+<section class="mb-32 overflow-x-auto">
+<h2 class="font-headline-lg text-headline-lg text-center mb-12">Compare Features</h2>
+<table class="w-full border-collapse">
+<thead>
+<tr class="border-b border-outline-variant">
+<th class="py-6 px-4 text-left font-label-md text-label-md text-on-surface-variant uppercase tracking-widest w-1/3">Core Features</th>
+<th class="py-6 px-4 text-center font-label-md text-label-md uppercase tracking-widest">Explorer</th>
+<th class="py-6 px-4 text-center font-label-md text-label-md uppercase tracking-widest text-secondary font-black">Innovator</th>
+<th class="py-6 px-4 text-center font-label-md text-label-md uppercase tracking-widest">Empire</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md">
+<tr class="border-b border-outline-variant/30 hover:bg-surface-container-low transition-colors">
+<td class="py-6 px-4">Daily Scan Capacity</td>
+<td class="py-6 px-4 text-center">3</td>
+<td class="py-6 px-4 text-center font-bold">Unlimited</td>
+<td class="py-6 px-4 text-center font-bold">Unlimited</td>
+</tr>
+<tr class="border-b border-outline-variant/30 hover:bg-surface-container-low transition-colors">
+<td class="py-6 px-4">Sentiment Analysis</td>
+<td class="py-6 px-4 text-center text-on-surface-variant/40"><span class="material-symbols-outlined" data-icon="horizontal_rule">horizontal_rule</span></td>
+<td class="py-6 px-4 text-center"><span class="material-symbols-outlined text-secondary" data-icon="done" style="font-variation-settings: 'wght' 700;">done</span></td>
+<td class="py-6 px-4 text-center"><span class="material-symbols-outlined" data-icon="done" style="font-variation-settings: 'wght' 700;">done</span></td>
+</tr>
+<tr class="border-b border-outline-variant/30 hover:bg-surface-container-low transition-colors">
+<td class="py-6 px-4">Historical Data</td>
+<td class="py-6 px-4 text-center">24 Hours</td>
+<td class="py-6 px-4 text-center">30 Days</td>
+<td class="py-6 px-4 text-center font-bold">Lifetime</td>
+</tr>
+<tr class="border-b border-outline-variant/30 hover:bg-surface-container-low transition-colors">
+<td class="py-6 px-4">Advanced Filters</td>
+<td class="py-6 px-4 text-center text-on-surface-variant/40"><span class="material-symbols-outlined" data-icon="horizontal_rule">horizontal_rule</span></td>
+<td class="py-6 px-4 text-center"><span class="material-symbols-outlined text-secondary" data-icon="done" style="font-variation-settings: 'wght' 700;">done</span></td>
+<td class="py-6 px-4 text-center"><span class="material-symbols-outlined" data-icon="done" style="font-variation-settings: 'wght' 700;">done</span></td>
+</tr>
+<tr class="border-b border-outline-variant/30 hover:bg-surface-container-low transition-colors">
+<td class="py-6 px-4">Custom Notifications</td>
+<td class="py-6 px-4 text-center">Email Only</td>
+<td class="py-6 px-4 text-center">Push &amp; Webhook</td>
+<td class="py-6 px-4 text-center font-bold">Dedicated Account Manager</td>
+</tr>
+</tbody>
+</table>
+</section>
+<!-- FAQ Section -->
+<section class="max-w-3xl mx-auto mb-16">
+<h2 class="font-headline-lg text-headline-lg text-center mb-12">Frequently Asked Questions</h2>
+<div class="space-y-4">
+<details class="group glass-card rounded-xl overflow-hidden" open="">
+<summary class="flex justify-between items-center p-6 cursor-pointer font-headline-md text-headline-md list-none">
+<span>Can I change plans later?</span>
+<span class="material-symbols-outlined transition-transform group-open:rotate-180" data-icon="expand_more">expand_more</span>
+</summary>
+<div class="px-6 pb-6 text-on-surface-variant font-body-md text-body-md">
+                        Yes, you can upgrade or downgrade your plan at any time. When upgrading, the change is immediate and the price will be prorated. Downgrades take effect at the end of your current billing cycle.
+                    </div>
+</details>
+<details class="group glass-card rounded-xl overflow-hidden">
+<summary class="flex justify-between items-center p-6 cursor-pointer font-headline-md text-headline-md list-none">
+<span>What counts as a "scan"?</span>
+<span class="material-symbols-outlined transition-transform group-open:rotate-180" data-icon="expand_more">expand_more</span>
+</summary>
+<div class="px-6 pb-6 text-on-surface-variant font-body-md text-body-md">
+                        A scan is a single AI-powered request to analyze a specific keyword, competitor, or social media niche. The Explorer plan limits this to ensure server stability for our premium users.
+                    </div>
+</details>
+<details class="group glass-card rounded-xl overflow-hidden">
+<summary class="flex justify-between items-center p-6 cursor-pointer font-headline-md text-headline-md list-none">
+<span>Do you offer a refund policy?</span>
+<span class="material-symbols-outlined transition-transform group-open:rotate-180" data-icon="expand_more">expand_more</span>
+</summary>
+<div class="px-6 pb-6 text-on-surface-variant font-body-md text-body-md">
+                        We offer a 14-day no-questions-asked money-back guarantee for all new Innovator and Founder subscriptions. We want you to be 100% satisfied with your data quality.
+                    </div>
+</details>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-on-surface text-surface py-stack-lg mt-16">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop max-w-container-max mx-auto w-full">
+<div class="mb-8 md:mb-0">
+<span class="font-headline-md text-headline-md text-surface font-bold">Opportunity Radar</span>
+<p class="font-body-md text-body-md text-surface-variant mt-2 max-w-xs opacity-80">Empowering modern entrepreneurs with the intelligence to act before the crowd.</p>
+</div>
+<div class="flex flex-col md:items-end">
+<nav class="flex flex-wrap justify-center gap-stack-md mb-stack-md">
+<a class="text-surface-variant font-body-md text-body-md hover:text-secondary-fixed-dim transition-colors" href="#">Privacy Policy</a>
+<a class="text-surface-variant font-body-md text-body-md hover:text-secondary-fixed-dim transition-colors" href="#">Terms of Service</a>
+<a class="text-surface-variant font-body-md text-body-md hover:text-secondary-fixed-dim transition-colors" href="#">Cookie Policy</a>
+<a class="text-surface-variant font-body-md text-body-md hover:text-secondary-fixed-dim transition-colors" href="#">Security</a>
+</nav>
+<p class="font-caption text-caption text-surface-variant opacity-60">© 2024 Opportunity Radar. All rights reserved.</p>
+</div>
+</div>
+</footer>
+<script>
+        const toggle = document.getElementById('billing-toggle');
+        const knob = document.getElementById('toggle-knob');
+        const monthlyLabel = document.getElementById('monthly-label');
+        const annualLabel = document.getElementById('annual-label');
+        
+        const prices = {
+            innovator: { monthly: 29, annual: 23 },
+            founder: { monthly: 99, annual: 79 }
+        };
+
+        const innovatorPriceEl = document.getElementById('innovator-price');
+        const founderPriceEl = document.getElementById('founder-price');
+        const innovatorPeriodEl = document.getElementById('innovator-period');
+        const founderPeriodEl = document.getElementById('founder-period');
+
+        let isAnnual = false;
+
+        toggle.addEventListener('click', () => {
+            isAnnual = !isAnnual;
+            
+            // UI Updates
+            if (isAnnual) {
+                knob.style.transform = 'translateX(28px)';
+                toggle.classList.add('bg-secondary-container');
+                monthlyLabel.classList.remove('font-bold');
+                monthlyLabel.classList.add('text-on-surface-variant');
+                annualLabel.classList.add('font-bold');
+                annualLabel.classList.remove('text-on-surface-variant');
+                
+                innovatorPriceEl.innerText = `$${prices.innovator.annual}`;
+                founderPriceEl.innerText = `$${prices.founder.annual}`;
+                innovatorPeriodEl.innerText = '/mo, billed yearly';
+                founderPeriodEl.innerText = '/mo, billed yearly';
+            } else {
+                knob.style.transform = 'translateX(0)';
+                toggle.classList.remove('bg-secondary-container');
+                annualLabel.classList.remove('font-bold');
+                annualLabel.classList.add('text-on-surface-variant');
+                monthlyLabel.classList.add('font-bold');
+                monthlyLabel.classList.remove('text-on-surface-variant');
+
+                innovatorPriceEl.innerText = `$${prices.innovator.monthly}`;
+                founderPriceEl.innerText = `$${prices.founder.monthly}`;
+                innovatorPeriodEl.innerText = '/mo';
+                founderPeriodEl.innerText = '/mo';
+            }
+        });
+    </script>
+</body></html>

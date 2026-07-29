@@ -15,18 +15,20 @@ import { SaveButton } from './SaveButton';
 export function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
   const o = opportunity;
   return (
-    <article className="flex flex-col rounded-xl border border-line bg-surface p-4 transition-colors hover:border-line-strong">
+    <article className="flex flex-col rounded-2xl bg-card p-4 shadow-card transition-shadow hover:shadow-card-hover">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="mb-1 flex flex-wrap items-center gap-2 font-mono text-[10px] tracking-[0.14em] text-gold uppercase">
-            {o.category}
-            <span className="text-smoke normal-case tracking-normal">· {o.opportunityType}</span>
+          <p className="mb-1.5 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center rounded-full bg-emerald/10 px-2 py-0.5 text-[9px] font-semibold tracking-[0.08em] text-emerald-ink uppercase">
+              {o.category}
+            </span>
+            <span className="text-[10px] font-medium text-soft">{o.opportunityType}</span>
             {o.isDemo && <DemoBadge />}
           </p>
-          <h3 className="font-display text-base leading-snug font-bold">
+          <h3 className="text-base leading-snug font-bold tracking-tight text-ink">
             <Link
               to={`/opportunities/${o.slug}`}
-              className="hover:text-gold focus-visible:text-gold"
+              className="hover:text-gold-ink focus-visible:text-gold-ink"
             >
               {o.title}
             </Link>
@@ -35,7 +37,7 @@ export function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
         <ScoreBadge score={o.score} isDemo={o.isDemo} />
       </div>
 
-      <p className="mb-4 line-clamp-3 text-sm leading-relaxed text-muted">{o.shortDescription}</p>
+      <p className="mb-4 line-clamp-3 text-sm leading-relaxed text-body">{o.shortDescription}</p>
 
       <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5">
         <GrowthBadge velocity={o.growthVelocity} />
@@ -53,7 +55,7 @@ export function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
       <div className="mt-auto flex items-center justify-between gap-2">
         <Link
           to={`/opportunities/${o.slug}`}
-          className="rounded-lg bg-gradient-to-r from-ember to-gold px-3.5 py-2 text-xs font-bold text-void transition-opacity hover:opacity-90"
+          className="rounded-lg bg-gold px-3.5 py-2 text-xs font-bold text-ink transition-opacity hover:opacity-90"
         >
           Full analysis →
         </Link>

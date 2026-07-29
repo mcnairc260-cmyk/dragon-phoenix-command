@@ -50,7 +50,7 @@ function ChipGroup<T extends string>({
 }) {
   return (
     <fieldset>
-      <legend className="mb-1.5 font-mono text-[10px] tracking-[0.14em] text-smoke uppercase">
+      <legend className="mb-1.5 text-[10px] font-semibold tracking-[0.08em] text-soft uppercase">
         {legend}
       </legend>
       <div className="flex flex-wrap gap-1.5">
@@ -64,8 +64,8 @@ function ChipGroup<T extends string>({
               onClick={() => onToggle(opt)}
               className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
                 active
-                  ? 'border-gold bg-gold/15 text-gold'
-                  : 'border-line text-muted hover:border-line-strong hover:text-ash'
+                  ? 'border-gold bg-gold/25 text-ink'
+                  : 'border-line text-body hover:border-line-strong hover:text-ink'
               }`}
             >
               {opt}
@@ -90,7 +90,7 @@ function RadioRow<V extends number | null>({
 }) {
   return (
     <fieldset>
-      <legend className="mb-1.5 font-mono text-[10px] tracking-[0.14em] text-smoke uppercase">
+      <legend className="mb-1.5 text-[10px] font-semibold tracking-[0.08em] text-soft uppercase">
         {legend}
       </legend>
       <div className="flex flex-wrap gap-1.5">
@@ -104,8 +104,8 @@ function RadioRow<V extends number | null>({
               onClick={() => onSelect(opt.value)}
               className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
                 active
-                  ? 'border-gold bg-gold/15 text-gold'
-                  : 'border-line text-muted hover:border-line-strong hover:text-ash'
+                  ? 'border-gold bg-gold/25 text-ink'
+                  : 'border-line text-body hover:border-line-strong hover:text-ink'
               }`}
             >
               {opt.label}
@@ -128,7 +128,7 @@ export function FilterPanel({
   const activeCount = countActiveFilters(filters);
 
   return (
-    <div className="rounded-xl border border-line bg-surface">
+    <div className="rounded-xl border border-line bg-card">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -138,12 +138,12 @@ export function FilterPanel({
         <span className="text-sm font-bold">
           Filters
           {activeCount > 0 && (
-            <span className="ml-2 rounded-full bg-gold/15 px-2 py-0.5 font-mono text-[10px] text-gold">
+            <span className="ml-2 rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-medium text-gold-ink">
               {activeCount} active
             </span>
           )}
         </span>
-        <span aria-hidden="true" className="text-xs text-smoke">
+        <span aria-hidden="true" className="text-xs text-soft">
           {open ? '▲' : '▼'}
         </span>
       </button>
@@ -222,7 +222,7 @@ export function FilterPanel({
             <button
               type="button"
               onClick={() => onChange({ ...EMPTY_FILTERS, search: filters.search })}
-              className="rounded-lg border border-line-strong px-3 py-1.5 text-xs font-bold text-ash hover:border-gold hover:text-gold"
+              className="rounded-lg border border-line-strong px-3 py-1.5 text-xs font-bold text-ink hover:border-gold hover:text-gold-ink"
             >
               Clear all filters
             </button>

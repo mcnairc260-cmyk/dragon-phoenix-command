@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Opportunity Detail | Opportunity Radar</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface": "#191c1e",
+                    "tertiary-fixed": "#6ffbbe",
+                    "on-error-container": "#93000a",
+                    "surface-dim": "#d8dadc",
+                    "on-tertiary-container": "#009668",
+                    "on-secondary-fixed-variant": "#574500",
+                    "on-secondary": "#ffffff",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "error": "#ba1a1a",
+                    "surface-container-low": "#f2f4f6",
+                    "outline-variant": "#c6c6cd",
+                    "inverse-primary": "#bec6e0",
+                    "on-secondary-fixed": "#231b00",
+                    "surface-container-high": "#e6e8ea",
+                    "outline": "#76777d",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "tertiary": "#000000",
+                    "surface-tint": "#565e74",
+                    "primary-fixed-dim": "#bec6e0",
+                    "on-tertiary-fixed": "#002113",
+                    "surface-container-lowest": "#ffffff",
+                    "primary": "#000000",
+                    "on-error": "#ffffff",
+                    "primary-container": "#131b2e",
+                    "tertiary-container": "#002113",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "surface-variant": "#e0e3e5",
+                    "on-primary-fixed": "#131b2e",
+                    "inverse-on-surface": "#eff1f3",
+                    "background": "#f7f9fb",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#7c839b",
+                    "surface-container": "#eceef0",
+                    "surface-bright": "#f7f9fb",
+                    "inverse-surface": "#2d3133",
+                    "on-background": "#191c1e",
+                    "secondary-fixed-dim": "#eec200",
+                    "on-surface-variant": "#45464d",
+                    "on-primary": "#ffffff",
+                    "primary-fixed": "#dae2fd",
+                    "surface": "#f7f9fb",
+                    "secondary-fixed": "#ffe083",
+                    "secondary": "#735c00",
+                    "error-container": "#ffdad6",
+                    "secondary-container": "#fed01b",
+                    "on-secondary-container": "#6f5900"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-sm": "8px",
+                    "margin-mobile": "16px",
+                    "gutter": "24px",
+                    "stack-md": "16px",
+                    "container-max": "1280px",
+                    "margin-desktop": "40px",
+                    "stack-lg": "32px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "caption": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { background-color: #f7f9fb; font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .radar-pulse { animation: pulse 3s infinite ease-out; }
+        @keyframes pulse { 0% { transform: scale(0.9); opacity: 0.1; } 50% { opacity: 0.3; } 100% { transform: scale(1.5); opacity: 0; } }
+    </style>
+</head>
+<body class="flex min-h-screen text-on-surface">
+<!-- SideNavBar (Shared Component) -->
+<aside class="hidden md:flex h-screen w-64 fixed left-0 top-0 flex-col p-4 space-y-stack-md bg-surface-container-low border-r border-outline-variant z-50">
+<div class="flex flex-col mb-stack-lg px-2">
+<span class="font-headline-md text-headline-md font-black text-on-surface">Intelligence Layer</span>
+<span class="font-body-md text-body-md text-on-surface-variant opacity-70">V3.2 Active</span>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Feed -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest transition-all duration-200 rounded-lg group" href="#">
+<span class="material-symbols-outlined">radar</span>
+<span class="font-label-md text-label-md">Feed</span>
+</a>
+<!-- Saved (Active Tab for this specific deep dive) -->
+<a class="flex items-center gap-3 px-3 py-2 bg-secondary-container text-on-secondary-container rounded-lg font-bold translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+<span class="font-label-md text-label-md">Saved</span>
+</a>
+<!-- Trends -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">trending_up</span>
+<span class="font-label-md text-label-md">Trends</span>
+</a>
+<!-- Alerts -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">notifications_active</span>
+<span class="font-label-md text-label-md">Alerts</span>
+</a>
+<!-- Settings -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</nav>
+<div class="pt-stack-md border-t border-outline-variant/30">
+<button class="w-full py-3 px-4 bg-secondary-container text-on-secondary-container font-bold rounded-lg hover:scale-[1.02] transition-transform text-label-md">
+                Upgrade to Founder
+            </button>
+</div>
+<div class="mt-auto space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-highest transition-all duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="font-label-md text-label-md">Documentation</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 bg-background">
+<!-- TopNavBar (Shared Component Context) -->
+<header class="sticky top-0 z-40 bg-surface/80 backdrop-blur-md shadow-[0_4px_20px_rgba(15,23,42,0.05)] w-full h-16 flex items-center px-margin-desktop justify-between">
+<div class="flex items-center gap-stack-md">
+<div class="md:hidden p-2">
+<span class="material-symbols-outlined text-on-surface">menu</span>
+</div>
+<h1 class="text-headline-md font-headline-md font-bold text-on-surface">Opportunity Radar</h1>
+</div>
+<div class="hidden md:flex items-center gap-stack-lg flex-1 justify-center">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Pricing</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Community</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Resources</a>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">notifications</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional studio portrait of a technology executive, mid-40s, with a clean and sharp aesthetic. The lighting is soft and cinematic, with a high-key background that blends perfectly with the minimalist corporate UI. The image has a calm and authoritative mood, consistent with a high-trust business intelligence platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlJb-OZqmoJNj3fMQxGpuTNKmPta066uOdJGw40SLbCMCRcIFi9r0NRoK8UxvSDE7vykxryNHZrZcLwiwP-KvoHwDr0nTPOgHhZ8i5waJB8rSJgX0Z-rhvFb7qy7tCzxG5SI-ev5BApXJGQxqK4NvGFmMGaqhS7U2lN7EXwB0KD5dSEDiUWvHXpp3GTrzvTruRNaWOyPusV0QX-9kNPg_SidkduFbrPwrLbrFwg3bhIx-0_13SSFRjOFOrEYagqSSOrolwatWpFjzq"/>
+</div>
+<button class="bg-primary text-on-primary px-4 py-1.5 rounded-lg font-label-md text-label-md Active:scale-95 transition-transform duration-150">Get Started</button>
+</div>
+</header>
+<!-- Content Shell -->
+<div class="max-w-container-max mx-auto px-margin-desktop py-stack-lg">
+<!-- Breadcrumbs -->
+<nav class="flex items-center gap-2 mb-stack-md text-on-surface-variant">
+<span class="font-label-md text-label-md cursor-pointer hover:text-primary">Dashboard</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="font-label-md text-label-md cursor-pointer hover:text-primary">Saved Opportunities</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="font-label-md text-label-md text-primary font-bold">Privacy Local AI</span>
+</nav>
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Main Intelligence Panel -->
+<div class="col-span-12 lg:col-span-8 space-y-gutter">
+<!-- Opportunity Header Card -->
+<div class="bg-surface-container-lowest p-stack-lg rounded-xl shadow-[0_4px_20px_rgba(15,23,42,0.05)] border-t-2 border-secondary-container relative overflow-hidden">
+<div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-stack-md">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="bg-secondary-container/20 text-on-secondary-container px-2 py-0.5 rounded text-caption font-bold uppercase tracking-wider">High Conviction</span>
+<span class="text-on-surface-variant font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">update</span> Analyzed 2h ago
+                                    </span>
+</div>
+<h2 class="text-headline-lg font-headline-lg text-on-surface leading-tight">Privacy-focused local-first AI assistant</h2>
+<p class="text-body-md text-on-surface-variant mt-2 max-w-2xl">A massive gap in the market for users who want LLM capabilities without data leaking to cloud providers. Driven by rising corporate security policies and personal privacy concerns.</p>
+</div>
+<div class="flex flex-col items-center justify-center p-4 bg-background border border-outline-variant/30 rounded-xl min-w-[140px]">
+<div class="relative w-20 h-20 flex items-center justify-center">
+<svg class="absolute inset-0 w-full h-full -rotate-90">
+<circle cx="40" cy="40" fill="transparent" r="36" stroke="#eceef0" stroke-width="8"></circle>
+<circle cx="40" cy="40" fill="transparent" r="36" stroke="#fed01b" stroke-dasharray="226" stroke-dashoffset="18" stroke-width="8"></circle>
+</svg>
+<span class="text-headline-md font-headline-md text-on-surface">92</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant mt-2">Radar Score</span>
+</div>
+</div>
+
+</div>
+<!-- Market Trends Graph -->
+<div class="bg-surface-container-lowest p-stack-lg rounded-xl shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-md text-headline-md">Market Interest: "Local AI"</h3>
+<div class="flex gap-2">
+<button class="px-3 py-1 text-caption font-label-md rounded border border-outline-variant">12M</button>
+<button class="px-3 py-1 text-caption font-label-md rounded bg-primary text-on-primary">6M</button>
+</div>
+</div>
+<div class="h-64 w-full relative">
+<!-- Simulated Chart Area -->
+<div class="absolute inset-0 flex items-end justify-between px-2">
+<div class="w-[8%] bg-surface-container-high h-[20%] rounded-t-sm"></div>
+<div class="w-[8%] bg-surface-container-high h-[25%] rounded-t-sm"></div>
+<div class="w-[8%] bg-surface-container-high h-[22%] rounded-t-sm"></div>
+<div class="w-[8%] bg-surface-container-high h-[35%] rounded-t-sm"></div>
+<div class="w-[8%] bg-secondary-container/40 h-[45%] rounded-t-sm"></div>
+<div class="w-[8%] bg-secondary-container h-[65%] rounded-t-sm"></div>
+<div class="w-[8%] bg-secondary-container h-[85%] rounded-t-sm"></div>
+<div class="w-[8%] bg-secondary-container h-[95%] rounded-t-sm"></div>
+<div class="w-[8%] bg-secondary-container h-[100%] rounded-t-sm"></div>
+<div class="w-[8%] bg-secondary-container h-[92%] rounded-t-sm"></div>
+</div>
+<div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
+<div class="border-t border-outline-variant/10 w-full h-0"></div>
+<div class="border-t border-outline-variant/10 w-full h-0"></div>
+<div class="border-t border-outline-variant/10 w-full h-0"></div>
+<div class="border-t border-outline-variant/10 w-full h-0"></div>
+</div>
+</div>
+<div class="flex justify-between mt-4 text-caption text-on-surface-variant font-label-md">
+<span>JAN</span><span>FEB</span><span>MAR</span><span>APR</span><span>MAY</span><span>JUN</span>
+</div>
+</div>
+<!-- Source Analysis Bento -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+<div class="bg-surface-container-lowest p-stack-md rounded-xl shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+<div class="flex items-center gap-2 mb-4 text-error">
+<span class="material-symbols-outlined">forum</span>
+<span class="font-label-md text-label-md">r/selfhosted Sentiment</span>
+</div>
+<div class="space-y-3">
+<div class="p-3 bg-surface-container-low rounded-lg border-l-4 border-error">
+<p class="text-body-md text-on-surface-variant italic">"I'm sick of every tool requiring an internet connection. My data should stay on my disk."</p>
+<div class="flex justify-between mt-2 text-caption">
+<span class="font-bold">u/privacy_warrior</span>
+<span>+1.2k Upvotes</span>
+</div>
+</div>
+<div class="p-3 bg-surface-container-low rounded-lg border-l-4 border-secondary">
+<p class="text-body-md text-on-surface-variant italic">"Current local LLMs are too hard to set up for non-techies. Need a UI layer."</p>
+<div class="flex justify-between mt-2 text-caption">
+<span class="font-bold">u/dev_minimalist</span>
+<span>+450 Upvotes</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-stack-md rounded-xl shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+<div class="flex items-center gap-2 mb-4 text-secondary">
+<span class="material-symbols-outlined">smart_display</span>
+<span class="font-label-md text-label-md">YouTube Comment Pulse</span>
+</div>
+<div class="space-y-3">
+<div class="p-3 bg-surface-container-low rounded-lg">
+<p class="text-body-md text-on-surface-variant">"The first person to make a 'Local Copilot' that works offline wins. Subscription model is killing me."</p>
+<p class="text-caption mt-1 opacity-60">Source: AI Weekly Trends (Video)</p>
+</div>
+<div class="p-3 bg-surface-container-low rounded-lg">
+<p class="text-body-md text-on-surface-variant">"Why can't I just plug in my own Llama 3 weights and use a clean Mac-native app?"</p>
+<p class="text-caption mt-1 opacity-60">Source: M3 Max Review Comments</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Actionable Steps -->
+<div class="bg-on-surface text-surface p-stack-lg rounded-xl shadow-lg">
+<h3 class="font-headline-md text-headline-md mb-6">Strategic Action Plan</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div>
+<div class="flex items-center gap-2 text-tertiary-fixed mb-3">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md uppercase">Core Features</span>
+</div>
+<ul class="space-y-2 text-body-md opacity-80">
+<li class="flex gap-2"><span>•</span> One-click local weights downloader</li>
+<li class="flex gap-2"><span>•</span> Air-gapped validation mode</li>
+<li class="flex gap-2"><span>•</span> Native OS index searching</li>
+</ul>
+</div>
+<div>
+<div class="flex items-center gap-2 text-secondary-fixed mb-3">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-md text-label-md uppercase">Target Audience</span>
+</div>
+<ul class="space-y-2 text-body-md opacity-80">
+<li class="flex gap-2"><span>•</span> Fintech software engineers</li>
+<li class="flex gap-2"><span>•</span> Medical data researchers</li>
+<li class="flex gap-2"><span>•</span> Legal documentation firms</li>
+</ul>
+</div>
+<div>
+<div class="flex items-center gap-2 text-tertiary-fixed mb-3">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-md text-label-md uppercase">Monetization</span>
+</div>
+<ul class="space-y-2 text-body-md opacity-80">
+<li class="flex gap-2"><span>•</span> "Bring Your Own GPU" model</li>
+<li class="flex gap-2"><span>•</span> Enterprise security licensing</li>
+<li class="flex gap-2"><span>•</span> Affiliate: PC hardware setups</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar Content -->
+<div class="col-span-12 lg:col-span-4 space-y-gutter">
+<!-- Execution Assistant Card -->
+<div class="bg-secondary-container p-stack-md rounded-xl shadow-md border border-on-secondary-container/10">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-on-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary-fixed">auto_awesome</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-secondary-container">Founder AI Assistant</p>
+<p class="text-caption text-on-secondary-container/70">Ready to draft your pitch?</p>
+</div>
+</div>
+<button class="w-full py-2 bg-on-secondary-container text-secondary-fixed rounded-lg font-bold text-label-md hover:bg-on-secondary-container/90 transition-colors">Generate GTM Strategy</button>
+</div>
+<!-- Related Niches -->
+<div class="bg-surface-container-lowest p-stack-lg rounded-xl shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+<h3 class="font-headline-md text-headline-md mb-stack-md">Nearby Signals</h3>
+<div class="space-y-stack-md">
+<!-- Niche 1 -->
+<div class="group p-4 bg-background rounded-lg border border-outline-variant/30 hover:border-primary transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-2">
+<span class="text-caption font-bold text-on-surface-variant px-2 py-0.5 bg-surface-container-highest rounded">DATA</span>
+<span class="text-secondary font-bold text-label-md">84 pts</span>
+</div>
+<h4 class="font-label-md text-label-md group-hover:text-primary transition-colors">Local-first Vector Databases</h4>
+<p class="text-caption text-on-surface-variant mt-1">Increasing demand for SQL-like local storage for embeddings.</p>
+</div>
+<!-- Niche 2 -->
+<div class="group p-4 bg-background rounded-lg border border-outline-variant/30 hover:border-primary transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-2">
+<span class="text-caption font-bold text-on-surface-variant px-2 py-0.5 bg-surface-container-highest rounded">HARDWARE</span>
+<span class="text-secondary font-bold text-label-md">79 pts</span>
+</div>
+<h4 class="font-label-md text-label-md group-hover:text-primary transition-colors">Pre-configured Home LLM Nodes</h4>
+<p class="text-caption text-on-surface-variant mt-1">Plug-and-play server boxes specifically for local inference.</p>
+</div>
+<!-- Niche 3 -->
+<div class="group p-4 bg-background rounded-lg border border-outline-variant/30 hover:border-primary transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-2">
+<span class="text-caption font-bold text-on-surface-variant px-2 py-0.5 bg-surface-container-highest rounded">MOBILE</span>
+<span class="text-secondary font-bold text-label-md">71 pts</span>
+</div>
+<h4 class="font-label-md text-label-md group-hover:text-primary transition-colors">Private Mobile Voice Assistants</h4>
+<p class="text-caption text-on-surface-variant mt-1">Replacing Siri/Alexa with on-device NPU processing.</p>
+</div>
+</div>
+</div>
+<!-- Affiliate Opportunity -->
+<div class="relative rounded-xl overflow-hidden h-48 group">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A macro shot of a high-performance GPU and cooling system with vibrant RGB lighting in a clean tech environment. The image uses a cool blue and silver color palette with sharp, focused details on the silicon circuitry. Professional product photography style, sleek and premium." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlva4B9ktN_1-jNTO5S_HALB8Uqa4Pm-tRTGh2FhO5_oVznoMb9YdegeIE1ecFQnRw9_gY_hIn8wj3_c5pbKOsOMwBCdN4xymNttMsqo6oATiQweAa8KRdHNZhRztDF8tkMNXU1gtI6FlhPauDHTd0Es9COg4iM4GLcV19UJSOwJ8cuZQ4biDOkE3_jCHD3Aui2VBrYde5-Mlrj5O8_FbWV1ishaj8TNwq5AccRDOIce01oRXu4LL2vX7G4_kmIGeSJwOBhL6-jPx6"/>
+<div class="absolute bottom-4 left-4 z-20 text-white">
+<span class="text-[10px] uppercase font-bold tracking-widest text-secondary-fixed">Ad Strategy</span>
+<p class="font-headline-md text-label-md font-bold mt-1">Affiliate: NVidia RTX 4090 Series</p>
+<p class="text-caption opacity-80">High conversion potential for Local AI builders.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer (Shared Component) -->
+<footer class="mt-stack-lg border-t border-outline-variant/20 bg-on-surface text-surface py-stack-lg px-margin-desktop">
+<div class="max-w-container-max mx-auto flex flex-col md:flex-row justify-between items-center gap-stack-md">
+<div class="flex flex-col items-center md:items-start">
+<span class="font-headline-md text-headline-md text-surface">Opportunity Radar</span>
+<span class="text-caption text-surface-variant mt-1">© 2024 Opportunity Radar. All rights reserved.</span>
+</div>
+<div class="flex gap-stack-lg text-caption text-surface-variant">
+<a class="hover:text-secondary-fixed transition-colors" href="#">Privacy Policy</a>
+<a class="hover:text-secondary-fixed transition-colors" href="#">Terms of Service</a>
+<a class="hover:text-secondary-fixed transition-colors" href="#">Cookie Policy</a>
+<a class="hover:text-secondary-fixed transition-colors" href="#">Security</a>
+</div>
+</div>
+</footer>
+</main>
+<!-- Floating Action Button (Only on Mobile for specific action) -->
+<button class="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-secondary-container text-on-secondary-container rounded-full shadow-lg flex items-center justify-center z-50 Active:scale-95">
+<span class="material-symbols-outlined">rocket_launch</span>
+</button>
+<script>
+        // Micro-interaction for score hover
+        const scoreCircle = document.querySelector('.radar-pulse');
+        // Any specific JS logic for data updates can go here
+    </script>
+</body></html>

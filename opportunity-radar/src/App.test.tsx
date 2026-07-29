@@ -19,7 +19,9 @@ function renderApp(initialPath: string) {
 describe('critical routes', () => {
   it('renders the landing page with the core promise and CTAs', () => {
     renderApp('/');
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/see tomorrow's markets/i);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      /find opportunities before everyone else/i,
+    );
     expect(screen.getAllByRole('link', { name: /explore opportunities/i }).length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: /see how it works/i })).toBeInTheDocument();
   });

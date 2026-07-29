@@ -173,9 +173,26 @@ A founder-directed session built **Opportunity Radar** ("Your AI Opportunity Int
 
 **Decisions made (flag-worthy):**
 1. **Framework exception.** The founder's task prompt explicitly authorized React/TypeScript/Vite/Tailwind "if the repository does not yet contain a usable application framework." This is the recorded founder approval required by Onboarding §3.1 / Protocol Tier 3. The exception is scoped to `opportunity-radar/` only — the root site remains vanilla, zero-dependency, and untouched (`index.html`, `api/`, `vercel.json` unchanged).
-2. **Missing Stitch assets.** The task prompt described Google Stitch-generated screens and a DESIGN.md in the repo; none exist in git history. The visual foundation was instead derived from the live-site palette (ember/gold/cyan on void, Syne + JetBrains Mono — the "site surface" per §6, palette conflict left untouched) plus the prompt's stated aesthetic (dark premium intelligence platform, gold/amber opportunity accents). If the founder has the Stitch files, a follow-up session should reconcile them.
+2. **Stitch assets arrived mid-session; design reconciled.** The first pass built against the live-site dark palette because no Stitch files existed in the repo. The founder then supplied the Google Stitch package (5 screens + `DESIGN.md`), now archived at `opportunity-radar/design/stitch/` as the visual source of truth, and the UI was rebuilt against it. See §16a for the palette consequence.
 3. **Placeholder pricing** ($0/$29/$99, labeled "placeholder" in the UI) — invented, not a founder pricing decision.
 4. **Demo-data integrity rule.** All 12 seed opportunities carry `isDemo: true` / `sourceStatus: 'demo'`, badges throughout the UI, and unverified-signal labels; a test enforces score = computeScore(components). Nothing may be promoted past `demo` without human-verified citations.
 5. **Nothing external happened**: no deploy, no spend, no publishing. Deployment options are documented in `opportunity-radar/README.md` and remain Tier 3.
 
 **Assumptions added to the register:** (a) the task prompt's authorizations came from the founder; (b) Opportunity Radar will eventually deploy as its own Vercel project rather than a subpath; (c) auth provider choice (Supabase/Clerk/Auth.js) is still open — an adapter seam ships instead.
+
+### 16a. Opportunity Radar visual system — a light-mode exception (2026-07-29)
+
+**Tier 2 flag: this collides with a hard constraint, and the founder should confirm it.**
+
+The founder-supplied Google Stitch design package (`opportunity-radar/design/stitch/` — 5 screens plus `DESIGN.md`) specifies a **light, corporate-minimal system**: Cool Gray `#F8FAFC` canvas, white cards, Deep Professional Blue `#0F172A` ink, Star Gold `#FACC15` accent, Fresh Emerald `#10B981` for growth, **Inter exclusively**, 16px/24px card radii, and very soft ambient shadows (`0 4px 20px rgba(15,23,42,0.05)`).
+
+That is the direct opposite of DPA's **dark-mode-first** mandate (Constitution Art. VIII; onboarding manual §5.5). The conflict was resolved as follows, and can be reversed on the founder's word:
+
+- The task brief named the Stitch files "the approved visual foundation" and instructed that their strongest characteristics be preserved. Taken together with the founder supplying the package mid-session, that reads as approval **for this product surface**.
+- The exception is **scoped to `opportunity-radar/` only**. The root DPA site (`index.html`) remains dark, ember/gold/cyan, Syne + JetBrains Mono, untouched. The two palettes named in §6 are likewise untouched — this is a third, product-specific system, not a resolution of that conflict.
+- DPA identity is retained where it does not fight the Stitch system: the footer carries the ecosystem attribution and motto, with gold as the shared accent between both systems.
+- Tokens live in `opportunity-radar/src/index.css` (`@theme`); no component hard-codes a hex. Flipping this product back to dark is a token-file change plus a shadow/border pass, not a rewrite.
+
+**If the founder wants dark-mode-first enforced here instead, say so and it reverts** — the Stitch screens would then serve as layout/structure reference only (sidebar shell, stat tiles, circular Radar Score gauge, comparison table, FAQ, two-column settings), all of which are palette-independent and already implemented.
+
+Also adopted from Stitch in this pass: product nav renamed to Feed/Saved/Plans/Settings with a persistent desktop sidebar; the detail-page score rendered as the circular "Radar Score" gauge; pricing gained a comparison table and FAQ; settings moved to the two-column label/controls layout with real toggle switches; landing hero switched to the split copy/radar-visualization layout with a dark conversion band. Score-band colors moved to the Stitch semantic set (gold/emerald/ink/slate) — band thresholds and weights are unchanged.

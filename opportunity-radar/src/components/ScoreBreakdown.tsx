@@ -18,14 +18,14 @@ export function ScoreBreakdown({
           return (
             <li key={key}>
               <div className="mb-1 flex items-baseline justify-between gap-2">
-                <span className="text-xs text-ash">
+                <span className="text-xs text-ink">
                   {SCORE_FACTOR_LABELS[key]}{' '}
-                  <span className="font-mono text-[9px] text-smoke">({weightPct}%)</span>
+                  <span className="text-[10px] font-medium text-soft">({weightPct}%)</span>
                 </span>
-                <span className="font-mono text-xs text-gold">{value}</span>
+                <span className="text-xs font-semibold text-gold-ink">{value}</span>
               </div>
               <div
-                className="h-1.5 overflow-hidden rounded-full bg-surface2"
+                className="h-1.5 overflow-hidden rounded-full bg-tint"
                 role="meter"
                 aria-valuemin={0}
                 aria-valuemax={100}
@@ -33,7 +33,7 @@ export function ScoreBreakdown({
                 aria-label={`${SCORE_FACTOR_LABELS[key]}: ${value} of 100`}
               >
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-ember to-gold"
+                  className="h-full rounded-full bg-gold"
                   style={{ width: `${value}%` }}
                 />
               </div>
@@ -41,7 +41,7 @@ export function ScoreBreakdown({
           );
         })}
       </ul>
-      <p className="mt-4 text-xs leading-relaxed text-muted">
+      <p className="mt-4 text-xs leading-relaxed text-body">
         {SCORE_EXPLANATION}
         {isDemo && ' This score was generated from demonstration data.'}
       </p>

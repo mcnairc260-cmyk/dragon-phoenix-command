@@ -22,24 +22,71 @@ const RISK_OPTIONS: { label: string; value: RiskTolerance }[] = [
   { label: 'High — early and unproven is fine', value: 'high' },
 ];
 
+/**
+ * Stitch settings layout: a description column on the left, the controls
+ * card on the right (stacks to one column below `lg`).
+ */
 function SettingsSection({
-  label,
   title,
   description,
   children,
+  danger = false,
 }: {
-  label: string;
   title: string;
   description?: string;
   children: React.ReactNode;
+  danger?: boolean;
 }) {
   return (
-    <section className="rounded-xl border border-line bg-surface p-5">
-      <p className="mb-1 font-mono text-[10px] tracking-[0.2em] text-ember uppercase">// {label}</p>
-      <h2 className="mb-1 font-display text-base font-bold">{title}</h2>
-      {description && <p className="mb-4 text-sm text-muted">{description}</p>}
-      <div className={description ? '' : 'mt-4'}>{children}</div>
+    <section className="grid gap-4 lg:grid-cols-[220px_1fr] lg:gap-8">
+      <div>
+        <h2
+          className={`text-base font-bold tracking-tight ${danger ? 'text-danger' : 'text-ink'}`}
+        >
+          {title}
+        </h2>
+        {description && <p className="mt-1 text-sm leading-relaxed text-body">{description}</p>}
+      </div>
+      <div className="rounded-2xl bg-card p-5 shadow-card">{children}</div>
     </section>
+  );
+}
+
+/** Accessible switch styled as the Stitch toggle. */
+function Toggle({
+  checked,
+  onChange,
+  label,
+  hint,
+}: {
+  checked: boolean;
+  onChange: (next: boolean) => void;
+  label: string;
+  hint: string;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center justify-between gap-4 py-2.5">
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold text-ink">{label}</span>
+        <span className="block text-xs leading-relaxed text-soft">{hint}</span>
+      </span>
+      <span className="relative flex-shrink-0">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          className="peer sr-only"
+        />
+        <span
+          aria-hidden="true"
+          className="block h-6 w-11 rounded-full bg-line-strong transition-colors peer-checked:bg-ink peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink"
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute top-0.5 left-0.5 block h-5 w-5 rounded-full bg-card transition-transform peer-checked:translate-x-5"
+        />
+      </span>
+    </label>
   );
 }
 
@@ -57,36 +104,34 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-4xl">
       <header className="mb-6">
-        <p className="font-mono text-[10px] tracking-[0.24em] text-ember uppercase">// Control room</p>
-        <h1 className="font-display text-2xl font-extrabold">Settings</h1>
-        <p className="mt-1 text-sm text-muted">
+        <h1 className="text-2xl font-bold tracking-tight text-ink">Settings</h1>
+        <p className="mt-1 text-sm text-body">
           Preferences are stored locally in this browser and shape your “Best fit” sorting and
           recommendations immediately.
         </p>
       </header>
 
-      <div className="space-y-5">
-        <SettingsSection label="Profile" title="Profile information">
+      <div className="space-y-10">
+        <SettingsSection title="Personal profile" description="Manage how the radar addresses you.">
           <label className="block">
-            <span className="mb-1.5 block text-sm text-ash">Display name</span>
+            <span className="mb-1.5 block text-sm text-ink">Display name</span>
             <input
               type="text"
               value={preferences.displayName}
               onChange={(e) => updatePreferences({ displayName: e.target.value })}
               placeholder="How should the radar greet you?"
               maxLength={40}
-              className="w-full max-w-sm rounded-lg border border-line bg-void px-3 py-2.5 text-sm text-ash placeholder:text-smoke focus:border-gold focus:outline-none"
+              className="w-full max-w-sm rounded-lg border border-line bg-card px-3 py-2.5 text-sm text-ink placeholder:text-faint focus:border-ink focus:outline-none"
             />
           </label>
-          <p className="mt-2 font-mono text-[10px] text-smoke">
+          <p className="mt-2 text-[10px] font-medium text-soft">
             Account email & password arrive with authentication (not yet enabled in this demo).
           </p>
         </SettingsSection>
 
         <SettingsSection
-          label="Interests"
           title="Opportunity interests"
           description="Pick the industries you want weighted toward the top of your radar."
         >
@@ -101,8 +146,8 @@ export default function SettingsPage() {
                   onClick={() => toggleCategory(category)}
                   className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
                     active
-                      ? 'border-gold bg-gold/15 text-gold'
-                      : 'border-line text-muted hover:border-line-strong hover:text-ash'
+                      ? 'border-gold bg-gold/25 text-ink'
+                      : 'border-line text-body hover:border-line-strong hover:text-ink'
                   }`}
                 >
                   {category}
@@ -113,13 +158,12 @@ export default function SettingsPage() {
         </SettingsSection>
 
         <SettingsSection
-          label="Fit"
           title="Budget, experience & risk"
           description="These drive the “Best fit for you” sort and the recommended section."
         >
           <div className="grid gap-4 sm:grid-cols-3">
             <label className="block">
-              <span className="mb-1.5 block text-sm text-ash">Budget range</span>
+              <span className="mb-1.5 block text-sm text-ink">Budget range</span>
               <select
                 value={preferences.maxBudgetUsd ?? ''}
                 onChange={(e) =>
@@ -127,7 +171,7 @@ export default function SettingsPage() {
                     maxBudgetUsd: e.target.value === '' ? null : Number(e.target.value),
                   })
                 }
-                className="w-full rounded-lg border border-line bg-void px-3 py-2.5 text-sm text-ash focus:border-gold focus:outline-none"
+                className="w-full rounded-lg border border-line bg-card px-3 py-2.5 text-sm text-ink focus:border-ink focus:outline-none"
               >
                 {BUDGET_OPTIONS.map((opt) => (
                   <option key={opt.label} value={opt.value ?? ''}>
@@ -137,13 +181,13 @@ export default function SettingsPage() {
               </select>
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm text-ash">Experience level</span>
+              <span className="mb-1.5 block text-sm text-ink">Experience level</span>
               <select
                 value={preferences.experienceLevel}
                 onChange={(e) =>
                   updatePreferences({ experienceLevel: e.target.value as ExperienceLevel })
                 }
-                className="w-full rounded-lg border border-line bg-void px-3 py-2.5 text-sm text-ash focus:border-gold focus:outline-none"
+                className="w-full rounded-lg border border-line bg-card px-3 py-2.5 text-sm text-ink focus:border-ink focus:outline-none"
               >
                 {EXPERIENCE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -153,13 +197,13 @@ export default function SettingsPage() {
               </select>
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm text-ash">Risk tolerance</span>
+              <span className="mb-1.5 block text-sm text-ink">Risk tolerance</span>
               <select
                 value={preferences.riskTolerance}
                 onChange={(e) =>
                   updatePreferences({ riskTolerance: e.target.value as RiskTolerance })
                 }
-                className="w-full rounded-lg border border-line bg-void px-3 py-2.5 text-sm text-ash focus:border-gold focus:outline-none"
+                className="w-full rounded-lg border border-line bg-card px-3 py-2.5 text-sm text-ink focus:border-ink focus:outline-none"
               >
                 {RISK_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -172,66 +216,53 @@ export default function SettingsPage() {
         </SettingsSection>
 
         <SettingsSection
-          label="Signals"
           title="Notification preferences"
           description="Stored now, delivered later — email alerts require accounts, which aren't live in this demo."
         >
-          <div className="space-y-2.5">
-            <label className="flex items-center gap-2.5 text-sm text-ash">
-              <input
-                type="checkbox"
-                checked={preferences.emailAlerts}
-                onChange={(e) => updatePreferences({ emailAlerts: e.target.checked })}
-                className="h-4 w-4 accent-[#FFB347]"
-              />
-              Alert me when a high-fit opportunity appears
-            </label>
-            <label className="flex items-center gap-2.5 text-sm text-ash">
-              <input
-                type="checkbox"
-                checked={preferences.weeklyDigest}
-                onChange={(e) => updatePreferences({ weeklyDigest: e.target.checked })}
-                className="h-4 w-4 accent-[#FFB347]"
-              />
-              Send me a weekly radar digest
-            </label>
+          <div className="divide-y divide-line">
+            <Toggle
+              checked={preferences.emailAlerts}
+              onChange={(emailAlerts) => updatePreferences({ emailAlerts })}
+              label="New opportunity alerts"
+              hint="Notify me when a high-fit opportunity appears on the radar."
+            />
+            <Toggle
+              checked={preferences.weeklyDigest}
+              onChange={(weeklyDigest) => updatePreferences({ weeklyDigest })}
+              label="Weekly summary"
+              hint="A consolidated report of everything that moved during the week."
+            />
           </div>
         </SettingsSection>
 
         <SettingsSection
-          label="Plan"
           title="Subscription"
           description="You're on the Free demo tier. Billing isn't live yet — paid tiers currently open a waitlist."
         >
           <a
             href="/pricing"
-            className="inline-block rounded-lg border border-line-strong px-4 py-2 text-sm font-bold text-ash hover:border-gold hover:text-gold"
+            className="inline-block rounded-lg border border-line-strong px-4 py-2 text-sm font-bold text-ink hover:border-gold hover:text-gold-ink"
           >
             View plans
           </a>
         </SettingsSection>
 
-        <SettingsSection label="Appearance" title="Appearance">
-          <div className="space-y-2.5">
-            <p className="text-sm text-muted">
-              Dark mode is the primary experience by design. A light theme is on the roadmap.
-            </p>
-            <label className="flex items-center gap-2.5 text-sm text-ash">
-              <input
-                type="checkbox"
-                checked={preferences.reducedMotion}
-                onChange={(e) => updatePreferences({ reducedMotion: e.target.checked })}
-                className="h-4 w-4 accent-[#FFB347]"
-              />
-              Reduce motion and animations
-            </label>
-          </div>
+        <SettingsSection
+          title="Appearance"
+          description="Opportunity Radar follows the approved light design system. A dark theme is on the roadmap."
+        >
+          <Toggle
+            checked={preferences.reducedMotion}
+            onChange={(reducedMotion) => updatePreferences({ reducedMotion })}
+            label="Reduce motion"
+            hint="Minimize animations and transitions across the app."
+          />
         </SettingsSection>
 
         <SettingsSection
-          label="Privacy"
-          title="Account & privacy"
+          title="Danger zone"
           description="Everything you see here lives in your browser's local storage. Nothing is sent to a server, and there is no tracking or analytics in this MVP."
+          danger
         >
           <button
             type="button"

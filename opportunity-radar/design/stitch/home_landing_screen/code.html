@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Opportunity Radar | Intelligence Layer for Business</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface": "#191c1e",
+                    "tertiary-fixed": "#6ffbbe",
+                    "on-error-container": "#93000a",
+                    "surface-dim": "#d8dadc",
+                    "on-tertiary-container": "#009668",
+                    "on-secondary-fixed-variant": "#574500",
+                    "on-secondary": "#ffffff",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "error": "#ba1a1a",
+                    "surface-container-low": "#f2f4f6",
+                    "outline-variant": "#c6c6cd",
+                    "inverse-primary": "#bec6e0",
+                    "on-secondary-fixed": "#231b00",
+                    "surface-container-high": "#e6e8ea",
+                    "outline": "#76777d",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "tertiary": "#000000",
+                    "surface-tint": "#565e74",
+                    "primary-fixed-dim": "#bec6e0",
+                    "on-tertiary-fixed": "#002113",
+                    "surface-container-lowest": "#ffffff",
+                    "primary": "#000000",
+                    "on-error": "#ffffff",
+                    "primary-container": "#131b2e",
+                    "tertiary-container": "#002113",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "surface-variant": "#e0e3e5",
+                    "on-primary-fixed": "#131b2e",
+                    "inverse-on-surface": "#eff1f3",
+                    "background": "#f7f9fb",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#7c839b",
+                    "surface-container": "#eceef0",
+                    "surface-bright": "#f7f9fb",
+                    "inverse-surface": "#2d3133",
+                    "on-background": "#191c1e",
+                    "secondary-fixed-dim": "#eec200",
+                    "on-surface-variant": "#45464d",
+                    "on-primary": "#ffffff",
+                    "primary-fixed": "#dae2fd",
+                    "surface": "#f7f9fb",
+                    "secondary-fixed": "#ffe083",
+                    "secondary": "#735c00",
+                    "error-container": "#ffdad6",
+                    "secondary-container": "#fed01b",
+                    "on-secondary-container": "#6f5900"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-sm": "8px",
+                    "margin-mobile": "16px",
+                    "gutter": "24px",
+                    "stack-md": "16px",
+                    "container-max": "1280px",
+                    "margin-desktop": "40px",
+                    "stack-lg": "32px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "caption": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .radar-pulse {
+            animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .5; transform: scale(1.05); }
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .custom-scroll::-webkit-scrollbar {
+            height: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-secondary-fixed selection:text-on-secondary-fixed overflow-x-hidden">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 left-0 w-full z-50 bg-surface/80 backdrop-blur-md shadow-[0_4px_20px_rgba(15,23,42,0.05)] h-16">
+<nav class="flex justify-between items-center px-margin-desktop w-full max-w-container-max mx-auto h-full">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-headline-md" data-icon="radar" style="font-variation-settings: 'FILL' 1;">radar</span>
+<span class="text-headline-md font-headline-md font-bold text-on-surface">Opportunity Radar</span>
+</div>
+<div class="hidden md:flex items-center gap-gutter">
+<a class="text-primary font-bold border-b-2 border-primary pb-1 font-label-md text-label-md" href="#">Dashboard</a>
+<a class="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md" href="#">Pricing</a>
+<a class="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md" href="#">Community</a>
+<a class="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 font-label-md text-label-md" href="#">Resources</a>
+</div>
+<div class="flex items-center gap-stack-md">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary p-2 transition-colors" data-icon="notifications">notifications</button>
+<button class="bg-primary text-on-primary px-6 py-2 rounded-lg font-label-md text-label-md hover:opacity-90 active:scale-95 transition-all">Get Started</button>
+</div>
+</nav>
+</header>
+<main class="pt-24">
+<!-- Hero Section -->
+<section class="relative px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto py-stack-lg md:py-24">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-center">
+<div class="lg:col-span-7 space-y-stack-lg">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary-container/30 border border-secondary-container">
+<span class="w-2 h-2 rounded-full bg-secondary-container animate-ping"></span>
+<span class="text-on-secondary-container font-label-md text-caption uppercase tracking-wider">V3.2 Engine Active</span>
+</div>
+<h1 class="font-display-lg text-display-lg md:text-[64px] text-on-surface leading-tight">
+                        Find opportunities before <span class="text-secondary">everyone else.</span>
+</h1>
+<p class="text-on-surface-variant font-body-lg text-body-lg max-w-xl">
+                        The AI that scans Reddit, YouTube, and job postings to identify unmet customer needs and emerging niches. Stop guessing, start building what people actually want.
+                    </p>
+<div class="flex flex-col sm:flex-row gap-stack-md">
+<button class="bg-secondary-container text-on-secondary-container px-8 py-4 rounded-xl font-label-md text-label-md font-bold shadow-lg hover:shadow-xl hover:translate-y-[-2px] transition-all flex items-center justify-center gap-2">
+                            Get Started for Free
+                            <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<button class="bg-surface border border-outline-variant px-8 py-4 rounded-xl font-label-md text-label-md font-medium text-on-surface hover:bg-surface-container-high transition-all">
+                            Watch the Demo
+                        </button>
+</div>
+<div class="flex items-center gap-4 pt-4">
+<div class="flex -space-x-3">
+<img class="w-10 h-10 rounded-full border-2 border-white object-cover" data-alt="A professional headshot of a smiling young woman in a modern tech office environment, soft natural lighting, light-mode corporate aesthetic, 8k resolution, photorealistic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlxcUX2A0Oew5RXLv_G-C8gU4iZxBzpOnXMOCbLxl0cDYe9aRGiakl7IbPyUAsJkj71C_8Q27iDwkhphw0ay7luUditBt5z1bvePFMxL_ZVXhnbPgJZ29kZjDhFYwho3U6sAaBtlYcHA3uhjfZP2cOM_EJVlkSZGRBZlJW7kjcQn-jsjHd7NhKzYHU1bGPkoZrOOJNX3U5IBk183Idml7s7jC24Z-HXZDp0dFRbq6l9bYqqQ_oPzrBZ7d-12myfdJEIbDAErZunV7O"/>
+<img class="w-10 h-10 rounded-full border-2 border-white object-cover" data-alt="A medium shot of a confident male entrepreneur wearing glasses in a bright minimalist workspace with plants, clean professional photography style, light-mode tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGo8pr8j_Y-y1zLO0KPrGkCmDFJGHS-jtU4BIReBKRkbuPjBqo0Yso-1Ssi9P5CEG2dvd4p2w8qclC286lZUo7BMUnvTOdClvnSQExIdD1TGhar-VWQopvw_DqysHWrlXomgmIxTl5kAJfuu1G4wBFXutJGM_Ok9q4PpWKEdgYNDsoSJbKEtH5-AIOOJo5kKko7nCHqwR6IODJkiTjNe9WpwBaHcfX49vprAeMrh_oqyuUS8SscR_1QbynTxBys6X1WFNM_hOHT71M"/>
+<img class="w-10 h-10 rounded-full border-2 border-white object-cover" data-alt="A portrait of a diverse female investor in a professional setting, looking at the camera with a friendly expression, vibrant and clear lighting, high contrast." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvuAr9KEgOgIByd5o6o8oKwRDDJjxCzhnPnNBE2PEb8q6R6a1BQXEtNFi0SSo8VvSJD-023mGpumuijQUTqQj5IvtEhKyweBorz0frI-otsLRi5dkpYiqSvgHvU3SB3ptXT0fsK8A0U95SUkjFJokw18fATIdsvjkTqYQ6BwIPYmOhTMaqkDAZRmgOE0vHRwQEwoJQyhsQUy37AY1zAPa-CIUPhblwsIhQoBL_R3dH4wWdTP0G7Qzz-4-zr9KSxecl9Y9HzjGLh3R3"/>
+</div>
+<p class="text-on-surface-variant font-label-md text-label-md">
+                            Used by <span class="font-bold text-on-surface">10,000+</span> Entrepreneurs and Investors.
+                        </p>
+</div>
+</div>
+<div class="lg:col-span-5 relative">
+<div class="relative w-full aspect-square radar-pulse flex items-center justify-center">
+<!-- Custom Radar Visualization -->
+<div class="absolute inset-0 border border-outline/20 rounded-full"></div>
+<div class="absolute inset-[15%] border border-outline/20 rounded-full"></div>
+<div class="absolute inset-[30%] border border-outline/20 rounded-full"></div>
+<div class="absolute inset-[45%] border border-outline/20 rounded-full"></div>
+<!-- Pulsing Points -->
+<div class="absolute top-1/4 right-1/4 w-4 h-4 bg-secondary shadow-[0_0_15px_#fed01b] rounded-full"></div>
+<div class="absolute bottom-1/3 left-1/4 w-3 h-3 bg-secondary-fixed shadow-[0_0_10px_#ffe083] rounded-full"></div>
+<div class="absolute top-2/3 right-1/2 w-5 h-5 bg-tertiary-fixed shadow-[0_0_20px_#6ffbbe] rounded-full"></div>
+<div class="z-10 bg-on-surface p-6 rounded-2xl shadow-2xl border border-outline/10 text-surface">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-secondary-container" data-icon="auto_awesome" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="font-bold">New Signal Found</span>
+</div>
+<div class="space-y-3">
+<div class="bg-white/10 p-3 rounded-lg border border-white/5">
+<p class="text-caption opacity-60">Reddit /r/entrepreneur</p>
+<p class="font-label-md text-sm">"I can't find a CRM for solopreneurs..."</p>
+</div>
+<div class="bg-white/10 p-3 rounded-lg border border-white/5 opacity-50">
+<p class="text-caption opacity-60">YouTube Comments</p>
+<p class="font-label-md text-sm">"Why is there no tool for..."</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Features Grid -->
+<section class="bg-surface-container-low py-24">
+<div class="px-margin-desktop max-w-container-max mx-auto">
+<div class="text-center max-w-2xl mx-auto mb-16 space-y-stack-md">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Universal Data Scanning</h2>
+<p class="text-on-surface-variant text-body-md">We ingest millions of data points every hour to find the signals hidden in the noise of the global internet.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- Reddit -->
+<div class="bg-white p-8 rounded-2xl shadow-[0_4px_20px_rgba(15,23,42,0.05)] border-t-2 border-orange-500 hover:translate-y-[-4px] transition-all group">
+<div class="w-12 h-12 bg-orange-50 flex items-center justify-center rounded-xl mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-orange-600" data-icon="forum">forum</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-2">Reddit</h3>
+<p class="text-on-surface-variant text-sm">Surface pain points and feature requests from 100k+ niche subreddits automatically.</p>
+</div>
+<!-- YouTube -->
+<div class="bg-white p-8 rounded-2xl shadow-[0_4px_20px_rgba(15,23,42,0.05)] border-t-2 border-red-500 hover:translate-y-[-4px] transition-all group">
+<div class="w-12 h-12 bg-red-50 flex items-center justify-center rounded-xl mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-red-600" data-icon="video_library">video_library</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-2">YouTube</h3>
+<p class="text-on-surface-variant text-sm">Analyze comment sentiment and search trends to find what viewers are asking for.</p>
+</div>
+<!-- App Reviews -->
+<div class="bg-white p-8 rounded-2xl shadow-[0_4px_20px_rgba(15,23,42,0.05)] border-t-2 border-blue-500 hover:translate-y-[-4px] transition-all group">
+<div class="w-12 h-12 bg-blue-50 flex items-center justify-center rounded-xl mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-blue-600" data-icon="star">star</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-2">App Reviews</h3>
+<p class="text-on-surface-variant text-sm">Find competitors' weaknesses by scanning 1-star reviews for recurring complaints.</p>
+</div>
+<!-- Job Postings -->
+<div class="bg-white p-8 rounded-2xl shadow-[0_4px_20px_rgba(15,23,42,0.05)] border-t-2 border-secondary hover:translate-y-[-4px] transition-all group">
+<div class="w-12 h-12 bg-yellow-50 flex items-center justify-center rounded-xl mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-secondary" data-icon="work">work</span>
+</div>
+<h3 class="font-headline-md text-headline-md mb-2">Job Postings</h3>
+<p class="text-on-surface-variant text-sm">Identify skill gaps and corporate needs before they become market standards.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Bento Grid Insights Section -->
+<section class="py-24 px-margin-desktop max-w-container-max mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-12 grid-rows-2 gap-stack-lg h-auto lg:h-[600px]">
+<!-- Main Insight Card -->
+<div class="md:col-span-8 md:row-span-2 bg-on-surface rounded-3xl p-margin-desktop text-surface overflow-hidden relative group">
+
+<div class="relative z-10 flex flex-col h-full justify-between">
+<div>
+<span class="text-tertiary-fixed font-label-md text-label-md uppercase tracking-widest mb-4 block">Actionable Intel</span>
+<h2 class="font-headline-lg text-headline-lg max-w-lg">The world's most advanced opportunity engine.</h2>
+</div>
+<div class="mt-8">
+<p class="text-body-lg text-surface-variant mb-6 max-w-md">Our neural network doesn't just find keywords; it understands context, intent, and frustration levels to quantify market gaps.</p>
+<div class="flex gap-4">
+<div class="bg-surface/10 backdrop-blur-sm p-4 rounded-xl border border-white/10">
+<p class="text-2xl font-bold">98.4%</p>
+<p class="text-caption opacity-60">Sentiment Accuracy</p>
+</div>
+<div class="bg-surface/10 backdrop-blur-sm p-4 rounded-xl border border-white/10">
+<p class="text-2xl font-bold">2.4M</p>
+<p class="text-caption opacity-60">Daily Scans</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Secondary Cards -->
+<div class="md:col-span-4 bg-secondary-container rounded-3xl p-8 flex flex-col justify-between hover:bg-secondary transition-colors duration-300 group">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-4xl text-on-secondary-container group-hover:text-white" data-icon="trending_up">trending_up</span>
+<div class="bg-white/20 p-2 rounded-lg">
+<span class="material-symbols-outlined text-sm" data-icon="north_east">north_east</span>
+</div>
+</div>
+<div>
+<h4 class="font-headline-md text-on-secondary-container group-hover:text-white transition-colors">Emerging Trends</h4>
+<p class="text-sm text-on-secondary-container/80 group-hover:text-white/80">Get notified the moment a niche starts gaining momentum.</p>
+</div>
+</div>
+<div class="md:col-span-4 bg-surface-container-high rounded-3xl p-8 flex flex-col justify-between border border-outline-variant hover:border-primary transition-all">
+<div class="flex gap-2 mb-4">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs">AI</div>
+<div class="px-3 py-1 bg-white rounded-full text-[10px] font-bold border border-outline-variant">STATUS: OPTIMIZED</div>
+</div>
+<div>
+<h4 class="font-headline-md text-on-surface">Predictive Analysis</h4>
+<p class="text-sm text-on-surface-variant">We predict the saturation point of niches so you don't enter too late.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="py-24 relative overflow-hidden">
+<div class="absolute inset-0 -z-10 bg-primary-container"></div>
+<div class="px-margin-desktop max-w-container-max mx-auto text-center relative z-10">
+<h2 class="font-display-lg text-display-lg text-white mb-6">Stop guessing. Start knowing.</h2>
+<p class="text-on-primary-container font-body-lg text-body-lg mb-10 max-w-2xl mx-auto">Join thousands of builders who are discovering their next big project with Opportunity Radar.</p>
+<div class="flex flex-col sm:flex-row justify-center gap-stack-md">
+<button class="bg-secondary-container text-on-secondary-container px-10 py-5 rounded-2xl font-bold text-lg hover:scale-105 transition-transform shadow-xl">
+                        Create Your Free Account
+                    </button>
+<button class="bg-transparent border-2 border-on-primary-container text-white px-10 py-5 rounded-2xl font-bold text-lg hover:bg-white/5 transition-colors">
+                        Talk to an Expert
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-on-surface py-16">
+<div class="px-margin-desktop max-w-container-max mx-auto">
+<div class="flex flex-col md:flex-row justify-between items-start gap-stack-lg mb-12">
+<div class="space-y-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-surface text-headline-md" data-icon="radar">radar</span>
+<span class="text-headline-md font-headline-md text-surface">Opportunity Radar</span>
+</div>
+<p class="text-surface-variant max-w-xs font-body-md">Empowering decision-makers with the intelligence layer for the modern market.</p>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-gutter">
+<div class="space-y-4">
+<h5 class="text-white font-bold font-label-md">Product</h5>
+<ul class="space-y-2 text-surface-variant text-sm">
+<li><a class="hover:text-secondary-fixed transition-colors" href="#">Features</a></li>
+<li><a class="hover:text-secondary-fixed transition-colors" href="#">Integrations</a></li>
+<li><a class="hover:text-secondary-fixed transition-colors" href="#">Pricing</a></li>
+<li><a class="hover:text-secondary-fixed transition-colors" href="#">Changelog</a></li>
+</ul>
+</div>
+<div class="space-y-4">
+<h5 class="text-white font-bold font-label-md">Resources</h5>
+<ul class="space-y-2 text-surface-variant text-sm">
+<li><a class="hover:text-secondary-fixed transition-colors" href="#">Community</a></li>
+<li><a class="hover:text-secondary-fixed transition-colors" href="#">Documentation</a></li>
+<li><a class="hover:text-secondary-fixed transition-colors" href="#">Help Center</a></li>
+<li><a class="hover:text-secondary-fixed transition-colors" href="#">API Docs</a></li>
+</ul>
+</div>
+<div class="space-y-4">
+<h5 class="text-white font-bold font-label-md">Company</h5>
+<ul class="space-y-2 text-surface-variant text-sm">
+<li><a class="hover:text-secondary-fixed transition-colors" href="#">About Us</a></li>
+<li><a class="hover:text-secondary-fixed transition-colors" href="#">Careers</a></li>
+<li><a class="hover:text-secondary-fixed transition-colors" href="#">Privacy</a></li>
+<li><a class="hover:text-secondary-fixed transition-colors" href="#">Terms</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="pt-8 border-t border-surface-variant/20 flex flex-col md:flex-row justify-between items-center gap-stack-md">
+<p class="text-surface-variant font-caption text-caption">© 2024 Opportunity Radar. All rights reserved.</p>
+<div class="flex gap-gutter">
+<a class="text-surface-variant hover:text-white transition-opacity" href="#"><span class="material-symbols-outlined" data-icon="public">public</span></a>
+<a class="text-surface-variant hover:text-white transition-opacity" href="#"><span class="material-symbols-outlined" data-icon="alternate_email">alternate_email</span></a>
+<a class="text-surface-variant hover:text-white transition-opacity" href="#"><span class="material-symbols-outlined" data-icon="share">share</span></a>
+</div>
+</div>
+</div>
+</footer>
+<!-- FAB for quick interaction (Contextual) -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-secondary-container text-on-secondary-container rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 group">
+<span class="material-symbols-outlined" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="absolute right-full mr-4 bg-on-surface text-surface text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Scan New Niche</span>
+</button>
+<script>
+        // Micro-interaction for the radar visualization
+        document.addEventListener('mousemove', (e) => {
+            const radar = document.querySelector('.radar-pulse');
+            if (radar) {
+                const rect = radar.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width - 0.5;
+                const y = (e.clientY - rect.top) / rect.height - 0.5;
+                radar.style.transform = `perspective(1000px) rotateX(${y * 10}deg) rotateY(${x * 10}deg)`;
+            }
+        });
+
+        // Smooth reveal on scroll logic (Simplified)
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100');
+                    entry.target.classList.remove('opacity-0', 'translate-y-8');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section').forEach(section => {
+            section.classList.add('transition-all', 'duration-700', 'opacity-0', 'translate-y-8');
+            observer.observe(section);
+        });
+    </script>
+</body></html>

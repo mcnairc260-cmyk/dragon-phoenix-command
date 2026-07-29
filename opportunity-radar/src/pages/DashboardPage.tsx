@@ -20,19 +20,19 @@ function MiniCardRow({ title, items }: { title: string; items: Opportunity[] }) 
   if (items.length === 0) return null;
   return (
     <section aria-label={title} className="mb-6">
-      <h2 className="mb-2 font-mono text-[10px] tracking-[0.2em] text-gold uppercase">{title}</h2>
+      <h2 className="mb-2 text-[11px] font-semibold tracking-[0.1em] text-soft uppercase">{title}</h2>
       <div className="flex gap-3 overflow-x-auto pb-1">
         {items.map((o) => (
           <Link
             key={o.id}
             to={`/opportunities/${o.slug}`}
-            className="min-w-52 flex-shrink-0 rounded-lg border border-line bg-surface p-3 transition-colors hover:border-line-strong"
+            className="min-w-52 flex-shrink-0 rounded-xl bg-card p-3 shadow-card transition-shadow hover:shadow-card-hover"
           >
-            <p className="mb-1 font-mono text-[9px] tracking-[0.12em] text-smoke uppercase">
+            <p className="mb-1 text-[10px] font-semibold tracking-[0.08em] text-soft uppercase">
               {o.category}
             </p>
-            <p className="mb-1.5 line-clamp-2 text-xs leading-snug font-bold text-ash">{o.title}</p>
-            <p className="font-mono text-xs text-gold">{o.score} · {o.growthVelocity}</p>
+            <p className="mb-1.5 line-clamp-2 text-xs leading-snug font-bold text-ink">{o.title}</p>
+            <p className="text-xs font-semibold text-gold-ink">{o.score} · {o.growthVelocity}</p>
           </Link>
         ))}
       </div>
@@ -90,22 +90,60 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <header className="mb-6">
-        <p className="font-mono text-[10px] tracking-[0.24em] text-ember uppercase">
-          // Opportunity Radar
-        </p>
+      <header className="mb-5">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <h1 className="font-display text-2xl font-extrabold">
+          <h1 className="text-2xl font-bold tracking-tight text-ink">
             {greeting(preferences.displayName)}
           </h1>
           <DemoBadge />
         </div>
-        <p className="mt-1 text-sm text-muted">
+        <p className="mt-1 text-sm text-body">
           {all.length > 0
             ? `${all.length} demo opportunities on the radar · scores are illustrative`
             : 'Scanning the radar…'}
         </p>
       </header>
+
+      {/* Stat tiles — Stitch dashboard pattern, computed from real demo data */}
+      {all.length > 0 && (
+        <dl className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            {
+              label: 'Opportunities tracked',
+              value: all.length,
+              accent: 'border-t-ink',
+              icon: '📡',
+            },
+            {
+              label: 'Strong signals',
+              value: all.flatMap((o) => o.signals).filter((s) => s.strength === 'Strong').length,
+              accent: 'border-t-gold',
+              icon: '✨',
+            },
+            {
+              label: 'Windows open now',
+              value: all.filter((o) => o.timeWindow === 'Open now').length,
+              accent: 'border-t-emerald',
+              icon: '📈',
+            },
+          ].map((tile) => (
+            <div
+              key={tile.label}
+              className={`flex items-center justify-between rounded-xl border-t-2 bg-card px-4 py-3.5 shadow-card ${tile.accent}`}
+            >
+              <div>
+                <dt className="text-[10px] font-semibold tracking-[0.1em] text-soft uppercase">
+                  {tile.label}
+                </dt>
+                <dd className="text-2xl font-bold tracking-tight text-ink">{tile.value}</dd>
+              </div>
+              <span aria-hidden="true" className="text-xl">
+                {tile.icon}
+              </span>
+            </div>
+          ))}
+        </dl>
+      )}
 
       {/* Search / sort */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -128,8 +166,8 @@ export default function DashboardPage() {
               onClick={() => toggleCategory(category)}
               className={`rounded-full border px-3 py-1.5 text-xs whitespace-nowrap transition-colors ${
                 active
-                  ? 'border-gold bg-gold/15 text-gold'
-                  : 'border-line text-muted hover:border-line-strong hover:text-ash'
+                  ? 'border-gold bg-gold/25 text-ink'
+                  : 'border-line text-body hover:border-line-strong hover:text-ink'
               }`}
             >
               {category}
@@ -152,7 +190,7 @@ export default function DashboardPage() {
           {/* Emerging signals */}
           {emergingSignals.length > 0 && (
             <section aria-label="Emerging signals" className="mb-6">
-              <h2 className="mb-2 font-mono text-[10px] tracking-[0.2em] text-gold uppercase">
+              <h2 className="mb-2 text-[11px] font-semibold tracking-[0.1em] text-soft uppercase">
                 Emerging signals
               </h2>
               <div className="grid gap-2 sm:grid-cols-2">
@@ -160,16 +198,16 @@ export default function DashboardPage() {
                   <Link
                     key={`${opportunity.id}-${signal.headline}`}
                     to={`/opportunities/${opportunity.slug}`}
-                    className="rounded-lg border border-line bg-surface p-3 transition-colors hover:border-line-strong"
+                    className="rounded-xl bg-card p-3 shadow-card transition-shadow hover:shadow-card-hover"
                   >
                     <div className="mb-1 flex items-center justify-between gap-2">
-                      <span className="font-mono text-[9px] tracking-[0.12em] text-cyan uppercase">
+                      <span className="inline-flex items-center rounded-full bg-emerald/10 px-2 py-0.5 text-[9px] font-semibold tracking-[0.08em] text-emerald-ink uppercase">
                         {signal.category}
                       </span>
                       <SignalStrengthIndicator strength={signal.strength} />
                     </div>
-                    <p className="text-xs leading-snug text-ash">{signal.headline}</p>
-                    <p className="mt-1 font-mono text-[9px] text-smoke">→ {opportunity.title}</p>
+                    <p className="text-xs leading-snug text-ink">{signal.headline}</p>
+                    <p className="mt-1 text-[10px] font-medium text-soft">→ {opportunity.title}</p>
                   </Link>
                 ))}
               </div>
@@ -182,10 +220,10 @@ export default function DashboardPage() {
           {/* Main feed */}
           <section aria-label="All opportunities">
             <div className="mb-2 flex items-baseline justify-between">
-              <h2 className="font-mono text-[10px] tracking-[0.2em] text-gold uppercase">
+              <h2 className="text-[11px] font-semibold tracking-[0.1em] text-soft uppercase">
                 Opportunity feed
               </h2>
-              <p className="font-mono text-[10px] text-smoke">
+              <p className="text-[10px] font-medium text-soft">
                 {visible.length} of {all.length} shown
               </p>
             </div>
@@ -197,7 +235,7 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => setFilters(EMPTY_FILTERS)}
-                    className="rounded-lg bg-gradient-to-r from-ember to-gold px-4 py-2 text-sm font-bold text-void"
+                    className="rounded-lg bg-gold px-4 py-2 text-sm font-bold text-ink"
                   >
                     Reset search & filters
                   </button>
