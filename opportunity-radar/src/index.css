@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap');
+@import 'tailwindcss';
+
+/*
+ * Opportunity Radar design tokens.
+ * Palette matches the live Dragon Phoenix Command site surface
+ * (docs/AI_ONBOARDING.md §6): ember / gold / cyan on void black.
+ * Gold is the product accent (opportunity), ember is reserved for brand
+ * moments, cyan for data/AI. All colors flow from these variables — never
+ * hard-code a hex in a component.
+ */
+@theme {
+  --color-void: #0a0a0f;
+  --color-surface: #13131f;
+  --color-surface2: #1c1c2e;
+  --color-ash: #e8e4dc;
+  --color-smoke: #6b6b7a;
+  --color-muted: #a0a0b2; /* brighter than smoke: AA contrast for body text on void */
+  --color-ember: #ff4d00;
+  --color-gold: #ffb347;
+  --color-cyan: #00e5ff;
+  --color-green: #3ddc97;
+  --color-danger: #ff6b6b;
+  --color-line: rgba(255, 179, 71, 0.14);
+  --color-line-strong: rgba(255, 179, 71, 0.32);
+
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Score-band colors referenced by name from src/lib/score.ts */
+:root {
+  --or-gold: #ffb347;
+  --or-cyan: #00e5ff;
+  --or-green: #3ddc97;
+  --or-muted: #a0a0b2;
+  --or-smoke: #6b6b7a;
+}
+
+html {
+  background: var(--color-void);
+  color: var(--color-ash);
+  font-family: var(--font-sans);
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Subtle command-center ambience, matching the existing site */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 40% at 15% 10%, rgba(255, 179, 71, 0.06), transparent 60%),
+    radial-gradient(ellipse 50% 50% at 85% 80%, rgba(0, 229, 255, 0.04), transparent 60%);
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Visible, consistent focus states */
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Honor both the OS setting and the in-app appearance preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+[data-reduced-motion='true'] *,
+[data-reduced-motion='true'] *::before,
+[data-reduced-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}

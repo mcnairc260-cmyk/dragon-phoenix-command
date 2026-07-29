@@ -55,7 +55,11 @@ dragon-phoenix-command/
 │   ├── PROJECT_CONTEXT.md  # Session handoff / decision log
 │   └── AI_ONBOARDING.md    # This file
 ├── brand/                  # Brand bible, story, lore
-└── youtube/                # Strategy, backlog, scripts, asset log
+├── youtube/                # Strategy, backlog, scripts, asset log
+└── opportunity-radar/      # Opportunity Radar MVP — self-contained React/TS/Vite sub-app
+                            # (founder-approved framework exception, 2026-07-29; the root
+                            # site's zero-dependency rule still applies outside this folder.
+                            # See docs/OPPORTUNITY_RADAR_MVP.md + PROJECT_CONTEXT §16.)
 ```
 
 ### 2.2 The web app (current state)
