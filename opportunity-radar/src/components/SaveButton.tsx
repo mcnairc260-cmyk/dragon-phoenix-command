@@ -1,4 +1,5 @@
 import { useSaved, useToasts } from '../state/AppState';
+import { Icon } from './Icon';
 
 export function SaveButton({
   opportunityId,
@@ -24,13 +25,14 @@ export function SaveButton({
         type="button"
         onClick={handleClick}
         aria-pressed={saved}
-        className={`rounded-lg border px-4 py-2 text-sm font-bold transition-colors ${
+        className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-bold transition-colors ${
           saved
-            ? 'border-gold bg-gold/25 text-ink'
-            : 'border-line-strong text-ink hover:border-gold hover:text-gold-ink'
+            ? 'border-gold bg-gold/25 text-ash'
+            : 'border-line-strong text-ash hover:border-gold hover:text-gold'
         }`}
       >
-        {saved ? '🔖 Saved' : '🔖 Save opportunity'}
+        <Icon name={saved ? 'bookmark-filled' : 'bookmark'} />
+        {saved ? 'Saved' : 'Save opportunity'}
       </button>
     );
   }
@@ -44,11 +46,11 @@ export function SaveButton({
       title={saved ? 'Remove from saved' : 'Save'}
       className={`rounded-lg border p-2 leading-none transition-colors ${
         saved
-          ? 'border-gold bg-gold/25 text-ink'
-          : 'border-line text-body hover:border-gold hover:text-gold-ink'
+          ? 'border-gold bg-gold/25 text-ash'
+          : 'border-line text-body hover:border-gold hover:text-gold'
       }`}
     >
-      <span aria-hidden="true">{saved ? '🔖' : '📑'}</span>
+      <Icon name={saved ? 'bookmark-filled' : 'bookmark'} />
     </button>
   );
 }

@@ -37,7 +37,8 @@ Node 20+ recommended (built and verified on Node 22).
 ## Architecture
 
 ```
-design/stitch/             # Approved Stitch screens + DESIGN.md (visual source of truth)
+design/brand/              # DPA Brand Guide v1.0 — the visual source of truth
+design/stitch/             # Google Stitch screens — structural reference only (light palette superseded)
 src/
 ├── types/opportunity.ts   # Domain types — single source of truth
 ├── lib/
@@ -63,13 +64,27 @@ Three seams isolate the demo layer so it can be replaced without touching the UI
 
 ## Design
 
-The approved **Google Stitch design package** is archived at `design/stitch/` (5 screens with reference PNGs + `DESIGN.md`) and is the visual source of truth for this product.
+The visual system is **DPA Brand Guide v1.0** (archived at `design/brand/DPA_BRAND_GUIDE_v1.png`) — Opportunity Radar ships inside the Dragon Phoenix Ascension family and uses its branding.
 
-Its system is light and corporate-minimal: Cool Gray `#F8FAFC` canvas, white cards, Deep Professional Blue `#0F172A` ink, Star Gold `#FACC15` accent (accent surfaces only — never body text), Fresh Emerald `#10B981` for growth, **Inter exclusively**, 16–24px card radii, and soft ambient shadows.
+| Token | Hex | Use |
+|---|---|---|
+| Obsidian Black | `#0B0B0D` | Page background |
+| Volcanic Charcoal | `#1A1B1F` | Card surface |
+| Ember Orange | `#FF5A1F` | Restrained accent, brand moments |
+| Molten Gold | `#F2A93B` | Opportunity accent, primary CTAs |
+| Ash Silver | `#D9DDE3` | Primary text |
 
-> **Note:** this light system is a product-scoped exception to DPA's dark-mode-first mandate, adopted because the founder supplied the Stitch package as the approved foundation. The root DPA site stays dark. Rationale and the path to revert are in `docs/PROJECT_CONTEXT.md` §16a.
+Typography per the guide: **Cinzel** for headlines and brand statements, **Inter** for UI, body copy, and product interfaces. Usage principles: dark backgrounds, silver metal, *restrained* ember, crisp high-contrast type.
 
-All colors are CSS variables in `src/index.css` (`@theme`) — never hard-code a hex in a component. Gold-on-white fails contrast, so `--color-gold-ink` (`#735C00`) is used wherever gold must read as text. Focus states, reduced-motion support, semantic HTML, and labeled controls are required in new components.
+All tokens live in `src/index.css` (`@theme`) — never hard-code a hex in a component. Tokens are labeled either **official** (the five above) or **derived**: mid-tone text greys and a functional `--color-danger` red, which the five-colour palette does not provide but the UI needs for hierarchy and error states. Derived values are AI-proposed and open to founder revision.
+
+Notes for contributors:
+- The palette has no cyan or green. Growth/acceleration reads ember, positive/opportunity reads gold, negative reads the derived danger red.
+- Icons are the stroke-based set in `src/components/Icon.tsx`, not emoji — emoji carry their own colours and break the metal palette.
+- The canonical DPA monogram and phoenix emblem are reserved marks and are **not** reproduced here; the product uses its own radar glyph plus a "Dragon Phoenix Ascension" wordmark endorsement.
+- Google Stitch screens in `design/stitch/` remain useful as **structural** reference (sidebar shell, stat tiles, score gauge, comparison table, FAQ, settings layout). Their light palette is superseded — do not pull colour from them.
+
+Focus states, reduced-motion support, semantic HTML, and labeled controls are required in new components.
 
 ## Environment variables
 
@@ -88,4 +103,4 @@ Not yet deployed — deploying anything publicly is a founder decision (Continua
 - Auth and billing are integration points only; login/signup honestly report unavailability.
 - Saved items / preferences / recently-viewed are per-browser (localStorage).
 - "Alerts" and "export report" are labeled as future/Pro features, not functional.
-- No dark theme yet (the Stitch system is light); no i18n; no analytics (by policy, none added without documentation).
+- Dark theme only (per the brand guide); no light theme; no i18n; no analytics (by policy, none added without documentation).

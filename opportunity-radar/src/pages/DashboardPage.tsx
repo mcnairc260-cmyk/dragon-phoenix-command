@@ -9,6 +9,7 @@ import { FilterPanel } from '../components/FilterPanel';
 import { OpportunityCard } from '../components/OpportunityCard';
 import { EmptyState, ErrorState, FeedSkeleton } from '../components/states';
 import { DemoBadge, SignalStrengthIndicator } from '../components/badges';
+import { Icon } from '../components/Icon';
 
 function greeting(name: string): string {
   const hour = new Date().getHours();
@@ -20,19 +21,19 @@ function MiniCardRow({ title, items }: { title: string; items: Opportunity[] }) 
   if (items.length === 0) return null;
   return (
     <section aria-label={title} className="mb-6">
-      <h2 className="mb-2 text-[11px] font-semibold tracking-[0.1em] text-soft uppercase">{title}</h2>
+      <h2 className="mb-2 text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">{title}</h2>
       <div className="flex gap-3 overflow-x-auto pb-1">
         {items.map((o) => (
           <Link
             key={o.id}
             to={`/opportunities/${o.slug}`}
-            className="min-w-52 flex-shrink-0 rounded-xl bg-card p-3 shadow-card transition-shadow hover:shadow-card-hover"
+            className="min-w-52 flex-shrink-0 rounded-xl bg-surface p-3 shadow-card transition-shadow hover:shadow-card-hover"
           >
-            <p className="mb-1 text-[10px] font-semibold tracking-[0.08em] text-soft uppercase">
+            <p className="mb-1 text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">
               {o.category}
             </p>
-            <p className="mb-1.5 line-clamp-2 text-xs leading-snug font-bold text-ink">{o.title}</p>
-            <p className="text-xs font-semibold text-gold-ink">{o.score} · {o.growthVelocity}</p>
+            <p className="mb-1.5 line-clamp-2 text-xs leading-snug font-bold text-ash">{o.title}</p>
+            <p className="text-xs font-semibold text-gold">{o.score} · {o.growthVelocity}</p>
           </Link>
         ))}
       </div>
@@ -92,7 +93,7 @@ export default function DashboardPage() {
     <div>
       <header className="mb-5">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <h1 className="text-2xl font-bold tracking-tight text-ink">
+          <h1 className="font-display text-2xl font-bold text-ash">
             {greeting(preferences.displayName)}
           </h1>
           <DemoBadge />
@@ -111,35 +112,33 @@ export default function DashboardPage() {
             {
               label: 'Opportunities tracked',
               value: all.length,
-              accent: 'border-t-ink',
-              icon: '📡',
+              accent: 'border-t-ash/40',
+              icon: 'satellite' as const,
             },
             {
               label: 'Strong signals',
               value: all.flatMap((o) => o.signals).filter((s) => s.strength === 'Strong').length,
               accent: 'border-t-gold',
-              icon: '✨',
+              icon: 'signal' as const,
             },
             {
               label: 'Windows open now',
               value: all.filter((o) => o.timeWindow === 'Open now').length,
-              accent: 'border-t-emerald',
-              icon: '📈',
+              accent: 'border-t-ember',
+              icon: 'trend' as const,
             },
           ].map((tile) => (
             <div
               key={tile.label}
-              className={`flex items-center justify-between rounded-xl border-t-2 bg-card px-4 py-3.5 shadow-card ${tile.accent}`}
+              className={`flex items-center justify-between rounded-xl border-t-2 bg-surface px-4 py-3.5 shadow-card ${tile.accent}`}
             >
               <div>
-                <dt className="text-[10px] font-semibold tracking-[0.1em] text-soft uppercase">
+                <dt className="text-[10px] font-semibold tracking-[0.1em] text-muted uppercase">
                   {tile.label}
                 </dt>
-                <dd className="text-2xl font-bold tracking-tight text-ink">{tile.value}</dd>
+                <dd className="text-2xl font-bold text-ash">{tile.value}</dd>
               </div>
-              <span aria-hidden="true" className="text-xl">
-                {tile.icon}
-              </span>
+<Icon name={tile.icon} size={22} className="text-muted" />
             </div>
           ))}
         </dl>
@@ -166,8 +165,8 @@ export default function DashboardPage() {
               onClick={() => toggleCategory(category)}
               className={`rounded-full border px-3 py-1.5 text-xs whitespace-nowrap transition-colors ${
                 active
-                  ? 'border-gold bg-gold/25 text-ink'
-                  : 'border-line text-body hover:border-line-strong hover:text-ink'
+                  ? 'border-gold bg-gold/25 text-ash'
+                  : 'border-line text-body hover:border-line-strong hover:text-ash'
               }`}
             >
               {category}
@@ -190,7 +189,7 @@ export default function DashboardPage() {
           {/* Emerging signals */}
           {emergingSignals.length > 0 && (
             <section aria-label="Emerging signals" className="mb-6">
-              <h2 className="mb-2 text-[11px] font-semibold tracking-[0.1em] text-soft uppercase">
+              <h2 className="mb-2 text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">
                 Emerging signals
               </h2>
               <div className="grid gap-2 sm:grid-cols-2">
@@ -198,16 +197,16 @@ export default function DashboardPage() {
                   <Link
                     key={`${opportunity.id}-${signal.headline}`}
                     to={`/opportunities/${opportunity.slug}`}
-                    className="rounded-xl bg-card p-3 shadow-card transition-shadow hover:shadow-card-hover"
+                    className="rounded-xl bg-surface p-3 shadow-card transition-shadow hover:shadow-card-hover"
                   >
                     <div className="mb-1 flex items-center justify-between gap-2">
-                      <span className="inline-flex items-center rounded-full bg-emerald/10 px-2 py-0.5 text-[9px] font-semibold tracking-[0.08em] text-emerald-ink uppercase">
+                      <span className="inline-flex items-center rounded-full bg-ember/12 px-2 py-0.5 text-[9px] font-semibold tracking-[0.08em] text-gold uppercase">
                         {signal.category}
                       </span>
                       <SignalStrengthIndicator strength={signal.strength} />
                     </div>
-                    <p className="text-xs leading-snug text-ink">{signal.headline}</p>
-                    <p className="mt-1 text-[10px] font-medium text-soft">→ {opportunity.title}</p>
+                    <p className="text-xs leading-snug text-ash">{signal.headline}</p>
+                    <p className="mt-1 text-[10px] font-medium text-muted">→ {opportunity.title}</p>
                   </Link>
                 ))}
               </div>
@@ -220,10 +219,10 @@ export default function DashboardPage() {
           {/* Main feed */}
           <section aria-label="All opportunities">
             <div className="mb-2 flex items-baseline justify-between">
-              <h2 className="text-[11px] font-semibold tracking-[0.1em] text-soft uppercase">
+              <h2 className="text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">
                 Opportunity feed
               </h2>
-              <p className="text-[10px] font-medium text-soft">
+              <p className="text-[10px] font-medium text-muted">
                 {visible.length} of {all.length} shown
               </p>
             </div>
@@ -235,7 +234,7 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => setFilters(EMPTY_FILTERS)}
-                    className="rounded-lg bg-gold px-4 py-2 text-sm font-bold text-ink"
+                    className="rounded-lg bg-gold px-4 py-2 text-sm font-bold text-void"
                   >
                     Reset search & filters
                   </button>

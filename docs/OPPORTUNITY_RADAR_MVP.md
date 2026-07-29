@@ -99,11 +99,11 @@ Hard constraints: legal/ToS review per source **before** any collection; no scra
 
 ## 11. Design system
 
-The approved Google Stitch package (5 screens + `DESIGN.md`) is archived at `opportunity-radar/design/stitch/` and is the visual source of truth. It defines a **light, corporate-minimal** system — Cool Gray canvas, white cards, Deep Professional Blue ink, Star Gold accent, Fresh Emerald for growth, Inter throughout.
+The product uses **DPA Brand Guide v1.0** (`opportunity-radar/design/brand/DPA_BRAND_GUIDE_v1.png`): Obsidian Black `#0B0B0D`, Volcanic Charcoal `#1A1B1F`, Ember Orange `#FF5A1F`, Molten Gold `#F2A93B`, Ash Silver `#D9DDE3`; Cinzel for headlines, Inter for UI and body. Dark backgrounds, silver metal, restrained ember accents — consistent with the Constitution's dark-mode-first mandate and with the rest of the DPA family.
 
-This is a **product-scoped exception to DPA's dark-mode-first mandate**, flagged for founder confirmation in `PROJECT_CONTEXT.md` §16a. The root DPA site remains dark and untouched. Because every color is a CSS variable in `src/index.css`, reverting this product to dark is a token change, not a rewrite.
+An earlier pass adopted the light palette from the Google Stitch `DESIGN.md`; that was reversed when the founder supplied the brand guide. The Stitch screens remain the **structural** reference — persistent sidebar (Feed / Saved / Plans / Settings) with mobile bottom nav, dashboard stat tiles, the circular Radar Score gauge, pricing comparison table and FAQ, two-column settings with toggle switches, and the split hero — all of which are palette-independent.
 
-Structural patterns adopted from Stitch: persistent desktop sidebar (Feed / Saved / Plans / Settings) with mobile bottom nav, dashboard stat tiles, the circular "Radar Score" gauge on detail pages, pricing comparison table and FAQ, two-column settings with toggle switches, and the split hero with a radar visualization plus dark conversion band. Accessibility adjustment on top of Stitch: gold is never used as body text (it fails contrast on white) — `--color-gold-ink` carries gold's meaning where text must read.
+Implementation detail and the open founder question (Brand Guide v1.0 is a *third* palette, differing from both the live site and the Brand Bible) are recorded in `PROJECT_CONTEXT.md` §16a.
 
 ---
 

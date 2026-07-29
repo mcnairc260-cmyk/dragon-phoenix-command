@@ -41,13 +41,13 @@ function SettingsSection({
     <section className="grid gap-4 lg:grid-cols-[220px_1fr] lg:gap-8">
       <div>
         <h2
-          className={`text-base font-bold tracking-tight ${danger ? 'text-danger' : 'text-ink'}`}
+          className={`text-base font-bold tracking-tight ${danger ? 'text-danger' : 'text-ash'}`}
         >
           {title}
         </h2>
         {description && <p className="mt-1 text-sm leading-relaxed text-body">{description}</p>}
       </div>
-      <div className="rounded-2xl bg-card p-5 shadow-card">{children}</div>
+      <div className="rounded-2xl bg-surface p-5 shadow-card">{children}</div>
     </section>
   );
 }
@@ -67,8 +67,8 @@ function Toggle({
   return (
     <label className="flex cursor-pointer items-center justify-between gap-4 py-2.5">
       <span className="min-w-0">
-        <span className="block text-sm font-semibold text-ink">{label}</span>
-        <span className="block text-xs leading-relaxed text-soft">{hint}</span>
+        <span className="block text-sm font-semibold text-ash">{label}</span>
+        <span className="block text-xs leading-relaxed text-muted">{hint}</span>
       </span>
       <span className="relative flex-shrink-0">
         <input
@@ -79,11 +79,11 @@ function Toggle({
         />
         <span
           aria-hidden="true"
-          className="block h-6 w-11 rounded-full bg-line-strong transition-colors peer-checked:bg-ink peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink"
+          className="block h-6 w-11 rounded-full bg-line-strong transition-colors peer-checked:bg-gold peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-gold"
         />
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute top-0.5 left-0.5 block h-5 w-5 rounded-full bg-card transition-transform peer-checked:translate-x-5"
+          className="pointer-events-none absolute top-0.5 left-0.5 block h-5 w-5 rounded-full bg-surface transition-transform peer-checked:translate-x-5"
         />
       </span>
     </label>
@@ -106,7 +106,7 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-4xl">
       <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-ink">Settings</h1>
+        <h1 className="font-display text-2xl font-bold text-ash">Settings</h1>
         <p className="mt-1 text-sm text-body">
           Preferences are stored locally in this browser and shape your “Best fit” sorting and
           recommendations immediately.
@@ -116,17 +116,17 @@ export default function SettingsPage() {
       <div className="space-y-10">
         <SettingsSection title="Personal profile" description="Manage how the radar addresses you.">
           <label className="block">
-            <span className="mb-1.5 block text-sm text-ink">Display name</span>
+            <span className="mb-1.5 block text-sm text-ash">Display name</span>
             <input
               type="text"
               value={preferences.displayName}
               onChange={(e) => updatePreferences({ displayName: e.target.value })}
               placeholder="How should the radar greet you?"
               maxLength={40}
-              className="w-full max-w-sm rounded-lg border border-line bg-card px-3 py-2.5 text-sm text-ink placeholder:text-faint focus:border-ink focus:outline-none"
+              className="w-full max-w-sm rounded-lg border border-line bg-surface px-3 py-2.5 text-sm text-ash placeholder:text-faint focus:border-gold focus:outline-none"
             />
           </label>
-          <p className="mt-2 text-[10px] font-medium text-soft">
+          <p className="mt-2 text-[10px] font-medium text-muted">
             Account email & password arrive with authentication (not yet enabled in this demo).
           </p>
         </SettingsSection>
@@ -146,8 +146,8 @@ export default function SettingsPage() {
                   onClick={() => toggleCategory(category)}
                   className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
                     active
-                      ? 'border-gold bg-gold/25 text-ink'
-                      : 'border-line text-body hover:border-line-strong hover:text-ink'
+                      ? 'border-gold bg-gold/25 text-ash'
+                      : 'border-line text-body hover:border-line-strong hover:text-ash'
                   }`}
                 >
                   {category}
@@ -163,7 +163,7 @@ export default function SettingsPage() {
         >
           <div className="grid gap-4 sm:grid-cols-3">
             <label className="block">
-              <span className="mb-1.5 block text-sm text-ink">Budget range</span>
+              <span className="mb-1.5 block text-sm text-ash">Budget range</span>
               <select
                 value={preferences.maxBudgetUsd ?? ''}
                 onChange={(e) =>
@@ -171,7 +171,7 @@ export default function SettingsPage() {
                     maxBudgetUsd: e.target.value === '' ? null : Number(e.target.value),
                   })
                 }
-                className="w-full rounded-lg border border-line bg-card px-3 py-2.5 text-sm text-ink focus:border-ink focus:outline-none"
+                className="w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-sm text-ash focus:border-gold focus:outline-none"
               >
                 {BUDGET_OPTIONS.map((opt) => (
                   <option key={opt.label} value={opt.value ?? ''}>
@@ -181,13 +181,13 @@ export default function SettingsPage() {
               </select>
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm text-ink">Experience level</span>
+              <span className="mb-1.5 block text-sm text-ash">Experience level</span>
               <select
                 value={preferences.experienceLevel}
                 onChange={(e) =>
                   updatePreferences({ experienceLevel: e.target.value as ExperienceLevel })
                 }
-                className="w-full rounded-lg border border-line bg-card px-3 py-2.5 text-sm text-ink focus:border-ink focus:outline-none"
+                className="w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-sm text-ash focus:border-gold focus:outline-none"
               >
                 {EXPERIENCE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -197,13 +197,13 @@ export default function SettingsPage() {
               </select>
             </label>
             <label className="block">
-              <span className="mb-1.5 block text-sm text-ink">Risk tolerance</span>
+              <span className="mb-1.5 block text-sm text-ash">Risk tolerance</span>
               <select
                 value={preferences.riskTolerance}
                 onChange={(e) =>
                   updatePreferences({ riskTolerance: e.target.value as RiskTolerance })
                 }
-                className="w-full rounded-lg border border-line bg-card px-3 py-2.5 text-sm text-ink focus:border-ink focus:outline-none"
+                className="w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-sm text-ash focus:border-gold focus:outline-none"
               >
                 {RISK_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -241,7 +241,7 @@ export default function SettingsPage() {
         >
           <a
             href="/pricing"
-            className="inline-block rounded-lg border border-line-strong px-4 py-2 text-sm font-bold text-ink hover:border-gold hover:text-gold-ink"
+            className="inline-block rounded-lg border border-line-strong px-4 py-2 text-sm font-bold text-ash hover:border-gold hover:text-gold"
           >
             View plans
           </a>

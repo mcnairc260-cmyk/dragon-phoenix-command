@@ -180,19 +180,41 @@ A founder-directed session built **Opportunity Radar** ("Your AI Opportunity Int
 
 **Assumptions added to the register:** (a) the task prompt's authorizations came from the founder; (b) Opportunity Radar will eventually deploy as its own Vercel project rather than a subpath; (c) auth provider choice (Supabase/Clerk/Auth.js) is still open — an adapter seam ships instead.
 
-### 16a. Opportunity Radar visual system — a light-mode exception (2026-07-29)
+### 16a. Opportunity Radar visual system — DPA Brand Guide v1.0 (2026-07-29)
 
-**Tier 2 flag: this collides with a hard constraint, and the founder should confirm it.**
+**Resolved in-session. An earlier light-mode exception was proposed and then REVERSED by the founder.**
 
-The founder-supplied Google Stitch design package (`opportunity-radar/design/stitch/` — 5 screens plus `DESIGN.md`) specifies a **light, corporate-minimal system**: Cool Gray `#F8FAFC` canvas, white cards, Deep Professional Blue `#0F172A` ink, Star Gold `#FACC15` accent, Fresh Emerald `#10B981` for growth, **Inter exclusively**, 16px/24px card radii, and very soft ambient shadows (`0 4px 20px rgba(15,23,42,0.05)`).
+Sequence: the first pass used the live-site dark palette (no Stitch files in repo) → the founder supplied the Google Stitch package, whose `DESIGN.md` specifies a *light* corporate system, and the UI was rebuilt to it with the dark-mode conflict flagged for confirmation → the founder then supplied **DPA Brand Guide v1.0** with the instruction to use DPA branding "since it'll be in the DPA family of products." The light system is gone. The product is dark, per the Constitution.
 
-That is the direct opposite of DPA's **dark-mode-first** mandate (Constitution Art. VIII; onboarding manual §5.5). The conflict was resolved as follows, and can be reversed on the founder's word:
+**The official system now in force** (`opportunity-radar/design/brand/DPA_BRAND_GUIDE_v1.png`, archived in-repo):
 
-- The task brief named the Stitch files "the approved visual foundation" and instructed that their strongest characteristics be preserved. Taken together with the founder supplying the package mid-session, that reads as approval **for this product surface**.
-- The exception is **scoped to `opportunity-radar/` only**. The root DPA site (`index.html`) remains dark, ember/gold/cyan, Syne + JetBrains Mono, untouched. The two palettes named in §6 are likewise untouched — this is a third, product-specific system, not a resolution of that conflict.
-- DPA identity is retained where it does not fight the Stitch system: the footer carries the ecosystem attribution and motto, with gold as the shared accent between both systems.
-- Tokens live in `opportunity-radar/src/index.css` (`@theme`); no component hard-codes a hex. Flipping this product back to dark is a token-file change plus a shadow/border pass, not a rewrite.
+| Token | Hex | Use |
+|---|---|---|
+| Obsidian Black | `#0B0B0D` | Page background |
+| Volcanic Charcoal | `#1A1B1F` | Card surface |
+| Ember Orange | `#FF5A1F` | Restrained accent, brand moments |
+| Molten Gold | `#F2A93B` | The opportunity accent, primary CTAs |
+| Ash Silver | `#D9DDE3` | Primary text ("silver metal") |
 
-**If the founder wants dark-mode-first enforced here instead, say so and it reverts** — the Stitch screens would then serve as layout/structure reference only (sidebar shell, stat tiles, circular Radar Score gauge, comparison table, FAQ, two-column settings), all of which are palette-independent and already implemented.
+Typography: **Cinzel** for headlines and brand statements, **Inter** for UI, body copy, and product interfaces; the DPA monogram is bespoke logo lettering only. Usage principles applied: dark backgrounds, silver metal, restrained ember, crisp high-contrast type.
 
-Also adopted from Stitch in this pass: product nav renamed to Feed/Saved/Plans/Settings with a persistent desktop sidebar; the detail-page score rendered as the circular "Radar Score" gauge; pricing gained a comparison table and FAQ; settings moved to the two-column label/controls layout with real toggle switches; landing hero switched to the split copy/radar-visualization layout with a dark conversion band. Score-band colors moved to the Stitch semantic set (gold/emerald/ink/slate) — band thresholds and weights are unchanged.
+Implementation notes a successor needs:
+- Tokens live in `opportunity-radar/src/index.css` (`@theme`). The five official colours are marked as such; a small set of **derived** tokens is marked separately — mid-tone greys (`--color-body`, `--color-muted`, `--color-faint`) interpolated between Obsidian and Ash for text hierarchy, and `--color-danger` `#FF6B6B` for errors/high-severity risk. The five-colour palette has no functional red and no mid greys; a UI cannot ship without them. **These derived values are AI-invented v1 proposals** and should be confirmed or replaced by the founder.
+- The official palette contains **no cyan/green**. Semantics were remapped: growth/acceleration → ember, positive/low-competition/opportunity → gold, negative → the derived danger red. The Stitch emerald is gone.
+- Score bands now read: Exceptional = Molten Gold, Strong = Ember, Promising = Ash, Watch/Early = greys. Band thresholds and score weights are unchanged.
+- Emoji icons were replaced with a stroke-based SVG set (`src/components/Icon.tsx`) — emoji render in their own colours and broke both the palette and the "crisp, high-contrast" principle.
+- The canonical DPA monogram and phoenix emblem are **not** reproduced in the app. The guide reserves them and forbids substitution, so the product uses its own radar glyph in silver/ember and carries "Dragon Phoenix Ascension" as a wordmark endorsement. If the founder wants the real mark in the product header, supply it as an isolated asset (SVG preferred).
+
+**⚠️ Unflagged consequence the founder should decide on — this is a THIRD palette.** Brand Guide v1.0 matches neither side of the §6 conflict:
+
+| | Live site `index.html` | `brand/BRAND_BIBLE.md` | **Brand Guide v1.0** |
+|---|---|---|---|
+| Ember | `#FF4D00` | `#FF6B2C` | **`#FF5A1F`** |
+| Gold | `#FFB347` | `#FFB300` | **`#F2A93B`** |
+| Background | `#0A0A0F` | `#0A0A0F` | **`#0B0B0D`** |
+| Third accent | Cyan `#00E5FF` | Cyan `#22D3EE` | **none** |
+| Display font | Syne | Space Grotesk / Sora | **Cinzel** |
+| Mono/UI font | JetBrains Mono | Inter | **Inter** |
+
+A founder-issued document titled "Brand Guide v1.0 — Official Color Palette" reads as superseding both, which would finally resolve unresolved-decision #1 (`AI_ONBOARDING.md` §8.1). **This session did not act on that** — it is founder-reserved, and syncing would mean editing `brand/BRAND_BIBLE.md` and the production `index.html`. Recommended next action: confirm Brand Guide v1.0 as canonical, then sync the Brand Bible and the live site to it in a separate, single-purpose PR.
+

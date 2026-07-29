@@ -3,6 +3,7 @@ import { OPPORTUNITIES } from '../data/opportunities';
 import { SCORE_BANDS, SCORE_FACTOR_LABELS, SCORE_WEIGHTS } from '../lib/score';
 import type { ScoreComponents } from '../types/opportunity';
 import { DemoBadge, ScoreBadge } from '../components/badges';
+import { Icon } from '../components/Icon';
 
 const HOW_IT_WORKS = [
   {
@@ -32,12 +33,12 @@ const HOW_IT_WORKS = [
 ];
 
 const FEATURES = [
-  { icon: '📡', title: 'Opportunity feed', detail: 'A scannable radar of emerging opportunities across ten industries, sortable by score, growth, competition, and cost.' },
-  { icon: '🧭', title: 'Why-now analysis', detail: 'Every opportunity explains its timing: the signals that opened the window and how long it may stay open.' },
-  { icon: '💯', title: 'Transparent scoring', detail: 'No black boxes — every score shows its six weighted components and how they combine.' },
-  { icon: '🎯', title: 'Fit-based recommendations', detail: 'Your budget, experience, and risk tolerance shape which opportunities surface first.' },
-  { icon: '🗺️', title: 'Action plans', detail: 'Strategic plans plus first-7-days and first-30-days checklists turn analysis into motion.' },
-  { icon: '🔖', title: 'Saved opportunities', detail: 'Build your personal watchlist and come back when the timing is right.' },
+  { icon: 'radar' as const, title: 'Opportunity feed', detail: 'A scannable radar of emerging opportunities across ten industries, sortable by score, growth, competition, and cost.' },
+  { icon: 'compass' as const, title: 'Why-now analysis', detail: 'Every opportunity explains its timing: the signals that opened the window and how long it may stay open.' },
+  { icon: 'gauge' as const, title: 'Transparent scoring', detail: 'No black boxes — every score shows its six weighted components and how they combine.' },
+  { icon: 'target' as const, title: 'Fit-based recommendations', detail: 'Your budget, experience, and risk tolerance shape which opportunities surface first.' },
+  { icon: 'route' as const, title: 'Action plans', detail: 'Strategic plans plus first-7-days and first-30-days checklists turn analysis into motion.' },
+  { icon: 'bookmark' as const, title: 'Saved opportunities', detail: 'Build your personal watchlist and come back when the timing is right.' },
 ];
 
 export default function LandingPage() {
@@ -49,12 +50,12 @@ export default function LandingPage() {
       {/* Hero — Stitch layout: left-aligned copy, radar visualization right */}
       <section className="grid items-center gap-10 border-b border-line py-16 sm:py-20 lg:grid-cols-2">
         <div>
-          <p className="mb-5 inline-flex items-center gap-1.5 rounded-full bg-gold-soft px-3 py-1 text-[10px] font-semibold tracking-[0.1em] text-gold-ink uppercase">
+          <p className="mb-5 inline-flex items-center gap-1.5 rounded-full bg-gold/12 px-3 py-1 text-[10px] font-semibold tracking-[0.1em] text-gold uppercase">
             <span aria-hidden="true">●</span> AI Opportunity Intelligence
           </p>
-          <h1 className="max-w-xl text-4xl leading-[1.1] font-bold tracking-tight text-ink sm:text-5xl">
+          <h1 className="max-w-xl font-display text-4xl leading-[1.1] font-bold text-ash sm:text-5xl">
             Find opportunities before{' '}
-            <span className="text-gold-ink">everyone else.</span>
+            <span className="text-gold">everyone else.</span>
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-body">
             Opportunity Radar helps entrepreneurs, creators, and ambitious professionals discover
@@ -64,18 +65,18 @@ export default function LandingPage() {
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link
               to="/dashboard"
-              className="rounded-lg bg-gold px-6 py-3 text-sm font-bold text-ink transition-opacity hover:opacity-90"
+              className="rounded-lg bg-gold px-6 py-3 text-sm font-bold text-void transition-opacity hover:opacity-90"
             >
               Explore Opportunities →
             </Link>
             <a
               href="#how-it-works"
-              className="rounded-lg border border-line-strong px-6 py-3 text-sm font-bold text-ink transition-colors hover:border-ink"
+              className="rounded-lg border border-line-strong px-6 py-3 text-sm font-bold text-ash transition-colors hover:border-gold"
             >
               See How It Works
             </a>
           </div>
-          <p className="mt-6 text-[10px] font-semibold tracking-[0.08em] text-soft uppercase">
+          <p className="mt-6 text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">
             Free to explore · No credit card · Demo dataset
           </p>
         </div>
@@ -96,16 +97,16 @@ export default function LandingPage() {
             ))}
             <circle cx="180" cy="180" r="4" fill="var(--color-ink)" />
             <circle cx="262" cy="118" r="7" fill="var(--color-gold)" />
-            <circle cx="118" cy="240" r="5" fill="var(--color-emerald)" />
+            <circle cx="118" cy="240" r="5" fill="var(--color-ember)" />
           </svg>
-          <div className="absolute top-1/2 left-1/2 w-64 -translate-x-1/2 -translate-y-1/2 rounded-xl bg-ink p-4 text-on-ink shadow-card-hover">
+          <div className="absolute top-1/2 left-1/2 w-64 -translate-x-1/2 -translate-y-1/2 rounded-xl bg-surface3 p-4 shadow-card-hover">
             <p className="mb-2 flex items-center gap-2 text-xs font-bold">
-              <span aria-hidden="true">✨</span> New signal found
+<Icon name="signal" className="text-gold" /> New signal found
             </p>
-            <p className="rounded-lg bg-white/10 p-2.5 text-[11px] leading-relaxed text-on-ink-soft">
+            <p className="rounded-lg border border-line bg-void/60 p-2.5 text-[11px] leading-relaxed text-body">
               Search interest in profession-specific AI training keeps climbing.
             </p>
-            <p className="mt-2 text-[9px] font-semibold tracking-[0.08em] text-on-ink-soft uppercase">
+            <p className="mt-2 text-[9px] font-semibold tracking-[0.08em] text-body uppercase">
               Demo signal · illustrative
             </p>
           </div>
@@ -132,7 +133,7 @@ export default function LandingPage() {
           },
         ].map((item) => (
           <div key={item.title}>
-            <h2 className="mb-2 text-lg font-bold tracking-tight text-ink">{item.title}</h2>
+            <h2 className="mb-2 font-display text-lg font-bold text-ash">{item.title}</h2>
             <p className="text-sm leading-relaxed text-body">{item.detail}</p>
           </div>
         ))}
@@ -140,12 +141,12 @@ export default function LandingPage() {
 
       {/* How it works */}
       <section id="how-it-works" className="border-b border-line py-14">
-        <p className="mb-1 text-[11px] font-semibold tracking-[0.1em] text-soft uppercase">Process</p>
-        <h2 className="mb-8 text-2xl font-bold tracking-tight text-ink">How Opportunity Radar works</h2>
+        <p className="mb-1 text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">Process</p>
+        <h2 className="mb-8 font-display text-2xl font-bold text-ash">How Opportunity Radar works</h2>
         <ol className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {HOW_IT_WORKS.map((step) => (
-            <li key={step.step} className="rounded-xl border border-line bg-card p-5">
-              <p className="mb-2 text-xs font-semibold text-gold-ink">{step.step}</p>
+            <li key={step.step} className="rounded-xl border border-line bg-surface p-5">
+              <p className="mb-2 text-xs font-semibold text-gold">{step.step}</p>
               <h3 className="mb-2 text-sm font-bold">{step.title}</h3>
               <p className="text-xs leading-relaxed text-body">{step.detail}</p>
             </li>
@@ -157,10 +158,10 @@ export default function LandingPage() {
       <section className="border-b border-line py-14">
         <div className="mb-8 flex flex-wrap items-center gap-3">
           <div>
-            <p className="mb-1 text-[11px] font-semibold tracking-[0.1em] text-soft uppercase">
+            <p className="mb-1 text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">
               On the radar
             </p>
-            <h2 className="text-2xl font-bold tracking-tight text-ink">Example opportunities</h2>
+            <h2 className="font-display text-2xl font-bold text-ash">Example opportunities</h2>
           </div>
           <DemoBadge />
         </div>
@@ -169,10 +170,10 @@ export default function LandingPage() {
             <Link
               key={o.id}
               to={`/opportunities/${o.slug}`}
-              className="rounded-xl border border-line bg-card p-5 transition-colors hover:border-line-strong"
+              className="rounded-xl border border-line bg-surface p-5 transition-colors hover:border-line-strong"
             >
               <div className="mb-3 flex items-start justify-between gap-3">
-                <p className="text-[10px] font-medium tracking-[0.14em] text-gold-ink uppercase">
+                <p className="text-[10px] font-medium tracking-[0.14em] text-gold uppercase">
                   {o.category}
                 </p>
                 <ScoreBadge score={o.score} isDemo={o.isDemo} />
@@ -186,16 +187,14 @@ export default function LandingPage() {
 
       {/* Features */}
       <section className="border-b border-line py-14">
-        <p className="mb-1 text-[11px] font-semibold tracking-[0.1em] text-soft uppercase">
+        <p className="mb-1 text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">
           Intelligence
         </p>
-        <h2 className="mb-8 text-2xl font-bold tracking-tight text-ink">Key intelligence features</h2>
+        <h2 className="mb-8 font-display text-2xl font-bold text-ash">Key intelligence features</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f) => (
-            <div key={f.title} className="rounded-xl border border-line bg-card p-5">
-              <p aria-hidden="true" className="mb-2 text-xl">
-                {f.icon}
-              </p>
+            <div key={f.title} className="rounded-xl border border-line bg-surface p-5">
+<Icon name={f.icon} size={22} className="mb-3 text-gold" />
               <h3 className="mb-1.5 text-sm font-bold">{f.title}</h3>
               <p className="text-xs leading-relaxed text-body">{f.detail}</p>
             </div>
@@ -205,31 +204,31 @@ export default function LandingPage() {
 
       {/* Score explanation */}
       <section className="border-b border-line py-14">
-        <p className="mb-1 text-[11px] font-semibold tracking-[0.1em] text-soft uppercase">Scoring</p>
-        <h2 className="mb-4 text-2xl font-bold tracking-tight text-ink">The Opportunity Score</h2>
+        <p className="mb-1 text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">Scoring</p>
+        <h2 className="mb-4 font-display text-2xl font-bold text-ash">The Opportunity Score</h2>
         <p className="mb-6 max-w-2xl text-sm leading-relaxed text-body">
           Every opportunity is scored 0–100 from six weighted factors. The weights are fixed and
           public, every component is shown on the detail page, and scores from demo data are always
           labeled as demo scores.
         </p>
         <div className="grid gap-6 lg:grid-cols-2">
-          <ul className="space-y-2 rounded-xl border border-line bg-card p-5">
+          <ul className="space-y-2 rounded-xl border border-line bg-surface p-5">
             {factorKeys.map((key) => (
               <li key={key} className="flex items-center justify-between gap-4 text-sm">
-                <span className="text-ink">{SCORE_FACTOR_LABELS[key]}</span>
-                <span className="text-xs font-semibold text-gold-ink">
+                <span className="text-ash">{SCORE_FACTOR_LABELS[key]}</span>
+                <span className="text-xs font-semibold text-gold">
                   {Math.round(SCORE_WEIGHTS[key] * 100)}%
                 </span>
               </li>
             ))}
           </ul>
-          <ul className="space-y-2 rounded-xl border border-line bg-card p-5">
+          <ul className="space-y-2 rounded-xl border border-line bg-surface p-5">
             {SCORE_BANDS.map((band, i) => {
               const prev = SCORE_BANDS[i - 1];
               const rangeLabel = `${band.min}–${prev ? prev.min - 1 : 100}`;
               return (
                 <li key={band.label} className="flex items-center justify-between gap-4 text-sm">
-                  <span className="text-ink">{band.label}</span>
+                  <span className="text-ash">{band.label}</span>
                   <span className="text-xs font-semibold text-body">{rangeLabel}</span>
                 </li>
               );
@@ -241,8 +240,8 @@ export default function LandingPage() {
       {/* Social proof placeholder */}
       <section className="border-b border-line py-14">
         <div className="mb-8 flex flex-wrap items-center gap-3">
-          <h2 className="text-2xl font-bold tracking-tight text-ink">What early users say</h2>
-          <span className="rounded border border-gold/30 bg-gold/10 px-2 py-0.5 text-[10px] font-medium tracking-[0.12em] text-gold-ink uppercase">
+          <h2 className="font-display text-2xl font-bold text-ash">What early users say</h2>
+          <span className="rounded border border-gold/30 bg-gold/10 px-2 py-0.5 text-[10px] font-medium tracking-[0.12em] text-gold uppercase">
             Placeholder — illustrative, not real testimonials
           </span>
         </div>
@@ -252,9 +251,9 @@ export default function LandingPage() {
             'The kind of quote a freelancer might give about picking a service niche using the fit-based recommendations.',
             'The kind of quote an operator might give about the 7-day plans making the first step obvious.',
           ].map((text, i) => (
-            <figure key={i} className="rounded-xl border border-line bg-card p-5">
+            <figure key={i} className="rounded-xl border border-line bg-surface p-5">
               <blockquote className="text-sm leading-relaxed text-body">“{text}”</blockquote>
-              <figcaption className="mt-3 text-[10px] font-semibold tracking-[0.08em] text-soft uppercase">
+              <figcaption className="mt-3 text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">
                 Placeholder testimonial {i + 1}
               </figcaption>
             </figure>
@@ -264,7 +263,7 @@ export default function LandingPage() {
 
       {/* Pricing preview */}
       <section className="border-b border-line py-14 text-center">
-        <h2 className="mb-3 text-2xl font-bold tracking-tight text-ink">Simple, honest pricing</h2>
+        <h2 className="mb-3 font-display text-2xl font-bold text-ash">Simple, honest pricing</h2>
         <p className="mx-auto mb-6 max-w-xl text-sm leading-relaxed text-body">
           Start free. Upgrade to Pro for the full database, score breakdowns, and action plans — or
           Founder for team workspaces and exportable reports. Placeholder pricing while the launch
@@ -272,32 +271,32 @@ export default function LandingPage() {
         </p>
         <Link
           to="/pricing"
-          className="rounded-lg border border-line-strong px-6 py-3 text-sm font-bold text-ink transition-colors hover:border-gold hover:text-gold-ink"
+          className="rounded-lg border border-line-strong px-6 py-3 text-sm font-bold text-ash transition-colors hover:border-gold hover:text-gold"
         >
           View pricing →
         </Link>
       </section>
 
       {/* Final CTA — Stitch dark conversion band */}
-      <section className="my-14 rounded-2xl bg-ink px-6 py-16 text-center text-on-ink sm:py-20">
+      <section className="my-14 rounded-2xl border border-line-ember bg-surface px-6 py-16 text-center sm:py-20">
         <h2 className="mx-auto max-w-2xl text-3xl leading-tight font-bold tracking-tight sm:text-4xl">
           The best opportunities don't announce themselves.{' '}
           <span className="text-gold">The radar does.</span>
         </h2>
-        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-on-ink-soft">
+        <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-body">
           Explore the full demo radar — no account required, every record clearly labeled as
           demonstration data.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link
             to="/dashboard"
-            className="rounded-lg bg-gold px-8 py-3.5 text-sm font-bold text-ink transition-opacity hover:opacity-90"
+            className="rounded-lg bg-gold px-8 py-3.5 text-sm font-bold text-void transition-opacity hover:opacity-90"
           >
             Explore Opportunities
           </Link>
           <Link
             to="/pricing"
-            className="rounded-lg border border-white/25 px-8 py-3.5 text-sm font-bold text-on-ink transition-colors hover:border-white/60"
+            className="rounded-lg border border-line-strong px-8 py-3.5 text-sm font-bold text-ash transition-colors hover:border-gold"
           >
             View plans
           </Link>

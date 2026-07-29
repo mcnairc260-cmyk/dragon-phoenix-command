@@ -11,7 +11,7 @@ export function ToastViewport() {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className="rounded-lg bg-ink px-4 py-2.5 text-sm font-medium text-on-ink shadow-card-hover"
+          className="rounded-lg border border-line-strong bg-surface3 px-4 py-2.5 text-sm font-medium text-ash shadow-card-hover"
         >
           {toast.text}
         </div>

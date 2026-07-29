@@ -132,6 +132,8 @@ These come from the Constitution and are **not negotiable with anyone except the
 
 Two palettes and two font stacks exist (full table in `PROJECT_CONTEXT.md` §6): the **live site** uses ember `#FF4D00` / gold `#FFB347` / cyan `#00E5FF` with **Syne**; the **Brand Bible** proposes `#FF6B2C` / `#FFB300` / `#22D3EE` with Space Grotesk/Sora. Until the founder reconciles them: **match whichever surface you're working in** (site work → site palette; brand-doc/YouTube packaging work → Brand Bible palette) and do not "fix" the other side.
 
+**Update 2026-07-29 — a third, founder-issued palette now exists.** *DPA Brand Guide v1.0* (archived at `opportunity-radar/design/brand/DPA_BRAND_GUIDE_v1.png`) defines an **Official Color Palette** — Obsidian `#0B0B0D`, Volcanic Charcoal `#1A1B1F`, Ember Orange `#FF5A1F`, Molten Gold `#F2A93B`, Ash Silver `#D9DDE3` — with **Cinzel** for headlines and **Inter** for UI, and no cyan at all. It is in force in `opportunity-radar/` by founder instruction. Because it is founder-issued and titled "Official," it most likely supersedes both palettes above and resolves §8.1 — but **only the founder may declare that**, and neither `brand/BRAND_BIBLE.md` nor `index.html` has been synced to it. Treat the guide as canonical for new product surfaces; leave the other two alone until instructed. Detail: `PROJECT_CONTEXT.md` §16a.
+
 ---
 
 ## 7. Active priorities (as of 2026-07)

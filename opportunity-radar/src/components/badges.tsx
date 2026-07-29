@@ -11,8 +11,8 @@ import { scoreBand } from '../lib/score';
 export function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[10px] font-semibold tracking-[0.08em] text-soft uppercase">{label}</dt>
-      <dd className="truncate text-xs font-medium text-ink">{value}</dd>
+      <dt className="text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">{label}</dt>
+      <dd className="truncate text-xs font-medium text-ash">{value}</dd>
     </div>
   );
 }
@@ -20,7 +20,7 @@ export function Stat({ label, value }: { label: string; value: string }) {
 export function DemoBadge({ className = '' }: { className?: string }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full bg-gold-soft px-2 py-0.5 text-[9px] font-semibold tracking-[0.08em] text-gold-ink uppercase ${className}`}
+      className={`inline-flex items-center rounded-full bg-gold/12 px-2 py-0.5 text-[9px] font-semibold tracking-[0.08em] text-gold uppercase ${className}`}
       title="Demonstration data — not verified market research"
     >
       Demo data
@@ -51,11 +51,11 @@ export function ScoreBadge({
     const c = 2 * Math.PI * r;
     return (
       <div
-        className="flex flex-col items-center rounded-xl border border-line bg-card px-5 py-4 shadow-card"
+        className="flex flex-col items-center rounded-xl border border-line bg-surface px-5 py-4 shadow-card"
         aria-label={label}
       >
         <svg width="88" height="88" viewBox="0 0 88 88" aria-hidden="true">
-          <circle cx="44" cy="44" r={r} fill="none" stroke="var(--color-tint)" strokeWidth="8" />
+          <circle cx="44" cy="44" r={r} fill="none" stroke="var(--color-surface3)" strokeWidth="8" />
           <circle
             cx="44"
             cy="44"
@@ -78,8 +78,8 @@ export function ScoreBadge({
             {score}
           </text>
         </svg>
-        <span className="mt-1 text-xs font-semibold text-ink">Radar Score</span>
-        <span className="text-[10px] font-semibold tracking-[0.08em] text-soft uppercase">
+        <span className="mt-1 text-xs font-semibold text-ash">Radar Score</span>
+        <span className="text-[10px] font-semibold tracking-[0.08em] text-muted uppercase">
           {band.label}
         </span>
         {isDemo && (
@@ -93,12 +93,12 @@ export function ScoreBadge({
 
   return (
     <div
-      className="flex flex-col items-center rounded-lg border-2 bg-card px-2.5 py-1.5"
+      className="flex flex-col items-center rounded-lg border-2 bg-surface px-2.5 py-1.5"
       style={{ borderColor: color }}
       aria-label={label}
     >
-      <span className="text-xl font-bold tracking-tight text-ink">{score}</span>
-      <span className="text-[9px] font-semibold tracking-[0.08em] text-soft uppercase">
+      <span className="text-xl font-bold text-ash">{score}</span>
+      <span className="text-[9px] font-semibold tracking-[0.08em] text-muted uppercase">
         {band.label}
       </span>
       {isDemo && (
@@ -118,7 +118,7 @@ const GROWTH_ICON: Record<GrowthVelocity, string> = {
 export function GrowthBadge({ velocity }: { velocity: GrowthVelocity }) {
   const hot = velocity === 'Explosive' || velocity === 'Accelerating';
   return (
-    <span className={`text-xs font-semibold ${hot ? 'text-emerald-ink' : 'text-soft'}`}>
+    <span className={`text-xs font-semibold ${hot ? 'text-gold' : 'text-muted'}`}>
       <span aria-hidden="true">{GROWTH_ICON[velocity]}</span> {velocity}
     </span>
   );
@@ -126,18 +126,18 @@ export function GrowthBadge({ velocity }: { velocity: GrowthVelocity }) {
 
 export function CompetitionBadge({ level }: { level: CompetitionLevel }) {
   const color =
-    level === 'Low' ? 'text-emerald-ink' : level === 'Moderate' ? 'text-soft' : 'text-danger';
+    level === 'Low' ? 'text-gold' : level === 'Moderate' ? 'text-muted' : 'text-danger';
   return <span className={`text-xs font-semibold ${color}`}>{level} competition</span>;
 }
 
 export function TimeWindowBadge({ window: w }: { window: TimeWindow }) {
   const color =
-    w === 'Open now' ? 'text-emerald-ink' : w === 'Opening' ? 'text-gold-ink' : 'text-danger';
+    w === 'Open now' ? 'text-gold' : w === 'Opening' ? 'text-gold' : 'text-danger';
   return <span className={`text-xs font-semibold ${color}`}>{w}</span>;
 }
 
 export function ConfidenceBadge({ confidence }: { confidence: Confidence }) {
-  return <span className="text-xs font-semibold text-soft">{confidence} confidence</span>;
+  return <span className="text-xs font-semibold text-muted">{confidence} confidence</span>;
 }
 
 const STRENGTH_DOTS: Record<Signal['strength'], string> = {
@@ -151,7 +151,7 @@ export function SignalStrengthIndicator({ strength }: { strength: Signal['streng
     <span
       className={`text-[10px] font-semibold tracking-widest ${
         strength === 'Strong'
-          ? 'text-gold-ink'
+          ? 'text-gold'
           : strength === 'Moderate'
             ? 'text-body'
             : 'text-faint'

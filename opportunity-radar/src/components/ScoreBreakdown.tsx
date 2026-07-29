@@ -18,14 +18,14 @@ export function ScoreBreakdown({
           return (
             <li key={key}>
               <div className="mb-1 flex items-baseline justify-between gap-2">
-                <span className="text-xs text-ink">
+                <span className="text-xs text-ash">
                   {SCORE_FACTOR_LABELS[key]}{' '}
-                  <span className="text-[10px] font-medium text-soft">({weightPct}%)</span>
+                  <span className="text-[10px] font-medium text-muted">({weightPct}%)</span>
                 </span>
-                <span className="text-xs font-semibold text-gold-ink">{value}</span>
+                <span className="text-xs font-semibold text-gold">{value}</span>
               </div>
               <div
-                className="h-1.5 overflow-hidden rounded-full bg-tint"
+                className="h-1.5 overflow-hidden rounded-full bg-surface3"
                 role="meter"
                 aria-valuemin={0}
                 aria-valuemax={100}

@@ -1,56 +1,65 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
 @import 'tailwindcss';
 
 /*
- * Opportunity Radar design tokens — from the approved Stitch design system
- * (design/stitch/DESIGN.md): "Deep Professional Blue" ink, "Star Gold" accent,
- * "Fresh Emerald" for growth, cool-gray canvas, Inter exclusively.
- * This light system is a founder-approved, product-scoped exception to DPA's
- * dark-mode-first default (PROJECT_CONTEXT §16a); the root DPA site stays dark.
- * All colors flow from these variables — never hard-code a hex in a component.
+ * Opportunity Radar design tokens — DPA Brand Guide v1.0.
+ * Source of truth: design/brand/DPA_BRAND_GUIDE_v1.png (founder-supplied).
+ *
+ * Palette is the Brand Guide's five official colors, plus a small set of
+ * clearly-marked DERIVED tokens (mid-tone text greys, a functional danger red)
+ * that the five-colour palette does not cover but a UI cannot ship without.
+ * Usage principles from the guide: dark backgrounds, silver metal, RESTRAINED
+ * ember accents, crisp high-contrast type.
+ *
+ * Never hard-code a hex in a component — add it here instead.
  */
 @theme {
-  --color-canvas: #f8fafc; /* page background (Cool Gray) */
-  --color-card: #ffffff; /* card surface */
-  --color-tint: #eceef0; /* container tint / skeletons */
-  --color-tint2: #e6e8ea;
-  --color-ink: #0f172a; /* Deep Professional Blue: headings, nav, dark sections */
-  --color-ink2: #1e293b; /* cards on dark sections */
-  --color-body: #334155; /* Slate body text */
-  --color-soft: #64748b; /* secondary text — AA on white */
-  --color-faint: #94a3b8; /* tertiary/placeholder */
-  --color-gold: #facc15; /* Star Gold — accent surfaces only, never body text */
-  --color-gold-ink: #735c00; /* gold as readable text on light surfaces */
-  --color-gold-soft: #fef9c3; /* gold tint fills */
-  --color-emerald: #10b981; /* growth / positive */
-  --color-emerald-ink: #047857; /* emerald as readable text on light */
-  --color-danger: #ba1a1a;
-  --color-line: #e2e8f0; /* default border */
-  --color-line-strong: #c6c6cd;
-  --color-on-ink: #f8fafc; /* text on dark sections */
-  --color-on-ink-soft: #94a3b8;
+  /* --- Official DPA palette --- */
+  --color-void: #0b0b0d; /* Obsidian Black — page background */
+  --color-surface2: #1a1b1f; /* Volcanic Charcoal — card surface */
+  --color-ember: #ff5a1f; /* Ember Orange — restrained accent, brand moments */
+  --color-gold: #f2a93b; /* Molten Gold — the opportunity accent */
+  --color-ash: #d9dde3; /* Ash Silver — primary text, "silver metal" */
 
+  /* --- Derived neutrals (interpolated between Obsidian and Ash) --- */
+  --color-surface: #131417; /* between Obsidian and Volcanic — default card */
+  --color-surface3: #232428; /* raised / hover / skeleton */
+  --color-body: #a8adb8; /* secondary text — 8.0:1 on Obsidian */
+  --color-muted: #7c818c; /* tertiary text / labels — 4.6:1 on Obsidian */
+  --color-faint: #5a5f69; /* placeholders, disabled */
+
+  /* --- Derived functional colour (not a brand colour) --- */
+  --color-danger: #ff6b6b; /* errors and high-severity risk only */
+
+  --color-line: rgba(217, 221, 227, 0.1); /* ash at low alpha — metal hairline */
+  --color-line-strong: rgba(217, 221, 227, 0.24);
+  --color-line-ember: rgba(255, 90, 31, 0.32);
+
+  /* Brand Guide typography: Cinzel for headlines and brand statements,
+     Inter for UI, body copy, and product interfaces. */
+  --font-display: 'Cinzel', Georgia, serif;
   --font-sans: 'Inter', system-ui, sans-serif;
-  --font-display: 'Inter', system-ui, sans-serif;
-  --font-mono: 'Inter', system-ui, sans-serif; /* Stitch: Inter exclusively; label style = uppercase + tracking */
 
-  --shadow-card: 0 4px 20px rgba(15, 23, 42, 0.05);
-  --shadow-card-hover: 0 6px 24px rgba(15, 23, 42, 0.09);
+  /* Depth on dark comes from hairlines and glow, not drop shadows. */
+  --shadow-card: 0 1px 0 rgba(217, 221, 227, 0.04) inset;
+  --shadow-card-hover: 0 0 0 1px rgba(255, 90, 31, 0.18), 0 8px 28px rgba(0, 0, 0, 0.5);
+  --shadow-ember: 0 0 20px rgba(255, 90, 31, 0.25);
 }
 
-/* Score-band colors referenced by name from src/lib/score.ts */
+/* Score-band colours, referenced by name from src/lib/score.ts */
 :root {
-  --or-exceptional: #eab308;
-  --or-strong: #10b981;
-  --or-promising: #0f172a;
-  --or-watch: #64748b;
-  --or-early: #94a3b8;
+  --or-exceptional: #f2a93b; /* Molten Gold */
+  --or-strong: #ff5a1f; /* Ember Orange */
+  --or-promising: #d9dde3; /* Ash Silver */
+  --or-watch: #a8adb8;
+  --or-early: #7c818c;
 }
 
 html {
-  background: var(--color-canvas);
+  background: var(--color-void);
   color: var(--color-body);
   font-family: var(--font-sans);
+  color-scheme: dark;
 }
 
 body {
@@ -58,17 +67,34 @@ body {
   overflow-x: hidden;
 }
 
+/* Volcanic ambience — restrained, per the guide's "restrained ember accents" */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 40% at 12% 0%, rgba(255, 90, 31, 0.07), transparent 62%),
+    radial-gradient(ellipse 50% 45% at 88% 85%, rgba(242, 169, 59, 0.05), transparent 62%);
+}
+
 #root {
   position: relative;
   z-index: 1;
 }
 
-/* Visible, consistent focus states (Stitch: deep blue with a soft outer glow) */
+/* Headlines and brand statements use the display face; UI stays Inter. */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+}
+
+/* Visible, consistent focus states */
 :focus-visible {
-  outline: 2px solid var(--color-ink);
+  outline: 2px solid var(--color-gold);
   outline-offset: 2px;
   border-radius: 4px;
-  box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.12);
 }
 
 /* Honor both the OS setting and the in-app appearance preference */

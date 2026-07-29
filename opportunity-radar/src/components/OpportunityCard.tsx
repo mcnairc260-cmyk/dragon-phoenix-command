@@ -15,20 +15,20 @@ import { SaveButton } from './SaveButton';
 export function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
   const o = opportunity;
   return (
-    <article className="flex flex-col rounded-2xl bg-card p-4 shadow-card transition-shadow hover:shadow-card-hover">
+    <article className="flex flex-col rounded-2xl bg-surface p-4 shadow-card transition-shadow hover:shadow-card-hover">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="mb-1.5 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center rounded-full bg-emerald/10 px-2 py-0.5 text-[9px] font-semibold tracking-[0.08em] text-emerald-ink uppercase">
+            <span className="inline-flex items-center rounded-full bg-ember/12 px-2 py-0.5 text-[9px] font-semibold tracking-[0.08em] text-gold uppercase">
               {o.category}
             </span>
-            <span className="text-[10px] font-medium text-soft">{o.opportunityType}</span>
+            <span className="text-[10px] font-medium text-muted">{o.opportunityType}</span>
             {o.isDemo && <DemoBadge />}
           </p>
-          <h3 className="text-base leading-snug font-bold tracking-tight text-ink">
+          <h3 className="text-base leading-snug font-bold tracking-tight text-ash">
             <Link
               to={`/opportunities/${o.slug}`}
-              className="hover:text-gold-ink focus-visible:text-gold-ink"
+              className="hover:text-gold focus-visible:text-gold"
             >
               {o.title}
             </Link>
@@ -55,7 +55,7 @@ export function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
       <div className="mt-auto flex items-center justify-between gap-2">
         <Link
           to={`/opportunities/${o.slug}`}
-          className="rounded-lg bg-gold px-3.5 py-2 text-xs font-bold text-ink transition-opacity hover:opacity-90"
+          className="rounded-lg bg-gold px-3.5 py-2 text-xs font-bold text-void transition-opacity hover:opacity-90"
         >
           Full analysis →
         </Link>
