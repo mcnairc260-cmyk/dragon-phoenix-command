@@ -30,7 +30,15 @@ npm run preview    # serve the production build
 npm run lint       # ESLint
 npm run typecheck  # tsc only
 npm test           # Vitest (single run); npm run test:watch for watch mode
+npm run build:demo # single self-contained HTML in dist-demo/ (see below)
 ```
+
+**Demo build.** `npm run build:demo` bundles the app into one self-contained
+`dist-demo/index.html` — CSS and JS inlined, Cinzel/Inter embedded as base64 —
+for static hosts that block external requests (a Claude Artifact, an email
+attachment, a USB stick). It builds with `VITE_DEMO_HASH_ROUTER=1`, so that
+variant uses hash URLs (`#/dashboard`) since there is no server to rewrite
+paths. Production builds are unaffected and keep real paths.
 
 Node 20+ recommended (built and verified on Node 22).
 

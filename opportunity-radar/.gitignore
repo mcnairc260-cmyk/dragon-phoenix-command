@@ -1,5 +1,7 @@
 node_modules
 dist
+dist-demo
+scripts/.fontcache
 *.local
 .env
 .env.*
