@@ -190,6 +190,18 @@
   // While testing locally with the same deploy, "/api/chat" works automatically.
   const API_ENDPOINT = "/api/chat";
 
+  // Keep only the most recent exchanges so a long-running session never
+  // outgrows the model's context window and trips a "prompt too long" error.
+  const MAX_HISTORY_MESSAGES = 20;
+
+  function trimHistory(){
+    if(history.length > MAX_HISTORY_MESSAGES){
+      history.splice(0, history.length - MAX_HISTORY_MESSAGES);
+      // Anthropic's Messages API expects the transcript to start on a user turn
+      if(history[0]?.role === "assistant") history.shift();
+    }
+  }
+
   const history = [];
   const msgsEl = document.getElementById("msgs");
   const errEl = document.getElementById("err");
@@ -237,9 +249,13 @@
       if(data.error){ throw new Error(data.error); }
       const reply = data.reply || "No response.";
       history.push({ role:"assistant", content:reply });
+      trimHistory();
       addMsg("ai", reply);
     } catch(err){
       hideTyping();
+      // A failed turn leaves an unanswered user message in history — drop it
+      // so the next attempt doesn't stack two consecutive user turns.
+      if(history[history.length - 1]?.role === "user") history.pop();
       errEl.style.display = "block";
       errEl.textContent = "⚠ " + err.message;
     } finally {

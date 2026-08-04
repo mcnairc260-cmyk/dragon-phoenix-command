@@ -22,6 +22,17 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Missing 'messages' array in request body." });
   }
 
+  // Defensive cap: any caller (not just our own client) could send an
+  // unbounded transcript. Keep only the most recent turns so we don't hit
+  // Anthropic's "prompt is too long" error, and keep the transcript
+  // starting on a user turn as the Messages API expects.
+  const MAX_HISTORY_MESSAGES = 20;
+  let trimmedMessages = messages;
+  if (trimmedMessages.length > MAX_HISTORY_MESSAGES) {
+    trimmedMessages = trimmedMessages.slice(-MAX_HISTORY_MESSAGES);
+    if (trimmedMessages[0]?.role === "assistant") trimmedMessages = trimmedMessages.slice(1);
+  }
+
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -34,7 +45,7 @@ export default async function handler(req, res) {
         model: "claude-sonnet-4-6",
         max_tokens: 1024,
         system: system || "You are a helpful assistant.",
-        messages: messages
+        messages: trimmedMessages
       })
     });
 

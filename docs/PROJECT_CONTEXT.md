@@ -84,6 +84,7 @@ The brand package was written **before** discovering the founder details embedde
 - ⚠️ **Security posture:** `Access-Control-Allow-Origin: *` + no rate limiting means anyone who finds the endpoint can spend the Anthropic API budget. Acceptable for a personal toy; fix before publicizing (lock CORS to the site origin, add basic rate limiting).
 - ⚠️ **Model ID:** `api/chat.js` calls `claude-sonnet-4-6`, which does not match current Anthropic model naming (current: `claude-sonnet-5`, `claude-opus-4-8`, `claude-haiku-4-5-20251001`). If chat requests fail with a model-not-found error, this is why.
 - The welcome message is hardcoded and the chat has no persistence; `history` is in-page memory only.
+- ✅ **Fixed 2026-08-04 — "prompt too long" error:** the in-page `history` array grew unbounded and was sent to `/api/chat` in full on every turn, so a long-running chat session would eventually exceed the model's context window and Anthropic would reject the request. Fixed with a 20-message sliding window: `index.html` trims `history` after each assistant reply (and drops a dangling unanswered user turn on request failure, so retries don't stack two user turns in a row); `api/chat.js` independently trims incoming `messages` to the same cap as defense-in-depth for any other caller of the endpoint. The `claude-sonnet-4-6` model ID issue noted above is unrelated and still unresolved.
 
 ## 8. Higgsfield operational intelligence (hard-won, not written anywhere else)
 
