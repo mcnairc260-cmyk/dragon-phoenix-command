@@ -179,3 +179,34 @@ A founder-directed session built **Opportunity Radar** ("Your AI Opportunity Int
 5. **Nothing external happened**: no deploy, no spend, no publishing. Deployment options are documented in `opportunity-radar/README.md` and remain Tier 3.
 
 **Assumptions added to the register:** (a) the task prompt's authorizations came from the founder; (b) Opportunity Radar will eventually deploy as its own Vercel project rather than a subpath; (c) auth provider choice (Supabase/Clerk/Auth.js) is still open — an adapter seam ships instead.
+
+## 17. The Legend of Little Chi — graphic novel (2026-08-04)
+
+`graphic-novel/The Legend of Little Chi.epub` is the Collector's Edition of the founder's all-ages graphic novel: 14 square (1707×1707) full-page images in a hand-built EPUB. Until this session the book existed in the repo with **no written record at all** — the only trace was PR #2's commit messages. This section is that record.
+
+**Provenance.** The artwork is AI-generated; the lettering inside it is *rendered pixels imitating type*, not a real typeface, which is why the original pages are internally inconsistent (pages 7/10/11/12 look like a humanist sans, pages 3/4 like a rounded comic face) and why several balloons had garbled or overflowing words. PR #2 (merged 2026-07-30) rebuilt the container, re-lettered pages 3/5/6/8 and page 9's sound effect; the founder then replaced pages 5 and 6 with his own corrected artwork.
+
+**The book's lettering face is Comic Neue Bold.** Established by the PR #2 repair pass, confirmed this session by scoring 16 candidate fonts against the artwork: pages 3 and 8 match Comic Neue Bold at **0.85 / 0.74 IoU**, far ahead of any alternative, while the untouched original pages score diffusely against everything (0.45–0.55) because no font underlies them. **Any future re-lettering must use Comic Neue Bold** (OFL, fetched from Google Fonts) or the book will fragment again.
+
+**Fixed 2026-08-04** (branch `claude/book-fixes-continued-5t65eh`):
+| Page | Defect | Fix |
+|---|---|---|
+| 8 | A stray cut-out of Chi's **head floating inside the balloon**, colliding with "Time"; patch seams in the white | Balloon wiped to its fitted body ellipse and re-lettered |
+| 9 | The "GIGGLE!" repair left a **visible rectangular glow patch** with hard edges | Bamboo rebuilt by per-column inpainting; effect redrawn at the original 190×45px |
+| 4 | "power. More… oomph!" **overran the balloon outline** | Re-fitted to 2 balanced lines inside the ellipse |
+| 5, 6 | Founder's replacement art was set in a **condensed grotesque**, unlike the rest of the book | All five balloons re-lettered in Comic Neue Bold |
+| 6 | "A forest spirit!…" is **Chi's** line but the tail pointed at the elder monk | Tail erased (wall cloned horizontally to preserve its ledge) and redrawn to Chi |
+| 10 | Balloon sat in a panel **Chi is not in**; pointed tail aimed at nothing | Converted to a **thought balloon** with trailing bubbles |
+| 5 | "Whispers?" is Chi's echo but the tail pointed at the **master** | **Fallback taken:** tail re-aimed leftward, balloon *not* relocated — see below |
+
+**Why "Whispers?" was not moved.** Chi is clear across the panel; relocating the balloon meant reconstructing ~320×150px of diagonal plank flooring, which produced worse artifacts than the defect. Re-aiming the tail at least points away from the wrong speaker. If the founder wants it truly resolved, it needs redrawn art, not a pixel repair.
+
+**Technique notes for a successor** (tooling lives in the session scratchpad, not the repo — rebuild it from here if needed):
+- Derive balloon geometry from the art: flood-fill the interior, then fit the **body ellipse from image moments**, iteratively rejecting the tail. Do *not* rely on the flood mask alone — glyphs that collided with the outline are fused to it and survive an interior-only wipe.
+- The outline stroke sits at **r ≈ 1.02–1.06** of that ellipse; wiping to r ≤ 0.99 clears the interior without thinning the stroke.
+- Fit text by searching point size **and** line count together, checking each line's *ink* extents against the ellipse (not the font's line box, which is far too conservative).
+- Background repair: clone **along** the structure's grain (horizontal for a wall ledge) and inpaint **per column** where structure is vertical (bamboo, posts). A horizontal clone across bamboo leaves an obvious block.
+
+**Format.** Reissued as **fixed-layout EPUB 3** (`rendition:layout: pre-paginated`, 1707×1707 viewport per page, EPUB 3 nav document) so it paginates one page per screen instead of being reflowed; `toc.ncx`, `<guide>` and the legacy `<meta name="cover">` are retained for EPUB 2 readers. **epubcheck 5.1.0: valid, zero messages** (validator sanity-checked against a deliberately broken copy). The 8 unmodified pages are byte-identical to the previous release; only the 6 changed pages were re-encoded (quality 95, 4:4:4). Size 17318 KB → 17201 KB.
+
+**Open — founder decision (Tier 3): the author byline is inconsistent.** The cover credits **"MASTER CHI"**; the Creator Credits page, the About page and the EPUB metadata all credit **Courtney McNair**; page 14 says "Master Chi's adventures are just beginning…", where it reads as the character. Pen name or artifact? Not an AI decision — say which, and the book can be made consistent in one pass.
