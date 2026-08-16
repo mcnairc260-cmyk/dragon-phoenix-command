@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- viewport-fit=cover + user-scalable=no: full-bleed canvas, no pinch-zoom mid-run -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#07040a" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="description" content="EMBERLOOP — a fast, mobile-first phoenix survival game. Drag to fly, graze danger for Heat, release to burst." />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="EMBERLOOP" />
+    <title>EMBERLOOP</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icons/icon-180.png" />
+  </head>
+  <body>
+    <!-- Phaser mounts its canvas here -->
+    <div id="game-root"></div>
+
+    <!-- DOM overlay layer: menus, cards, toasts, warnings -->
+    <div id="ui-root" aria-live="polite">
+      <div id="ui-panels"></div>
+      <div id="ui-toasts"></div>
+      <div id="ui-hint" class="hint" hidden></div>
+      <div id="ui-fps" class="fps" hidden>60</div>
+    </div>
+
+    <div id="rotate-overlay" hidden>
+      <div class="rotate-card">
+        <div class="rotate-icon">📱</div>
+        <h2>Rotate to portrait</h2>
+        <p>EMBERLOOP is built for one hand, held upright.</p>
+      </div>
+    </div>
+
+    <noscript>
+      <div class="noscript">EMBERLOOP needs JavaScript enabled to run.</div>
+    </noscript>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
