@@ -72,19 +72,26 @@ configuration.
 
 **On this repo's Vercel deployment**, the root site is a zero-build static site
 and Vercel deploys it as-is, so the game is *not* built by the root deployment.
-To publish it, either:
+The game therefore lives in its own Vercel project.
 
-- **Separate project (recommended):** point a second Vercel project at this repo
-  with Root Directory `games/emberloop`; the framework preset (Vite) handles the
-  rest. This keeps the root site's zero-build setup untouched.
-- **Same project:** add a build step at the repo root that runs
-  `cd games/emberloop && npm ci && npm run build` and copies `dist/` to
-  `games/emberloop/` in the output. This changes the root deploy from
-  "no build" to "build", which is a founder-level decision — see
-  `docs/AI_ONBOARDING.md` §3.
+**Current setup** (founder-authorized 2026-08-16): a second Vercel project named
+**`emberloop`** is linked to this repository with **Root Directory
+`games/emberloop`**. Vercel's Vite preset runs `npm install` + `npm run build`
+and serves `dist/`. The root site's zero-build setup is untouched, and the two
+projects deploy independently.
 
-Either way the game needs no environment variables, secrets, or serverless
-functions.
+Its **production branch is `main`**, so the game only reaches the production URL
+once `games/emberloop/` exists on `main`. Until then every push to a feature
+branch produces a working **preview** deployment, which is what the branch URL
+below serves. Promoting it to production means merging the branch — a founder
+call, not a deployment detail.
+
+The rejected alternative, recorded so it is not relitigated: adding a build step
+to the *root* project (`cd games/emberloop && npm ci && npm run build`). That
+converts the root deploy from "no build" to "build" for the whole site, which
+`docs/AI_ONBOARDING.md` §3 reserves for the founder.
+
+The game needs no environment variables, secrets, or serverless functions.
 
 ## Project structure
 
