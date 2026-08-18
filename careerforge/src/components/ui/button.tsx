@@ -9,13 +9,13 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          "bg-accent text-accent-ink hover:bg-accent-hover shadow-sm",
+        default: "bg-accent text-accent-ink hover:bg-accent-hover shadow-sm",
         secondary:
           "bg-surface-raised text-ink border border-line hover:border-line-strong",
         outline:
           "border border-line-strong bg-transparent text-ink hover:bg-surface-raised",
-        ghost: "bg-transparent text-ink-muted hover:bg-surface-raised hover:text-ink",
+        ghost:
+          "bg-transparent text-ink-muted hover:bg-surface-raised hover:text-ink",
         destructive:
           "bg-critical-soft text-critical border border-critical/40 hover:bg-critical hover:text-ink-inverse",
         link: "text-accent underline-offset-4 hover:underline",
@@ -33,7 +33,8 @@ const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+  extends
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }

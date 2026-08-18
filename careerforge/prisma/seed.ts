@@ -170,11 +170,26 @@ async function main() {
     { name: "Kubernetes", category: "Platform", level: "PROFICIENT", years: 4 },
     { name: "Terraform", category: "Platform", level: "PROFICIENT", years: 3 },
     { name: "AWS", category: "Platform", level: "ADVANCED", years: 6 },
-    { name: "Distributed systems", category: "Domain", level: "ADVANCED", years: 6 },
+    {
+      name: "Distributed systems",
+      category: "Domain",
+      level: "ADVANCED",
+      years: 6,
+    },
     { name: "Payments", category: "Domain", level: "ADVANCED", years: 4 },
-    { name: "Observability", category: "Platform", level: "PROFICIENT", years: 5 },
+    {
+      name: "Observability",
+      category: "Platform",
+      level: "PROFICIENT",
+      years: 5,
+    },
     { name: "Mentoring", category: "Leadership", level: "ADVANCED", years: 4 },
-    { name: "Incident response", category: "Leadership", level: "ADVANCED", years: 5 },
+    {
+      name: "Incident response",
+      category: "Leadership",
+      level: "ADVANCED",
+      years: 5,
+    },
   ];
 
   await prisma.skill.createMany({
@@ -383,7 +398,8 @@ async function main() {
       priority: "HIGH",
       source: "Company site",
       appliedAt: daysAgo(11),
-      notes: "Recruiter said decisions were going out this week. Worth a nudge.",
+      notes:
+        "Recruiter said decisions were going out this week. Worth a nudge.",
       activityDays: 11,
       description: [
         "Lumen Grid is building the internal platform that every product team at Lumen deploys onto.",

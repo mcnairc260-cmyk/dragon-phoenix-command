@@ -16,7 +16,12 @@ import {
 function initials(name: string | null, email: string) {
   const source = name?.trim() || email;
   const parts = source.split(/[\s@._-]+/).filter(Boolean);
-  return (parts.slice(0, 2).map((p) => p[0] ?? "").join("") || "?").toUpperCase();
+  return (
+    parts
+      .slice(0, 2)
+      .map((p) => p[0] ?? "")
+      .join("") || "?"
+  ).toUpperCase();
 }
 
 export function UserMenu({
@@ -39,7 +44,9 @@ export function UserMenu({
           <span className="text-ink block truncate text-sm">
             {name ?? "Your account"}
           </span>
-          <span className="text-ink-subtle block truncate text-xs">{email}</span>
+          <span className="text-ink-subtle block truncate text-xs">
+            {email}
+          </span>
         </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-52">

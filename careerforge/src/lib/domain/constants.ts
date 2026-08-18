@@ -1,4 +1,9 @@
-import type { JobStatus, MaterialKind, Priority, WorkMode } from "@prisma/client";
+import type {
+  JobStatus,
+  MaterialKind,
+  Priority,
+  WorkMode,
+} from "@prisma/client";
 
 /** Pipeline order. Everything that sorts, groups, or advances status uses this. */
 export const JOB_STATUS_ORDER: JobStatus[] = [
@@ -51,7 +56,8 @@ export const JOB_STATUS_LABEL: Record<JobStatus, string> = {
   ARCHIVED: "Archived",
 };
 
-export type Tone = "neutral" | "accent" | "positive" | "caution" | "critical" | "info";
+export type Tone =
+  "neutral" | "accent" | "positive" | "caution" | "critical" | "info";
 
 export const JOB_STATUS_TONE: Record<JobStatus, Tone> = {
   DISCOVERED: "neutral",
@@ -118,12 +124,14 @@ export const MATERIAL_LABEL: Record<MaterialKind, string> = {
 
 export const MATERIAL_DESCRIPTION: Record<MaterialKind, string> = {
   SUMMARY: "A three-sentence professional summary aimed at this specific role.",
-  RESUME_BULLETS: "Rewrites of your accomplishments in this posting's language.",
+  RESUME_BULLETS:
+    "Rewrites of your accomplishments in this posting's language.",
   COVER_LETTER: "A short, specific letter you can send with minimal editing.",
   RECRUITER_OUTREACH: "A brief message for the recruiter or talent partner.",
   HIRING_MANAGER_OUTREACH: "A direct note to the person who owns the role.",
   INTERVIEW_QUESTIONS: "Questions this posting makes likely, worth rehearsing.",
-  STAR_PROMPTS: "Situation/Task/Action/Result prompts drawn from your own record.",
+  STAR_PROMPTS:
+    "Situation/Task/Action/Result prompts drawn from your own record.",
   COMPANY_RESEARCH: "What to find out before you talk to anyone.",
 };
 

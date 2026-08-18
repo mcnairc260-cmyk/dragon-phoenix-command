@@ -49,7 +49,11 @@ export const SelectContent = React.forwardRef<
       {...props}
     >
       <SelectPrimitive.Viewport
-        className={cn("p-1", position === "popper" && "w-full min-w-[var(--radix-select-trigger-width)]")}
+        className={cn(
+          "p-1",
+          position === "popper" &&
+            "w-full min-w-[var(--radix-select-trigger-width)]",
+        )}
       >
         {children}
       </SelectPrimitive.Viewport>

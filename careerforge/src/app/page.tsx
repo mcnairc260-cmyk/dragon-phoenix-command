@@ -129,7 +129,9 @@ export default async function LandingPage() {
 
       <footer className="border-line border-t">
         <div className="text-ink-subtle mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-6 py-6 text-xs">
-          <span>CareerForge — part of the Dragon Phoenix Ascension ecosystem.</span>
+          <span>
+            CareerForge — part of the Dragon Phoenix Ascension ecosystem.
+          </span>
           <span>Your data stays in your own database.</span>
         </div>
       </footer>
