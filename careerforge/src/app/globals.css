@@ -1,0 +1,208 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   CareerForge design tokens.
+
+   One neutral ramp (charcoal → warm off-white) plus a single amber accent.
+   Status colours are deliberately desaturated so a board full of badges still
+   reads as calm. Every colour is declared here; components never hard-code hex.
+   Dark is the primary experience; light is a faithful inversion, not an
+   afterthought.
+--------------------------------------------------------------------------- */
+
+@theme {
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+  --font-mono:
+    var(--font-jetbrains-mono), ui-monospace, "SF Mono", Menlo, monospace;
+
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-ink-inverse: var(--ink-inverse);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+
+  --color-positive: var(--positive);
+  --color-positive-soft: var(--positive-soft);
+  --color-caution: var(--caution);
+  --color-caution-soft: var(--caution-soft);
+  --color-critical: var(--critical);
+  --color-critical-soft: var(--critical-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --color-focus-ring: var(--focus-ring);
+}
+
+:root {
+  color-scheme: dark;
+
+  --canvas: #17181a;
+  --surface: #1e1f22;
+  --surface-raised: #26282b;
+  --surface-sunken: #121315;
+  --line: #303236;
+  --line-strong: #43464b;
+
+  --ink: #f2efe9;
+  --ink-muted: #a8a49c;
+  --ink-subtle: #78756f;
+  --ink-inverse: #17181a;
+
+  --accent: #d98c2b;
+  --accent-hover: #e89c3d;
+  --accent-soft: #3a2a14;
+  --accent-ink: #1a1206;
+
+  --positive: #6fae7d;
+  --positive-soft: #1d2b21;
+  --caution: #d4a743;
+  --caution-soft: #2f2717;
+  --critical: #cf7f72;
+  --critical-soft: #2f1e1b;
+  --info: #7fa3c4;
+  --info-soft: #1b242c;
+
+  --focus-ring: #e89c3d;
+}
+
+.light {
+  color-scheme: light;
+
+  --canvas: #faf8f4;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f1eee8;
+  --line: #e2ddd3;
+  --line-strong: #c9c2b4;
+
+  --ink: #23241f;
+  --ink-muted: #5f5c55;
+  --ink-subtle: #86827a;
+  --ink-inverse: #faf8f4;
+
+  --accent: #a8641a;
+  --accent-hover: #8e5414;
+  --accent-soft: #f7ecdc;
+  --accent-ink: #ffffff;
+
+  --positive: #3d7a4d;
+  --positive-soft: #e6f0e7;
+  --caution: #8a6a17;
+  --caution-soft: #f6eed8;
+  --critical: #a44b3c;
+  --critical-soft: #f7e6e2;
+  --info: #3d6588;
+  --info-soft: #e5edf4;
+
+  --focus-ring: #a8641a;
+}
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* A single, unmistakable focus treatment across every interactive element. */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+::selection {
+  background-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* Scrollbars that do not shout. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--line-strong);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@utility skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-raised) 25%,
+    var(--line) 37%,
+    var(--surface-raised) 63%
+  );
+  background-size: 400% 100%;
+  animation: cf-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes cf-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+@keyframes cf-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility fade-in {
+  animation: cf-fade-in 180ms ease-out both;
+}

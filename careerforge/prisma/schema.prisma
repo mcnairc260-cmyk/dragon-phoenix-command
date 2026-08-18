@@ -1,0 +1,410 @@
+// CareerForge data model.
+// One user owns one candidate profile and many job opportunities; every child
+// record reaches a user through a cascade path so authorization can be enforced
+// by a single ownership check at the aggregate root.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------- enums
+
+enum WorkMode {
+  REMOTE
+  HYBRID
+  ONSITE
+  FLEXIBLE
+}
+
+enum JobStatus {
+  DISCOVERED
+  EVALUATING
+  PREPARING
+  APPLIED
+  INTERVIEWING
+  OFFER
+  REJECTED
+  ARCHIVED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SkillLevel {
+  FAMILIAR
+  PROFICIENT
+  ADVANCED
+  EXPERT
+}
+
+enum EvidenceLevel {
+  CONFIRMED // stated verbatim in the candidate profile
+  INFERRED // reasonably implied by profile content
+  MISSING // no supporting evidence in the profile
+}
+
+enum MaterialKind {
+  SUMMARY
+  RESUME_BULLETS
+  COVER_LETTER
+  RECRUITER_OUTREACH
+  HIRING_MANAGER_OUTREACH
+  INTERVIEW_QUESTIONS
+  STAR_PROMPTS
+  COMPANY_RESEARCH
+}
+
+enum ActivityType {
+  JOB_CREATED
+  JOB_UPDATED
+  STATUS_CHANGED
+  ANALYSIS_RUN
+  MATERIAL_GENERATED
+  MATERIAL_EDITED
+  NOTE_ADDED
+  FOLLOW_UP_CREATED
+  FOLLOW_UP_COMPLETED
+  FOCUS_TASK_COMPLETED
+}
+
+enum FocusTaskStatus {
+  PENDING
+  SNOOZED
+  COMPLETED
+  DISMISSED
+}
+
+enum FollowUpChannel {
+  EMAIL
+  LINKEDIN
+  PHONE
+  PORTAL
+  OTHER
+}
+
+// ---------------------------------------------------------------- identity
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  isDemo       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  profile       CandidateProfile?
+  opportunities JobOpportunity[]
+  activities    Activity[]
+  focusTasks    FocusTask[]
+
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------- profile
+
+model CandidateProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName  String
+  headline  String?
+  email     String?
+  phone     String?
+  location  String?
+  linkedIn  String?
+  portfolio String?
+  github    String?
+
+  targetRoles        String[] @default([])
+  preferredLocations String[] @default([])
+  workMode           WorkMode @default(FLEXIBLE)
+  desiredSalaryMin   Int?
+  desiredSalaryMax   Int?
+  salaryCurrency     String   @default("USD")
+
+  masterResume String @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  employments     Employment[]
+  educations      Education[]
+  skills          Skill[]
+  accomplishments Accomplishment[]
+  resumes         Resume[]
+}
+
+model Employment {
+  id        String           @id @default(cuid())
+  profileId String
+  profile   CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  company   String
+  title     String
+  location  String?
+  startDate DateTime
+  endDate   DateTime?
+  isCurrent Boolean   @default(false)
+  summary   String    @default("")
+  sortOrder Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accomplishments Accomplishment[]
+
+  @@index([profileId, startDate])
+}
+
+model Education {
+  id        String           @id @default(cuid())
+  profileId String
+  profile   CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  institution String
+  credential  String
+  field       String?
+  startDate   DateTime?
+  endDate     DateTime?
+  notes       String    @default("")
+  sortOrder   Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+}
+
+model Skill {
+  id        String           @id @default(cuid())
+  profileId String
+  profile   CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  name            String
+  normalizedName  String
+  category        String?
+  level           SkillLevel @default(PROFICIENT)
+  yearsExperience Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([profileId, normalizedName])
+  @@index([profileId])
+}
+
+/// Reusable STAR-shaped achievements. These are the ONLY factual source the
+/// material generator may quote from, which is what keeps generated text
+/// from inventing employers, metrics, or dates.
+model Accomplishment {
+  id        String           @id @default(cuid())
+  profileId String
+  profile   CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  employmentId String?
+  employment   Employment? @relation(fields: [employmentId], references: [id], onDelete: SetNull)
+
+  title      String
+  situation  String   @default("")
+  task       String   @default("")
+  action     String   @default("")
+  result     String   @default("")
+  metric     String?
+  skillTags  String[] @default([])
+  categories String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+  @@index([employmentId])
+}
+
+model Resume {
+  id        String           @id @default(cuid())
+  profileId String
+  profile   CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  label     String
+  content   String  @default("")
+  isDefault Boolean @default(false)
+  version   Int     @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([profileId, label])
+  @@index([profileId])
+}
+
+// ---------------------------------------------------------------- pipeline
+
+model JobOpportunity {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title       String
+  company     String
+  url         String?
+  location    String?
+  workMode    WorkMode?
+  salaryText  String?
+  salaryMin   Int?
+  salaryMax   Int?
+  description String    @default("")
+  source      String?
+  notes       String    @default("")
+
+  status   JobStatus @default(DISCOVERED)
+  priority Priority  @default(MEDIUM)
+
+  deadline       DateTime?
+  appliedAt      DateTime?
+  lastActivityAt DateTime  @default(now())
+  archivedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  analysis   JobAnalysis?
+  materials  ApplicationMaterial[]
+  activities Activity[]
+  followUps  FollowUp[]
+  focusTasks FocusTask[]
+
+  @@index([userId, status])
+  @@index([userId, lastActivityAt])
+  @@index([userId, deadline])
+  @@index([userId, archivedAt])
+}
+
+model JobAnalysis {
+  id    String         @id @default(cuid())
+  jobId String         @unique
+  job   JobOpportunity @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  fitScore            Int
+  recommendedPriority Priority
+  explanation         String
+
+  /// SkillFinding[] — { name, importance, evidence, note }
+  requiredSkills        Json
+  preferredSkills       Json
+  /// SkillFinding[] restricted to CONFIRMED/INFERRED evidence
+  matchedSkills         Json
+  /// Gap[] — { item, severity, note }
+  missingQualifications Json
+  /// string[]
+  strengths             Json
+  /// string[]
+  concerns              Json
+
+  provider  String
+  model     String
+  /// SHA-256 over the profile + job inputs; a match means the cached analysis is still current.
+  inputHash String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([inputHash])
+}
+
+model ApplicationMaterial {
+  id    String         @id @default(cuid())
+  jobId String
+  job   JobOpportunity @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  kind MaterialKind
+
+  /// The untouched generator output, kept so "revert to generated" is possible.
+  generatedContent        String
+  /// What the user sees and edits. Starts equal to generatedContent.
+  content                 String
+  isEdited                Boolean  @default(false)
+  /// Accomplishment ids the generator drew on, for provenance display.
+  sourceAccomplishmentIds String[] @default([])
+
+  provider String
+  model    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([jobId, kind])
+  @@index([jobId])
+}
+
+model Activity {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  jobId String?
+  job   JobOpportunity? @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  type    ActivityType
+  message String
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([jobId, createdAt])
+}
+
+model FollowUp {
+  id    String         @id @default(cuid())
+  jobId String
+  job   JobOpportunity @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  dueAt       DateTime
+  channel     FollowUpChannel @default(EMAIL)
+  note        String          @default("")
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([jobId])
+  @@index([dueAt])
+}
+
+model FocusTask {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  jobId String?
+  job   JobOpportunity? @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  title            String
+  rationale        String          @default("")
+  /// Stable identity for a recommendation so regenerating does not duplicate or
+  /// resurrect a task the user already handled today.
+  recipeKey        String
+  estimatedMinutes Int             @default(15)
+  score            Int             @default(0)
+  status           FocusTaskStatus @default(PENDING)
+  href             String?
+
+  snoozedUntil DateTime?
+  completedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, recipeKey])
+  @@index([userId, status])
+}
