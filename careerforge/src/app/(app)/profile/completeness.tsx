@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 
+import { profileChecklist } from "@/lib/domain/profile-completeness";
 import { cn } from "@/lib/utils";
 
 type ProfileWithCounts = {
@@ -11,28 +12,6 @@ type ProfileWithCounts = {
   accomplishments: unknown[];
 };
 
-/**
- * Completeness is expressed as named, actionable steps rather than a bare
- * percentage. "Add three accomplishments" is something you can do; "62%" is
- * something you can only feel bad about.
- */
-export function profileChecklist(profile: ProfileWithCounts) {
-  return [
-    { label: "Name and contact", done: profile.fullName.trim().length > 0 },
-    { label: "Target roles", done: profile.targetRoles.length > 0 },
-    { label: "Employment history", done: profile.employments.length > 0 },
-    { label: "At least 5 skills", done: profile.skills.length >= 5 },
-    {
-      label: "At least 3 accomplishments",
-      done: profile.accomplishments.length >= 3,
-    },
-    {
-      label: "Master resume text",
-      done: profile.masterResume.trim().length > 0,
-    },
-  ];
-}
-
 export function ProfileCompleteness({
   profile,
   className,
@@ -40,7 +19,15 @@ export function ProfileCompleteness({
   profile: ProfileWithCounts;
   className?: string;
 }) {
-  const items = profileChecklist(profile);
+  const items = profileChecklist({
+    fullName: profile.fullName,
+    targetRoles: profile.targetRoles,
+    masterResume: profile.masterResume,
+    employmentCount: profile.employments.length,
+    skillCount: profile.skills.length,
+    accomplishmentCount: profile.accomplishments.length,
+  });
+
   const done = items.filter((i) => i.done).length;
   const complete = done === items.length;
 
