@@ -95,24 +95,25 @@ function bake(scene: Phaser.Scene, key: string, width: number, height: number, d
 function drawPhoenix(g: Phaser.GameObjects.Graphics, size: number, ascended: boolean): void {
   const c = size / 2;
   const s = size / 64; // shapes are authored on a 64px grid
-  const wingSweep = ascended ? 26 : 21;
-  const tailLength = ascended ? 30 : 23;
+  const wingSweep = ascended ? 29 : 25;
+  const tailLength = ascended ? 33 : 27;
 
   drawPolys(g, [
-    // Upper wing
-    { points: [[c, c], [c - 6 * s, c - wingSweep * s], [c + 13 * s, c - 7 * s]], color: 0xffffff, alpha: 0.92 },
-    // Lower wing
-    { points: [[c, c], [c - 6 * s, c + wingSweep * s], [c + 13 * s, c + 7 * s]], color: 0xffffff, alpha: 0.92 },
-    // Tail feathers
-    { points: [[c - 2 * s, c - 5 * s], [c - tailLength * s, c - 2 * s], [c - 2 * s, c]], color: 0xffffff, alpha: 0.7 },
-    { points: [[c - 2 * s, c + 5 * s], [c - tailLength * s, c + 2 * s], [c - 2 * s, c]], color: 0xffffff, alpha: 0.7 },
-    // Body — a forward-pointing dart
-    { points: [[c + 22 * s, c], [c - 4 * s, c - 8 * s], [c - 10 * s, c], [c - 4 * s, c + 8 * s]], color: 0xffffff },
+    // Swept, split wings. The stepped outer points stay readable under bloom
+    // and make the player look like a bird rather than a mouse cursor.
+    { points: [[c + 8 * s, c - 3 * s], [c - 2 * s, c - wingSweep * s], [c - 8 * s, c - 14 * s], [c - 18 * s, c - 20 * s], [c - 8 * s, c - 5 * s]], color: 0xffffff, alpha: 0.94 },
+    { points: [[c + 8 * s, c + 3 * s], [c - 2 * s, c + wingSweep * s], [c - 8 * s, c + 14 * s], [c - 18 * s, c + 20 * s], [c - 8 * s, c + 5 * s]], color: 0xffffff, alpha: 0.94 },
+    // Three separated tail flames give direction at a glance.
+    { points: [[c - 5 * s, c - 5 * s], [c - tailLength * s, c - 10 * s], [c - 13 * s, c]], color: 0xffffff, alpha: 0.64 },
+    { points: [[c - 8 * s, c - 2 * s], [c - (tailLength + 3) * s, c], [c - 8 * s, c + 2 * s]], color: 0xffffff, alpha: 0.88 },
+    { points: [[c - 5 * s, c + 5 * s], [c - tailLength * s, c + 10 * s], [c - 13 * s, c]], color: 0xffffff, alpha: 0.64 },
+    // Beaked body and head.
+    { points: [[c + 25 * s, c], [c + 10 * s, c - 6 * s], [c - 8 * s, c - 7 * s], [c - 13 * s, c], [c - 8 * s, c + 7 * s], [c + 10 * s, c + 6 * s]], color: 0xffffff },
   ]);
 
-  // Bright core so the tint reads hot in the middle.
+  // Compact core retains a hot centre without washing out the silhouette.
   g.fillStyle(0xffffff, 1);
-  g.fillCircle(c + 2 * s, c, 5.5 * s);
+  g.fillCircle(c + 6 * s, c, 4.2 * s);
 }
 
 export function generateTextures(scene: Phaser.Scene): void {

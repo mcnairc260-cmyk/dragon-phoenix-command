@@ -148,6 +148,16 @@ export class GameScene extends Phaser.Scene {
 
     this.tutorial = new Tutorial(!session.save.tutorialSeen);
 
+    // The first objective is visible immediately instead of relying on the
+    // ambient pickup timer. A short arc also teaches steering through motion.
+    if (!session.save.tutorialSeen) {
+      for (const [angle, radius] of [[-0.55, 0.2], [-0.1, 0.32], [0.35, 0.44]] as const) {
+        const point = this.arena.pointAt(angle, radius);
+        this.spawnPickup(point.x, point.y, 0);
+      }
+      this.fx.shockwave(this.player.x, this.player.y, session.palette.glow, 150, 360);
+    }
+
     // The pointer starts wherever the player tapped to launch the run, so the
     // phoenix responds to the very first frame instead of waiting for a drag.
     if (typeof data?.pointerX === 'number') {

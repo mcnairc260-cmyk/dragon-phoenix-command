@@ -66,14 +66,14 @@ export class Player {
       })
       .setDepth(depth - 1);
 
-    this.glow = scene.add.image(0, 0, TEX.glow).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth).setScale(1.1);
+    this.glow = scene.add.image(0, 0, TEX.glow).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth).setScale(0.92);
     this.shieldRing = scene.add
       .image(0, 0, TEX.ring)
       .setBlendMode(Phaser.BlendModes.ADD)
       .setDepth(depth + 1)
       .setScale(0.32)
       .setVisible(false);
-    this.body = scene.add.image(0, 0, TEX.phoenix).setDepth(depth + 2).setScale(0.86);
+    this.body = scene.add.image(0, 0, TEX.phoenix).setDepth(depth + 2).setScale(1.06);
 
     this.setPalette(palette);
     this.applyStats(stats);
@@ -223,14 +223,18 @@ export class Player {
     this.body.setPosition(this.x, this.y);
     this.body.setTexture(this.ascended ? TEX.phoenixAscended : TEX.phoenix);
 
-    const breathe = this.reducedMotion ? 1 : 1 + Math.sin(this.pulse * 6) * 0.06;
+    const breathe = this.reducedMotion ? 1 : 1 + Math.sin(this.pulse * 6) * 0.045;
+    const wingBeat = this.reducedMotion ? 1 : 0.94 + Math.sin(this.pulse * 11) * 0.08;
     const ascendBoost = this.ascended ? 1.35 : 1;
     this.glow.setPosition(this.x, this.y);
-    this.glow.setScale(1.05 * breathe * ascendBoost);
-    this.glow.setAlpha(this.invulnerable ? 0.45 + 0.35 * Math.sin(this.pulse * 30) : 0.85);
+    this.glow.setScale(0.88 * breathe * ascendBoost);
+    this.glow.setAlpha(this.invulnerable ? 0.35 + 0.3 * Math.sin(this.pulse * 30) : 0.62);
+    const bodyScale = this.ascended ? 1.22 : 1.06;
+    this.body.setScale(bodyScale * breathe, bodyScale * wingBeat);
     this.body.setAlpha(this.invulnerable ? 0.5 + 0.4 * Math.sin(this.pulse * 30) : 1);
 
-    this.trail.setPosition(this.x, this.y);
+    // Emit behind the bird so its nose and wings remain crisp at full speed.
+    this.trail.setPosition(this.x - Math.cos(this.facing) * 22, this.y - Math.sin(this.facing) * 22);
     this.trail.frequency = this.ascended ? 10 : 18;
 
     this.shieldRing.setVisible(this.shieldActive);
@@ -260,7 +264,6 @@ export class Player {
   setAscended(on: boolean): void {
     if (this.ascended === on) return;
     this.ascended = on;
-    this.body.setScale(on ? 1.0 : 0.86);
   }
 
   addBurstEnergy(amount: number): boolean {

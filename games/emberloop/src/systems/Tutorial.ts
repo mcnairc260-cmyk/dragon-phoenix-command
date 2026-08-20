@@ -26,25 +26,25 @@ interface Step {
 const STEPS: Step[] = [
   {
     id: 'move',
-    html: '<b>Drag anywhere</b> — the phoenix flies to your finger',
+    html: '<b>DRAG TO FLY</b> — lead the phoenix with your finger',
     done: (s) => s.distanceMoved > 260,
     timeout: 6,
   },
   {
     id: 'collect',
-    html: 'Sweep up <b>ember shards</b> to level up',
-    done: (s) => s.embersCollected >= 2,
+    html: 'Follow the glowing trail — <b>COLLECT 3 EMBERS</b>',
+    done: (s) => s.embersCollected >= 3,
     timeout: 6,
   },
   {
     id: 'graze',
-    html: 'Fly <b>close to danger</b> to build Heat — Heat multiplies your score',
+    html: '<b>GRAZE DANGER</b> — close calls build Heat and multiply your score',
     done: (s) => s.nearMisses >= 1,
     timeout: 6,
   },
   {
     id: 'burst',
-    html: 'Burst meter full — <b>let go</b> to unleash the Phoenix Burst',
+    html: 'Burst charged — <b>RELEASE TO IGNITE</b>',
     done: (s) => s.burstsUsed >= 1,
     ready: (s) => s.burstReady,
     timeout: 8,

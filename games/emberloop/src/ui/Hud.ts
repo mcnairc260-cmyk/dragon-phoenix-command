@@ -36,6 +36,9 @@ export class Hud {
   private readonly multText: Phaser.GameObjects.Text;
   private readonly timeText: Phaser.GameObjects.Text;
   private readonly levelText: Phaser.GameObjects.Text;
+  private readonly heatLabel: Phaser.GameObjects.Text;
+  private readonly xpLabel: Phaser.GameObjects.Text;
+  private readonly burstLabel: Phaser.GameObjects.Text;
   private readonly bars: Phaser.GameObjects.Graphics;
   private readonly hearts: Phaser.GameObjects.Image[] = [];
   private readonly burstPips: Phaser.GameObjects.Image[] = [];
@@ -66,6 +69,9 @@ export class Hud {
     this.levelText = scene.add
       .text(0, 0, 'LV 1', { fontFamily: FONT_MONO, fontSize: '12px', color: '#00e5ff' })
       .setOrigin(0, 0);
+    this.xpLabel = scene.add.text(0, 0, 'ASCENSION', { fontFamily: FONT_MONO, fontSize: '9px', color: '#00e5ff' }).setOrigin(0, 1);
+    this.heatLabel = scene.add.text(0, 0, 'HEAT', { fontFamily: FONT_MONO, fontSize: '9px', color: '#ff7a2a' }).setOrigin(0, 1);
+    this.burstLabel = scene.add.text(0, 0, 'PHOENIX BURST', { fontFamily: FONT_MONO, fontSize: '10px', color: '#ffb347' }).setOrigin(0.5, 1);
     this.bossLabel = scene.add
       .text(0, 0, '', { fontFamily: FONT_DISPLAY, fontSize: '13px', color: '#ff7a2a' })
       .setOrigin(0.5, 0)
@@ -93,7 +99,7 @@ export class Hud {
 
     this.pauseButton = this.createPauseButton(onPause);
 
-    this.root.add([this.scoreText, this.multText, this.timeText, this.levelText, this.bossLabel, this.pauseButton]);
+    this.root.add([this.scoreText, this.multText, this.timeText, this.levelText, this.xpLabel, this.heatLabel, this.burstLabel, this.bossLabel, this.pauseButton]);
   }
 
   private createPauseButton(onPause: () => void): Phaser.GameObjects.Container {
@@ -120,6 +126,9 @@ export class Hud {
     this.multText.setPosition(width / 2, top + 38);
     this.timeText.setPosition(width - inset.right - 16, top + 4);
     this.levelText.setPosition(inset.left + 16, top + 30);
+    this.xpLabel.setPosition(inset.left + 18, top + 59);
+    this.heatLabel.setPosition(inset.left + 18, top + 73);
+    this.burstLabel.setPosition(width / 2, height - inset.bottom - 39);
     // Sits below the XP + Heat bars (which end at top + 73).
     this.bossLabel.setPosition(width / 2, top + 78);
     this.pauseButton.setPosition(width - inset.right - 30, top + 34);
@@ -137,14 +146,15 @@ export class Hud {
     this.timeText.setText(formatClock(state.elapsed));
     this.levelText.setText(`LV ${state.level}`);
 
-    if (state.multiplier > 1) {
-      this.multText.setVisible(true).setText(`×${state.multiplier.toFixed(1)}  ${state.combo} HEAT`);
+    if (state.multiplier > 1 || state.combo > 0) {
+      this.multText.setVisible(true).setText(`×${state.multiplier.toFixed(1)}  ·  ${state.combo} COMBO`);
       // The multiplier readout throbs harder the hotter the run gets.
       const throb = 1 + Math.sin(this.pulse * 8) * 0.03 * Math.min(state.multiplier, 6);
       this.multText.setScale(throb);
     } else {
-      this.multText.setVisible(false);
+      this.multText.setVisible(true).setText('BUILD HEAT · GRAZE DANGER').setScale(1).setAlpha(0.58);
     }
+    if (state.multiplier > 1 || state.combo > 0) this.multText.setAlpha(1);
 
     for (let i = 0; i < this.hearts.length; i++) {
       const alive = i < state.health;
@@ -180,14 +190,14 @@ export class Hud {
     const top = inset.top + 12;
 
     // XP bar (cyan) — thin line under the score row.
-    const xpY = top + 60;
+    const xpY = top + 62;
     g.fillStyle(0x1a1220, 0.9);
     g.fillRoundedRect(margin, xpY, barWidth, 5, 2.5);
     g.fillStyle(0x00e5ff, 0.95);
     g.fillRoundedRect(margin, xpY, Math.max(2, barWidth * clamp(state.xpProgress, 0, 1)), 5, 2.5);
 
     // Heat bar (ember→gold) sits directly beneath, draining visibly.
-    const heatY = xpY + 9;
+    const heatY = xpY + 14;
     g.fillStyle(0x1a1220, 0.9);
     g.fillRoundedRect(margin, heatY, barWidth, 4, 2);
     if (state.heat > 0) {
