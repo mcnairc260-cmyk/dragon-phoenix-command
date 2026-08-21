@@ -35,6 +35,18 @@ Every document in the DPA ecosystem, its job, and when it must be updated. **Con
 | `SOP_LIBRARY.md` | SOP index (canonical-home per SOP) | New/changed procedures |
 | `ROADMAP.md` | v1.1→v10 evolution + exit criteria | Version exits; parked-idea promotions |
 
+## Sub-application layer (`opportunity-radar/`, `phenomena-research/`)
+
+| Document | Job | Update trigger |
+|---|---|---|
+| `docs/OPPORTUNITY_RADAR_MVP.md` + `opportunity-radar/README.md` | Opportunity Radar product intent, methodology, roadmap, setup | Any change to that sub-app |
+| `phenomena-research/README.md` | PRP entry point, status, reading order | Status changes (proposal → built) |
+| `phenomena-research/docs/ARCHITECTURE.md` | PRP design principles, stack, module + provider contracts, LLM routing | Any architectural decision |
+| `phenomena-research/docs/DATABASE_SCHEMA.md` | PRP PostgreSQL data model (capture/interp/judgment layers) — *not* the Notion schema | Any schema change |
+| `phenomena-research/docs/RESEARCH_PIPELINE.md` | PRP pipeline stages, query expansion, scoring formulas, research modes, report format | Any pipeline or scoring change |
+| `phenomena-research/docs/SECURITY.md` | PRP threat model, injection containment, legal + PII collection constraints | Any new ingestion surface |
+| `phenomena-research/docs/IMPLEMENTATION_PLAN.md` | PRP phases, Milestone 1 acceptance criteria, cost model, limitations, open founder decisions | Phase completion; cost re-verification |
+
 ## Operations layer (Notion — canonical for daily use)
 
 | Page/DB | Job | Repo counterpart |

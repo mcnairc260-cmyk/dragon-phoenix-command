@@ -218,3 +218,69 @@ The whole repair is reproducible from the pre-session baseline by running `run_a
 **Byline — resolved by the founder 2026-08-04.** The cover previously credited **"MASTER CHI"** while the Creator Credits page, the About page and the EPUB metadata (including the "© Courtney McNair" rights line) all credited **Courtney McNair**. The founder directed that it be made consistent; the cover was the 3-to-1 outlier, so its byline now reads **COURTNEY McNAIR** and the cover's alt text follows. Set in Comic Neue Bold sheared 14.5° and emboldened with a black stroke to a stem/cap ratio of ~0.21, matching the original display italic's weight and slant; the old byline sat on a smooth sky gradient and was removed by per-column inpainting.
 
 Page 14's "Master Chi's adventures are just beginning…" was **left as written** — it is the author's own line about the series, and with the cover corrected it reads unambiguously as the character rather than as an author credit. If the founder wants the character called Little Chi there for consistency with the title, that is a one-line prose change, not an attribution fix.
+
+## 18. Phenomena Research Platform — architecture proposal (2026-08-21)
+
+A founder-directed session ("Master Build Directive") asked for a production-quality research
+platform for discovering, preserving, and analyzing publicly accessible information about
+unexplained phenomena (UAP/UFO, NHI claims, cryptozoology). The directive's own §32 instructed the
+session to inspect the environment, produce the architecture, and **stop for review before building**.
+
+**What exists now:** `phenomena-research/` containing six documents and **zero code** — `README.md`
+plus `docs/{ARCHITECTURE, DATABASE_SCHEMA, RESEARCH_PIPELINE, SECURITY, IMPLEMENTATION_PLAN}.md`.
+Branch `claude/unexplained-phenomena-platform-9zfbe1`.
+
+**Nothing external happened.** No accounts created, no API keys obtained, no money or credits
+spent, no deployment, no publishing. The root site (`index.html`, `api/`, `vercel.json`) is
+untouched.
+
+**Decisions made (flag-worthy):**
+1. **Framework/stack exception #2.** The directive §28 explicitly names TypeScript, Node,
+   PostgreSQL, pgvector and Playwright. Treated as the founder approval required by Onboarding §3.1
+   / Protocol Tier 3, scoped to `phenomena-research/` only — the same shape as the Opportunity
+   Radar exception (§16.1). The root site's zero-dependency rule is unchanged.
+2. **Placement as a self-contained sub-app**, per the `opportunity-radar/` precedent.
+3. **Naming left plain** ("Phenomena Research Platform"). Naming it inside the DPA lore vocabulary
+   is founder-reserved (Onboarding §8.4) and was not decided.
+4. **Postgres over a graph database**, with the measured-query trigger for revisiting it, and
+   **Postgres-backed job queue over Redis** — both on solo-maintainer grounds (Constitution
+   Art. III §6).
+5. **Epistemic neutrality made structural, not editorial**: a three-layer ledger (immutable
+   capture / versioned attributed interpretation / human-only judgment), claim spans verified in
+   code against stored text, independence counted in *source families* rather than sources, and no
+   pipeline stage permitted to write a truth label or a claim-plausibility value.
+
+**Gauntlet result (Protocol §6), recorded so it is not re-litigated:** PRP is off-mission against
+Constitution Art. I, and Gate 6 (solo-founder capacity) is the real objection — it is far larger
+than anything else in the repo, and the active-priorities queue (§13) is the YouTube launch. It was
+built as directed, with the concern stated once in `IMPLEMENTATION_PLAN.md` §2 and the first
+milestone scoped small enough to abandon cheaply. Note the genuine transfer: the same evidence
+engine would serve the channel's own verify-before-render obligation (§9 above).
+
+**Tool/environment intelligence learned this session:**
+- The remote execution environment has Node 22.22.2, npm 10.9.7, PostgreSQL 16.13 client, Docker
+  29.3.1, Python 3.11.15, ~30 GB free disk, 15 GB RAM, 4 cores.
+- **The egress proxy allowlist blocked vendor sites** (`firecrawl.dev`, `docs.firecrawl.dev`,
+  `exa.ai`) while `WebSearch` and the **npm registry** were reachable. Practical consequence:
+  vendor pricing in the cost model is from secondary sources and is explicitly flagged for
+  re-verification; SDK surfaces were confirmed from npm package READMEs instead
+  (`firecrawl@4.34.2` uses `new Firecrawl({apiKey}).scrape/crawl/search`; `exa-js@2.18.1` uses
+  `new Exa(key).search(q, {type, contents, numResults})`).
+- **Anthropic has no embeddings endpoint.** Semantic similarity requires a second vendor (Voyage
+  AI was chosen, ~$0.02/MTok for `voyage-3.5-lite`); the design degrades to lexical dedup without it.
+- Chronicling America's legacy API was retired in 2025; the collection is now reached through the
+  **loc.gov JSON API** — free, no key, and the highest-value free source for pre-1963 US local
+  newspapers.
+- Wayback CDX is roughly 1 req/s and ~1k requests/day unauthenticated; an archive.org token raises
+  it substantially (reported ~100k/day).
+
+**Assumptions added to the register:** (a) the Master Build Directive came from the founder and
+carries the same authority as the Opportunity Radar prompt; (b) PRP is intended as a private
+research tool unless the founder says otherwise — `SECURITY.md` §8's PII posture is written for
+that case and a public deployment would need a legal review the repo does not have; (c) the
+pilot case (Val Johnson, Marshall County MN, 1979) is a stand-in the founder may replace.
+
+**Open founder decisions:** listed in `phenomena-research/docs/IMPLEMENTATION_PLAN.md` §9 — build
+at all, brand relationship, which providers to fund and the monthly ceiling, public vs private,
+whether media forensics is in scope, and whether to point the same engine at DPA's own
+fact-verification obligation.

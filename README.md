@@ -30,6 +30,7 @@ Founding documents: the **DPA Constitution v1.0** and **Master Blueprint v1.0** 
 | `youtube/PRODUCTION_ASSETS.md` | Generated media assets log + trailer render plan |
 | `index.html`, `api/`, `vercel.json` | The Dragon Phoenix Command web app (deployed on Vercel) |
 | `opportunity-radar/` | Opportunity Radar — AI opportunity-intelligence platform MVP (self-contained React/TS sub-app; see `docs/OPPORTUNITY_RADAR_MVP.md`) |
+| `phenomena-research/` | Phenomena Research Platform — architecture proposal for an evidence-provenance research system (**docs only, no code**; see `phenomena-research/README.md`) |
 
 ## The Seven Laws
 
