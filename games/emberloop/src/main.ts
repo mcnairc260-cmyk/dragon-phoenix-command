@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import './style.css';
 import { session } from './core/Session';
 import { RENDER_SCALE } from './core/viewport';
+import { BRAND_CSS } from './config/brand';
 import { measureSafeArea } from './core/safeArea';
 import { BootScene } from './scenes/BootScene';
 import { GameScene } from './scenes/GameScene';
@@ -58,7 +59,7 @@ const initial = computeViewport();
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game-root',
-  backgroundColor: '#05030a',
+  backgroundColor: BRAND_CSS.voidBlack,
   width: initial.width * RENDER_SCALE,
   height: initial.height * RENDER_SCALE,
   zoom: 1 / RENDER_SCALE,

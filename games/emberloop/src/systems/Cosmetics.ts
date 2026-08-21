@@ -1,6 +1,12 @@
+import { BRAND, SIGNAL } from '../config/brand';
+
 /**
  * Phoenix colour palettes. Cosmetic only — nothing here touches gameplay
  * numbers, and the unlock conditions are read from persisted lifetime stats.
+ *
+ * The default "Ember" palette is the Brand Bible trinity exactly: Ghost White
+ * body, Ember Orange glow, Rebirth Gold accent. Unlockables are variations on
+ * that structure rather than free-for-all colours.
  */
 
 export interface Palette {
@@ -31,45 +37,45 @@ export const PALETTES: readonly Palette[] = [
   {
     id: 'ember',
     name: 'Ember',
-    core: 0xfff1c9,
-    glow: 0xff4d00,
-    accent: 0xffb347,
+    core: BRAND.ghostWhite,
+    glow: BRAND.emberOrange,
+    accent: BRAND.rebirthGold,
     requirement: 'Unlocked',
     unlocked: () => true,
   },
   {
     id: 'azure',
     name: 'Azure Ghost',
-    core: 0xe8fbff,
-    glow: 0x00a3ff,
-    accent: 0x00e5ff,
+    core: BRAND.ghostWhite,
+    glow: BRAND.signalCyan,
+    accent: 0x7ff0ff,
     requirement: 'Score 5,000 in a single run',
     unlocked: (s) => s.highScore >= 5000,
   },
   {
     id: 'violet',
     name: 'Violet Ash',
-    core: 0xf6e9ff,
-    glow: 0x8b2bff,
-    accent: 0xd08bff,
+    core: BRAND.ghostWhite,
+    glow: SIGNAL.violet,
+    accent: 0xe0b3ff,
     requirement: 'Survive 120 seconds',
     unlocked: (s) => s.longestSurvival >= 120,
   },
   {
     id: 'gold',
     name: 'Molten Gold',
-    core: 0xfffbe6,
-    glow: 0xffab00,
-    accent: 0xffe082,
+    core: BRAND.ghostWhite,
+    glow: BRAND.rebirthGold,
+    accent: 0xffe08a,
     requirement: 'Bank 750 total embers',
     unlocked: (s) => s.totalEmbers >= 750,
   },
   {
     id: 'verdant',
     name: 'Verdant Flame',
-    core: 0xeaffef,
-    glow: 0x00c46a,
-    accent: 0x7dffb0,
+    core: BRAND.ghostWhite,
+    glow: 0x2ce6a4,
+    accent: 0x9dffd8,
     requirement: 'Defeat the Ashborn',
     unlocked: (s) => s.bossesDefeated >= 1,
   },
@@ -77,8 +83,8 @@ export const PALETTES: readonly Palette[] = [
     id: 'spectral',
     name: 'Spectral White',
     core: 0xffffff,
-    glow: 0xc9d8ff,
-    accent: 0xff5aa8,
+    glow: BRAND.steel,
+    accent: SIGNAL.magenta,
     requirement: 'Earn 6 achievements',
     unlocked: (s) => s.achievements >= 6,
   },

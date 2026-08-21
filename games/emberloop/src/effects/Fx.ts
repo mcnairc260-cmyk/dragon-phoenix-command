@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { BRAND, BRAND_CSS } from '../config/brand';
 import { TEX } from './Textures';
 
 /**
@@ -149,12 +150,12 @@ export class Fx {
     if (this.reducedMotion) return;
     if (!this.chromaA) {
       this.chromaA = this.scene.add
-        .rectangle(0, 0, 10, 10, 0xff0040, 0)
+        .rectangle(0, 0, 10, 10, BRAND.emberOrange, 0)
         .setOrigin(0, 0)
         .setDepth(8990)
         .setBlendMode(Phaser.BlendModes.ADD);
       this.chromaB = this.scene.add
-        .rectangle(0, 0, 10, 10, 0x00b0ff, 0)
+        .rectangle(0, 0, 10, 10, BRAND.signalCyan, 0)
         .setOrigin(0, 0)
         .setDepth(8991)
         .setBlendMode(Phaser.BlendModes.ADD);
@@ -192,7 +193,7 @@ export class Fx {
         fontFamily: 'Rajdhani, "Trebuchet MS", sans-serif',
         fontSize: `${size}px`,
         color,
-        stroke: '#0a0406',
+        stroke: BRAND_CSS.voidBlack,
         strokeThickness: 3,
       })
       .setOrigin(0.5)

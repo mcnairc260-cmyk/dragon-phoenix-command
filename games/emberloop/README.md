@@ -124,6 +124,19 @@ Phaser only appears in `entities/`, `effects/`, `scenes/`, `ui/Hud.ts` and
 
 ## Design notes
 
+- **Brand Bible colours, one source of truth.** The founder directed (2026-08-20)
+  that the game follow `brand/BRAND_BIBLE.md` §5 rather than the live site's
+  palette. Every colour lives in `src/config/brand.ts` (mirrored as CSS custom
+  properties in `src/style.css`); nothing else hard-codes a hex. Three of the six
+  enemy hues sit exactly on the brand accents — the other three are declared as
+  *functional signal* colours in the same file, because six threats cannot be
+  told apart at a glance with three colours and readable telegraphs are a hard
+  gameplay requirement. The root site is unchanged, so the wider two-palette
+  question in `docs/AI_ONBOARDING.md` §8.1 stays open.
+- **The phoenix is elemental energy, not a creature.** The Bible's imagery
+  direction asks for the Phoenix "rendered as elemental energy (fire, light,
+  smoke) rather than cartoon creatures", so the player sprite is a bundle of
+  tapered flame strokes with a single hot core, not a bird silhouette.
 - **Everything is procedural.** Textures are drawn with Phaser `Graphics` and
   canvas gradients at boot (`effects/Textures.ts`); audio is synthesised from
   oscillators and a noise buffer (`systems/AudioEngine.ts`). No third-party art

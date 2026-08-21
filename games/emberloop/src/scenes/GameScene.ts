@@ -5,6 +5,7 @@ import { weightedIndex } from '../core/Rng';
 import { session } from '../core/Session';
 import { clamp, TAU } from '../core/math';
 import { applyCamera } from '../core/viewport';
+import { BRAND, BRAND_CSS } from '../config/brand';
 import { Boss } from '../entities/Boss';
 import { Enemy } from '../entities/Enemy';
 import { Pickup } from '../entities/Pickup';
@@ -112,7 +113,7 @@ export class GameScene extends Phaser.Scene {
 
   create(data: { pointerX?: number; pointerY?: number }): void {
     const { w: width, h: height } = applyCamera(this);
-    this.cameras.main.setBackgroundColor('#05030a');
+    this.cameras.main.setBackgroundColor(BRAND_CSS.voidBlack);
     this.cameras.main.fadeIn(220, 0, 0, 0);
     this.resetRunState();
 
@@ -379,7 +380,7 @@ export class GameScene extends Phaser.Scene {
       session.ui.toast(`${BOSS.name} awakens`, 3000);
       audio.bossWarning();
       haptics.play('boss');
-      this.fx.flash(0xff2a00, 0.3, 400);
+      this.fx.flash(BRAND.emberOrange, 0.3, 400);
     }
 
     if (this.elapsed >= dueAt) {
@@ -387,7 +388,7 @@ export class GameScene extends Phaser.Scene {
       this.bossWarned = false;
       const spawn = this.arena.pointAt(-Math.PI / 2, 0.55);
       this.boss.spawn(spawn.x, spawn.y, bossStageHp(BOSS.stageHp, this.bossIndex));
-      this.fx.shockwave(spawn.x, spawn.y, 0xff6a00, 460, 700);
+      this.fx.shockwave(spawn.x, spawn.y, BRAND.emberOrange, 460, 700);
       this.fx.chromaticFlash(10, 240);
       this.fx.shake(0.012, 420);
       audio.setIntensity(1);
@@ -703,10 +704,10 @@ export class GameScene extends Phaser.Scene {
     audio.nearMiss(this.score.combo);
     this.fx.burstSparks(x, y, this.player.colors.accent, 4, 120);
     if (this.score.combo % 5 === 0) {
-      this.fx.floatText(this.player.x, this.player.y - 34, `${this.score.combo} HEAT`, '#ffb347', 15);
+      this.fx.floatText(this.player.x, this.player.y - 34, `${this.score.combo} HEAT`, BRAND_CSS.rebirthGold, 15);
       haptics.play('pickup');
     } else if (gained > 0 && this.score.multiplier > 1) {
-      this.fx.floatText(x, y, `+${gained}`, '#ffd27a', 13);
+      this.fx.floatText(x, y, `+${gained}`, BRAND_CSS.rebirthGold, 13);
     }
   }
 
@@ -790,7 +791,7 @@ export class GameScene extends Phaser.Scene {
 
   private zap(x1: number, y1: number, x2: number, y2: number): void {
     const g = this.add.graphics().setDepth(DEPTH.fx).setBlendMode(Phaser.BlendModes.ADD);
-    g.lineStyle(3, 0x00e5ff, 0.9);
+    g.lineStyle(3, BRAND.signalCyan, 0.9);
     g.lineBetween(x1, y1, x2, y2);
     g.lineStyle(1, 0xffffff, 1);
     g.lineBetween(x1, y1, x2, y2);
@@ -817,7 +818,7 @@ export class GameScene extends Phaser.Scene {
 
     audio.enemyDeath();
     this.fx.burstSparks(x, y, color, wasElite ? 26 : 12, wasElite ? 380 : 240);
-    this.fx.puffSmoke(x, y, 0x4a2a1a, 2);
+    this.fx.puffSmoke(x, y, BRAND.carbon, 2);
     if (wasElite) {
       this.fx.shockwave(x, y, color, 260, 520);
       this.fx.shake(0.008, 200);
@@ -867,9 +868,9 @@ export class GameScene extends Phaser.Scene {
     const y = enemy.y;
     const radius = ENEMY.mine.blastRadius;
 
-    this.fx.flashOrb(x, y, 0xff2a00, radius, 300);
-    this.fx.shockwave(x, y, 0xffaa33, radius * 1.4, 420);
-    this.fx.burstSparks(x, y, 0xff4d00, 22, 340);
+    this.fx.flashOrb(x, y, BRAND.emberOrange, radius, 300);
+    this.fx.shockwave(x, y, BRAND.rebirthGold, radius * 1.4, 420);
+    this.fx.burstSparks(x, y, BRAND.emberOrange, 22, 340);
     this.fx.shake(0.01, 240);
     audio.enemyDeath();
 
@@ -886,8 +887,8 @@ export class GameScene extends Phaser.Scene {
 
     if (result === 'shielded' || result === 'armored') {
       audio.hitEnemy();
-      this.fx.shockwave(this.player.x, this.player.y, 0x00e5ff, 140, 340);
-      this.fx.floatText(this.player.x, this.player.y - 30, result === 'shielded' ? 'SHIELD' : 'ARMOR', '#00e5ff', 14);
+      this.fx.shockwave(this.player.x, this.player.y, BRAND.signalCyan, 140, 340);
+      this.fx.floatText(this.player.x, this.player.y - 30, result === 'shielded' ? 'SHIELD' : 'ARMOR', BRAND_CSS.signalCyan, 14);
       haptics.play('tap');
       return;
     }
@@ -896,14 +897,14 @@ export class GameScene extends Phaser.Scene {
     breakCombo(this.score);
     audio.damage();
     haptics.play('damage');
-    this.fx.flash(0xff0022, 0.34, 260);
+    this.fx.flash(BRAND.emberOrange, 0.34, 260);
     this.fx.chromaticFlash(8, 200);
     this.fx.shake(0.014, 300);
-    this.fx.burstSparks(this.player.x, this.player.y, 0xff3355, 18, 300);
+    this.fx.burstSparks(this.player.x, this.player.y, BRAND.emberOrange, 18, 300);
 
     if (result === 'revived') {
-      this.fx.shockwave(this.player.x, this.player.y, 0xffd27a, 320, 700);
-      this.fx.floatText(this.player.x, this.player.y - 40, 'SECOND DAWN', '#ffd27a', 18);
+      this.fx.shockwave(this.player.x, this.player.y, BRAND.rebirthGold, 320, 700);
+      this.fx.floatText(this.player.x, this.player.y - 40, 'SECOND DAWN', BRAND_CSS.rebirthGold, 18);
       session.ui.toast('Second Dawn');
       return;
     }
@@ -999,11 +1000,11 @@ export class GameScene extends Phaser.Scene {
     audio.setIntensity(0);
     haptics.play('boss');
     this.slowMo(0.3, 0.9);
-    this.fx.flashOrb(x, y, 0xffd27a, 460, 700);
-    this.fx.shockwave(x, y, 0xff6a00, 900, 1000);
-    this.fx.burstSparks(x, y, 0xffb347, 70, 640);
+    this.fx.flashOrb(x, y, BRAND.rebirthGold, 460, 700);
+    this.fx.shockwave(x, y, BRAND.emberOrange, 900, 1000);
+    this.fx.burstSparks(x, y, BRAND.rebirthGold, 70, 640);
     this.fx.shake(0.02, 700);
-    this.fx.flash(0xffb347, 0.4, 500);
+    this.fx.flash(BRAND.rebirthGold, 0.4, 500);
     session.ui.toast('Ashborn felled', 3000);
 
     for (let i = 0; i < BOSS.emberDrop; i++) this.spawnPickup(x, y, 60 + Math.random() * 220);
@@ -1090,12 +1091,12 @@ export class GameScene extends Phaser.Scene {
     audio.setIntensity(0);
     haptics.play('gameOver');
     this.slowMo(0.25, 1.1);
-    this.fx.flashOrb(this.player.x, this.player.y, 0xff4d00, 420, 700);
-    this.fx.shockwave(this.player.x, this.player.y, 0xffb347, 700, 900);
-    this.fx.burstSparks(this.player.x, this.player.y, 0xff7a2a, 60, 520);
+    this.fx.flashOrb(this.player.x, this.player.y, BRAND.emberOrange, 420, 700);
+    this.fx.shockwave(this.player.x, this.player.y, BRAND.rebirthGold, 700, 900);
+    this.fx.burstSparks(this.player.x, this.player.y, BRAND.emberOrange, 60, 520);
     this.fx.chromaticFlash(14, 320);
     this.fx.shake(0.02, 600);
-    this.fx.flash(0xff2a00, 0.4, 500);
+    this.fx.flash(BRAND.emberOrange, 0.4, 500);
     session.ui.hideHint();
 
     // Real-time delay so the death beat plays at full length during slow motion.

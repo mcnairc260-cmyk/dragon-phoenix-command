@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { PLAYER } from '../config/GameConfig';
 import { clamp } from '../core/math';
 import { safeArea } from '../core/safeArea';
+import { BRAND, BRAND_CSS } from '../config/brand';
 import { TEX } from '../effects/Textures';
 import { FONT_DISPLAY, FONT_MONO } from './fonts';
 
@@ -58,22 +59,28 @@ export class Hud {
     this.root.add(this.bars);
 
     this.scoreText = scene.add
-      .text(0, 0, '0', { fontFamily: FONT_MONO, fontSize: '34px', color: '#fff6ee' })
+      .text(0, 0, '0', { fontFamily: FONT_MONO, fontSize: '34px', color: BRAND_CSS.ghostWhite })
       .setOrigin(0.5, 0);
     this.multText = scene.add
-      .text(0, 0, '', { fontFamily: FONT_DISPLAY, fontSize: '17px', color: '#ffb347' })
+      .text(0, 0, '', { fontFamily: FONT_DISPLAY, fontSize: '15px', color: BRAND_CSS.rebirthGold })
       .setOrigin(0.5, 0);
     this.timeText = scene.add
-      .text(0, 0, '0:00', { fontFamily: FONT_MONO, fontSize: '14px', color: '#8b8090' })
+      .text(0, 0, '0:00', { fontFamily: FONT_MONO, fontSize: '14px', color: BRAND_CSS.steel })
       .setOrigin(1, 0);
     this.levelText = scene.add
-      .text(0, 0, 'LV 1', { fontFamily: FONT_MONO, fontSize: '12px', color: '#00e5ff' })
-      .setOrigin(0, 0);
-    this.xpLabel = scene.add.text(0, 0, 'ASCENSION', { fontFamily: FONT_MONO, fontSize: '9px', color: '#00e5ff' }).setOrigin(0, 1);
-    this.heatLabel = scene.add.text(0, 0, 'HEAT', { fontFamily: FONT_MONO, fontSize: '9px', color: '#ff7a2a' }).setOrigin(0, 1);
-    this.burstLabel = scene.add.text(0, 0, 'PHOENIX BURST', { fontFamily: FONT_MONO, fontSize: '10px', color: '#ffb347' }).setOrigin(0.5, 1);
+      .text(0, 0, 'LV 1', { fontFamily: FONT_MONO, fontSize: '12px', color: BRAND_CSS.signalCyan })
+      .setOrigin(0, 0.5);
+    this.xpLabel = scene.add
+      .text(0, 0, 'ASCENSION', { fontFamily: FONT_MONO, fontSize: '9px', color: BRAND_CSS.signalCyan })
+      .setOrigin(0, 0.5);
+    this.heatLabel = scene.add
+      .text(0, 0, 'HEAT', { fontFamily: FONT_MONO, fontSize: '9px', color: BRAND_CSS.emberOrange })
+      .setOrigin(0, 0.5);
+    this.burstLabel = scene.add
+      .text(0, 0, 'PHOENIX BURST', { fontFamily: FONT_MONO, fontSize: '10px', color: BRAND_CSS.rebirthGold })
+      .setOrigin(0.5, 1);
     this.bossLabel = scene.add
-      .text(0, 0, '', { fontFamily: FONT_DISPLAY, fontSize: '13px', color: '#ff7a2a' })
+      .text(0, 0, '', { fontFamily: FONT_DISPLAY, fontSize: '13px', color: BRAND_CSS.emberOrange })
       .setOrigin(0.5, 0)
       .setVisible(false);
 
@@ -106,8 +113,8 @@ export class Hud {
     const container = this.scene.add.container(0, 0);
     // A generous 52x52 hit area — comfortably past the 44pt iOS minimum.
     const hit = this.scene.add.rectangle(0, 0, 52, 52, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
-    const bar1 = this.scene.add.rectangle(-5, 0, 4, 16, 0xcbbfc9, 0.9);
-    const bar2 = this.scene.add.rectangle(5, 0, 4, 16, 0xcbbfc9, 0.9);
+    const bar1 = this.scene.add.rectangle(-5, 0, 4, 16, BRAND.steel, 0.9);
+    const bar2 = this.scene.add.rectangle(5, 0, 4, 16, BRAND.steel, 0.9);
     hit.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
       event.stopPropagation();
       onPause();
@@ -122,19 +129,24 @@ export class Hud {
     const inset = safeArea();
     const top = inset.top + 12;
 
+    // Vertical rhythm, all relative to `top`:
+    //   0..34  score        34..49  multiplier readout
+    //   58..63 XP bar       74..78  Heat bar        88+  boss
+    // Labels are centred on their bar rather than stacked above it, so no row
+    // can grow into its neighbour.
     this.scoreText.setPosition(width / 2, top);
-    this.multText.setPosition(width / 2, top + 38);
+    this.multText.setPosition(width / 2, top + 34);
     this.timeText.setPosition(width - inset.right - 16, top + 4);
-    this.levelText.setPosition(inset.left + 16, top + 30);
-    this.xpLabel.setPosition(inset.left + 18, top + 59);
-    this.heatLabel.setPosition(inset.left + 18, top + 73);
-    this.burstLabel.setPosition(width / 2, height - inset.bottom - 39);
-    // Sits below the XP + Heat bars (which end at top + 73).
-    this.bossLabel.setPosition(width / 2, top + 78);
+    // Level sits beside the health pips, clear of the centred readout.
+    this.levelText.setPosition(inset.left + 82, top + 14);
+    this.xpLabel.setPosition(inset.left + 18, top + 60);
+    this.heatLabel.setPosition(inset.left + 18, top + 76);
+    this.burstLabel.setPosition(width / 2, height - inset.bottom - 40);
+    this.bossLabel.setPosition(width / 2, top + 88);
     this.pauseButton.setPosition(width - inset.right - 30, top + 34);
 
     for (let i = 0; i < this.hearts.length; i++) {
-      this.hearts[i].setPosition(inset.left + 20 + i * 20, top + 8);
+      this.hearts[i].setPosition(inset.left + 20 + i * 20, top + 14);
     }
   }
 
@@ -152,13 +164,13 @@ export class Hud {
       const throb = 1 + Math.sin(this.pulse * 8) * 0.03 * Math.min(state.multiplier, 6);
       this.multText.setScale(throb);
     } else {
-      this.multText.setVisible(true).setText('BUILD HEAT · GRAZE DANGER').setScale(1).setAlpha(0.58);
+      this.multText.setVisible(true).setText('GRAZE DANGER TO BUILD HEAT').setScale(1).setAlpha(0.5);
     }
     if (state.multiplier > 1 || state.combo > 0) this.multText.setAlpha(1);
 
     for (let i = 0; i < this.hearts.length; i++) {
       const alive = i < state.health;
-      this.hearts[i].setTint(alive ? 0xff4d00 : 0x2a1c22).setAlpha(alive ? 0.95 : 0.5).setScale(alive ? 0.42 : 0.3);
+      this.hearts[i].setTint(alive ? BRAND.emberOrange : BRAND.carbon).setAlpha(alive ? 0.95 : 0.6).setScale(alive ? 0.42 : 0.3);
     }
 
     const maxPips = Math.min(this.burstPips.length, state.maxBurstCharges);
@@ -172,7 +184,7 @@ export class Hud {
       pip
         .setVisible(true)
         .setPosition(this.width / 2 + (i - (maxPips - 1) / 2) * 26, this.height - inset.bottom - 54)
-        .setTint(charged ? 0xffd27a : 0x4a3540)
+        .setTint(charged ? BRAND.rebirthGold : BRAND.carbon)
         .setScale(charged ? 0.34 + Math.sin(this.pulse * 6) * 0.03 : 0.24)
         .setAlpha(charged ? 1 : 0.6);
     }
@@ -186,48 +198,53 @@ export class Hud {
     g.clear();
 
     const margin = 18 + Math.max(inset.left, inset.right);
-    const barWidth = this.width - margin * 2;
+    // Reserve a left column for the mono gauge labels.
+    const labelColumn = 62;
+    const barX = margin + labelColumn;
+    const barWidth = this.width - margin - barX;
     const top = inset.top + 12;
 
-    // XP bar (cyan) — thin line under the score row.
-    const xpY = top + 62;
-    g.fillStyle(0x1a1220, 0.9);
-    g.fillRoundedRect(margin, xpY, barWidth, 5, 2.5);
-    g.fillStyle(0x00e5ff, 0.95);
-    g.fillRoundedRect(margin, xpY, Math.max(2, barWidth * clamp(state.xpProgress, 0, 1)), 5, 2.5);
+    // ASCENSION bar (Signal Cyan) — experience toward the next upgrade.
+    const xpY = top + 58;
+    g.fillStyle(BRAND.carbon, 0.95);
+    g.fillRoundedRect(barX, xpY, barWidth, 5, 2.5);
+    g.fillStyle(BRAND.signalCyan, 0.95);
+    g.fillRoundedRect(barX, xpY, Math.max(2, barWidth * clamp(state.xpProgress, 0, 1)), 5, 2.5);
 
-    // Heat bar (ember→gold) sits directly beneath, draining visibly.
-    const heatY = xpY + 14;
-    g.fillStyle(0x1a1220, 0.9);
-    g.fillRoundedRect(margin, heatY, barWidth, 4, 2);
+    // HEAT bar — Ember Orange, tipping to Rebirth Gold once the run is hot.
+    const heatY = top + 74;
+    g.fillStyle(BRAND.carbon, 0.95);
+    g.fillRoundedRect(barX, heatY, barWidth, 4, 2);
     if (state.heat > 0) {
-      g.fillStyle(state.multiplier >= 3 ? 0xffd27a : 0xff4d00, 0.95);
-      g.fillRoundedRect(margin, heatY, Math.max(2, barWidth * clamp(state.heat, 0, 1)), 4, 2);
+      g.fillStyle(state.multiplier >= 3 ? BRAND.rebirthGold : BRAND.emberOrange, 0.95);
+      g.fillRoundedRect(barX, heatY, Math.max(2, barWidth * clamp(state.heat, 0, 1)), 4, 2);
     }
 
     // Phoenix Burst meter across the bottom.
     const burstY = this.height - inset.bottom - 34;
-    g.fillStyle(0x1a1220, 0.85);
-    g.fillRoundedRect(margin, burstY, barWidth, 9, 4.5);
+    const burstWidth = this.width - margin * 2;
+    g.fillStyle(BRAND.carbon, 0.9);
+    g.fillRoundedRect(margin, burstY, burstWidth, 9, 4.5);
     const full = state.burstCharges >= state.maxBurstCharges;
-    g.fillStyle(full ? 0xffd27a : 0xff7a2a, full ? 0.95 : 0.85);
-    g.fillRoundedRect(margin, burstY, Math.max(3, barWidth * clamp(state.burstFraction, 0, 1)), 9, 4.5);
+    g.fillStyle(full ? BRAND.rebirthGold : BRAND.emberOrange, full ? 0.95 : 0.85);
+    g.fillRoundedRect(margin, burstY, Math.max(3, burstWidth * clamp(state.burstFraction, 0, 1)), 9, 4.5);
     if (state.burstCharges > 0) {
       // A pulsing outline says "you can release now".
-      g.lineStyle(2, 0xffe6b0, 0.5 + 0.4 * Math.sin(this.pulse * 7));
-      g.strokeRoundedRect(margin - 1, burstY - 1, barWidth + 2, 11, 5.5);
+      g.lineStyle(2, BRAND.rebirthGold, 0.5 + 0.4 * Math.sin(this.pulse * 7));
+      g.strokeRoundedRect(margin - 1, burstY - 1, burstWidth + 2, 11, 5.5);
     }
 
     // Boss health, when one is alive.
     if (state.bossHp !== undefined && state.bossName) {
-      const bossY = top + 96;
+      const bossY = top + 100;
       this.bossLabel.setVisible(true).setText(`${state.bossName}   ${'◆'.repeat(state.bossStages ?? 1)}`.trim());
-      g.fillStyle(0x1a1220, 0.92);
-      g.fillRoundedRect(margin, bossY, barWidth, 8, 4);
-      g.fillStyle(0xff2a4d, 0.95);
-      g.fillRoundedRect(margin, bossY, Math.max(2, barWidth * clamp(state.bossHp, 0, 1)), 8, 4);
-      g.lineStyle(1, 0xffb347, 0.7);
-      g.strokeRoundedRect(margin, bossY, barWidth, 8, 4);
+      const bossWidth = this.width - margin * 2;
+      g.fillStyle(BRAND.carbon, 0.95);
+      g.fillRoundedRect(margin, bossY, bossWidth, 8, 4);
+      g.fillStyle(BRAND.emberOrange, 0.95);
+      g.fillRoundedRect(margin, bossY, Math.max(2, bossWidth * clamp(state.bossHp, 0, 1)), 8, 4);
+      g.lineStyle(1, BRAND.rebirthGold, 0.7);
+      g.strokeRoundedRect(margin, bossY, bossWidth, 8, 4);
     } else {
       this.bossLabel.setVisible(false);
     }

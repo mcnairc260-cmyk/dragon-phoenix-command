@@ -72,12 +72,13 @@ const smooth = (edge0, edge1, x) => {
 
 /** Sweep crimson → ember → gold around the loop. */
 function ringColor(angle) {
+  // The brand's signature fire gradient: Ember Orange → Rebirth Gold.
   const stops = [
-    [0xff, 0x2a, 0x4d],
-    [0xff, 0x4d, 0x00],
-    [0xff, 0xb3, 0x47],
-    [0xff, 0xe6, 0xb0],
-    [0xff, 0x4d, 0x00],
+    [0xff, 0x6b, 0x2c],
+    [0xff, 0x8a, 0x36],
+    [0xff, 0xb3, 0x00],
+    [0xff, 0xd9, 0x6a],
+    [0xff, 0x6b, 0x2c],
   ];
   const t = ((angle / (Math.PI * 2)) % 1 + 1) % 1;
   const scaled = t * (stops.length - 1);
@@ -111,9 +112,9 @@ function drawIcon(size, { maskable = false } = {}) {
 
       // Obsidian field with a faint warm centre.
       const centreWarm = 1 - smooth(0, size * 0.55, dist);
-      let r = lerp(5, 32, centreWarm * 0.9);
-      let g = lerp(3, 10, centreWarm * 0.9);
-      let b = lerp(10, 14, centreWarm * 0.9);
+      let r = lerp(0x0a, 0x24, centreWarm * 0.9);
+      let g = lerp(0x0a, 0x14, centreWarm * 0.9);
+      let b = lerp(0x0f, 0x18, centreWarm * 0.9);
 
       // Outer bloom around the loop.
       const bloom = Math.exp(-Math.pow((dist - ringRadius) / (ringWidth * 2.6), 2));
@@ -149,13 +150,13 @@ function drawIcon(size, { maskable = false } = {}) {
 const SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
     <radialGradient id="bg" cx="50%" cy="50%" r="60%">
-      <stop offset="0%" stop-color="#20070c"/>
-      <stop offset="100%" stop-color="#05030a"/>
+      <stop offset="0%" stop-color="#241418"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
     </radialGradient>
     <linearGradient id="loop" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ff2a4d"/>
-      <stop offset="50%" stop-color="#ff4d00"/>
-      <stop offset="100%" stop-color="#ffb347"/>
+      <stop offset="0%" stop-color="#ff6b2c"/>
+      <stop offset="50%" stop-color="#ff8a36"/>
+      <stop offset="100%" stop-color="#ffb300"/>
     </linearGradient>
     <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
       <feGaussianBlur stdDeviation="16" result="blur"/>
@@ -165,7 +166,7 @@ const SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width
   <rect width="512" height="512" fill="url(#bg)"/>
   <g filter="url(#glow)">
     <circle cx="256" cy="256" r="128" fill="none" stroke="url(#loop)" stroke-width="30"/>
-    <circle cx="320" cy="145" r="30" fill="#fff0cd"/>
+    <circle cx="320" cy="145" r="30" fill="#f4f4f5"/>
   </g>
 </svg>
 `;

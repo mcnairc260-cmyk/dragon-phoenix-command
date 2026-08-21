@@ -40,6 +40,7 @@ export class Player {
 
   private readonly scene: Phaser.Scene;
   private readonly glow: Phaser.GameObjects.Image;
+  private readonly innerGlow: Phaser.GameObjects.Image;
   private readonly body: Phaser.GameObjects.Image;
   private readonly shieldRing: Phaser.GameObjects.Image;
   private readonly trail: Phaser.GameObjects.Particles.ParticleEmitter;
@@ -66,14 +67,17 @@ export class Player {
       })
       .setDepth(depth - 1);
 
-    this.glow = scene.add.image(0, 0, TEX.glow).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth).setScale(0.92);
+    this.glow = scene.add.image(0, 0, TEX.glow).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth).setScale(1.12);
+    // Layered bloom: a wide soft halo plus a tight hot core, which is how the
+    // "single strong light source" of the brand's imagery direction reads.
+    this.innerGlow = scene.add.image(0, 0, TEX.glowTight).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth + 1);
     this.shieldRing = scene.add
       .image(0, 0, TEX.ring)
       .setBlendMode(Phaser.BlendModes.ADD)
-      .setDepth(depth + 1)
+      .setDepth(depth + 2)
       .setScale(0.32)
       .setVisible(false);
-    this.body = scene.add.image(0, 0, TEX.phoenix).setDepth(depth + 2).setScale(1.06);
+    this.body = scene.add.image(0, 0, TEX.phoenix).setDepth(depth + 3).setScale(1.0);
 
     this.setPalette(palette);
     this.applyStats(stats);
@@ -82,6 +86,7 @@ export class Player {
   setPalette(palette: Palette): void {
     this.palette = palette;
     this.glow.setTint(palette.glow);
+    this.innerGlow.setTint(palette.accent);
     this.body.setTint(palette.core);
     this.shieldRing.setTint(palette.accent);
     this.trail.setParticleTint(palette.glow);
@@ -223,14 +228,20 @@ export class Player {
     this.body.setPosition(this.x, this.y);
     this.body.setTexture(this.ascended ? TEX.phoenixAscended : TEX.phoenix);
 
-    const breathe = this.reducedMotion ? 1 : 1 + Math.sin(this.pulse * 6) * 0.045;
-    const wingBeat = this.reducedMotion ? 1 : 0.94 + Math.sin(this.pulse * 11) * 0.08;
-    const ascendBoost = this.ascended ? 1.35 : 1;
+    // Brand Bible motion rule: "subtle, purposeful ... never bouncy, never
+    // busy." A slow breath only — the fast wing-beat read as bounce.
+    const breathe = this.reducedMotion ? 1 : 1 + Math.sin(this.pulse * 4.5) * 0.035;
+    const ascendBoost = this.ascended ? 1.3 : 1;
     this.glow.setPosition(this.x, this.y);
-    this.glow.setScale(0.88 * breathe * ascendBoost);
-    this.glow.setAlpha(this.invulnerable ? 0.35 + 0.3 * Math.sin(this.pulse * 30) : 0.62);
-    const bodyScale = this.ascended ? 1.22 : 1.06;
-    this.body.setScale(bodyScale * breathe, bodyScale * wingBeat);
+    this.glow.setScale(1.12 * breathe * ascendBoost);
+    // The glow is what makes the phoenix read as fire rather than a pale
+    // cut-out, so it stays bright; only the invulnerable flicker dims it.
+    this.glow.setAlpha(this.invulnerable ? 0.5 + 0.35 * Math.sin(this.pulse * 30) : 0.92);
+    this.innerGlow.setPosition(this.x, this.y).setRotation(this.facing);
+    this.innerGlow.setScale(0.62 * breathe * ascendBoost);
+    this.innerGlow.setAlpha(this.invulnerable ? 0.4 : 0.85);
+    const bodyScale = this.ascended ? 1.16 : 1.0;
+    this.body.setScale(bodyScale * breathe);
     this.body.setAlpha(this.invulnerable ? 0.5 + 0.4 * Math.sin(this.pulse * 30) : 1);
 
     // Emit behind the bird so its nose and wings remain crisp at full speed.
@@ -340,6 +351,7 @@ export class Player {
   destroy(): void {
     this.trail.destroy();
     this.glow.destroy();
+    this.innerGlow.destroy();
     this.body.destroy();
     this.shieldRing.destroy();
     for (const blade of this.blades) blade.destroy();

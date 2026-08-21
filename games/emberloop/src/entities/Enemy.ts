@@ -1,17 +1,23 @@
 import Phaser from 'phaser';
 import { ELITE, ENEMY } from '../config/GameConfig';
 import { TAU } from '../core/math';
+import { BRAND, SIGNAL } from '../config/brand';
 import { TEX } from '../effects/Textures';
 import type { EnemyKind } from '../systems/Difficulty';
 
-/** Palette per archetype: [glow, body]. Kept distinct so threats read instantly. */
+/**
+ * Palette per archetype: [glow, body]. Three sit exactly on the Brand Bible
+ * accents; the other three use the functional signal hues from `config/brand`,
+ * because six threats cannot be told apart at a glance with three colours and
+ * readable telegraphs are a hard requirement.
+ */
 export const ENEMY_COLORS: Record<EnemyKind, [number, number]> = {
-  cinder: [0xff4d00, 0xffb08a],
-  dart: [0x9b30ff, 0xe6c6ff],
-  spitter: [0x00c8ff, 0xc8f4ff],
-  orbiter: [0xffb300, 0xffe9b0],
-  splitter: [0xff2ea6, 0xffc4e6],
-  mine: [0xff1f1f, 0xffbdbd],
+  cinder: [BRAND.emberOrange, 0xffc9a8],
+  dart: [SIGNAL.violet, 0xe6ccff],
+  spitter: [BRAND.signalCyan, 0xcdf6ff],
+  orbiter: [BRAND.rebirthGold, 0xffe9b0],
+  splitter: [SIGNAL.magenta, 0xffc8dd],
+  mine: [SIGNAL.crimson, 0xffc4c0],
 };
 
 const TEXTURE_FOR: Record<EnemyKind, string> = {
@@ -87,7 +93,7 @@ export class Enemy {
       .setDepth(depth + 2)
       .setVisible(false);
     this.hpBar = scene.add
-      .rectangle(0, 0, 40, 4, 0xff5a3c, 1)
+      .rectangle(0, 0, 40, 4, BRAND.emberOrange, 1)
       .setOrigin(0.5, 0.5)
       .setDepth(depth + 2)
       .setVisible(false);

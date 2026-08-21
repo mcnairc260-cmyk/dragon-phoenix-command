@@ -7,33 +7,35 @@
  */
 
 :root {
-  /* Core palette — obsidian ground, magma light */
-  --void: #05030a;
-  --obsidian: #0b0710;
-  --obsidian-soft: #150c18;
-  --ember: #ff4d00;
-  --ember-bright: #ff7a2a;
-  --gold: #ffb347;
-  --crimson: #ff2a4d;
-  --violet: #9b30ff;
-  --cyan: #00e5ff;
-  --ash: #cbbfc9;
-  --ash-dim: #8b8090;
-  --white: #fff6ee;
+  /* Dragon Phoenix Ascension palette — brand/BRAND_BIBLE.md §5.
+     Mirrors src/config/brand.ts; keep the two in step. */
+  --void: #0a0a0f;        /* Void Black   — primary background */
+  --obsidian: #14141c;    /* Carbon       — cards, panels */
+  --obsidian-soft: #1c1c26;
+  --ember: #ff6b2c;       /* Ember Orange — Dragon Fire, primary accent */
+  --ember-bright: #ff8a52;
+  --gold: #ffb300;        /* Rebirth Gold — Phoenix Flame, secondary accent */
+  --crimson: #ff3b30;
+  --violet: #a855f7;
+  --cyan: #22d3ee;        /* Signal Cyan  — Ascension, data/AI/systems */
+  --ash: #f4f4f5;         /* Ghost White  — primary text */
+  --ash-dim: #8b8b99;     /* Steel        — secondary text, captions */
+  --white: #f4f4f5;
 
-  /* Rarity accents */
-  --rarity-common: #d9d2dd;
-  --rarity-rare: #00e5ff;
-  --rarity-legendary: #ffb347;
+  /* Rarity accents, drawn from the same three brand accents */
+  --rarity-common: #8b8b99;
+  --rarity-rare: #22d3ee;
+  --rarity-legendary: #ffb300;
 
   /* Surfaces */
-  --panel-bg: rgba(11, 7, 16, 0.9);
-  --panel-border: rgba(255, 122, 42, 0.35);
-  --card-bg: linear-gradient(160deg, rgba(35, 16, 22, 0.96), rgba(12, 7, 14, 0.96));
-  --scrim: rgba(4, 2, 7, 0.78);
+  --panel-bg: rgba(20, 20, 28, 0.92);
+  --panel-border: rgba(255, 107, 44, 0.35);
+  --card-bg: linear-gradient(160deg, rgba(32, 22, 26, 0.96), rgba(20, 20, 28, 0.96));
+  --scrim: rgba(10, 10, 15, 0.8);
 
   /* Type */
   --font-display: "Avenir Next", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  /* Brand Bible §5 typography: squared display, humanist body, mono for data. */
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
   /* Safe areas */
@@ -150,7 +152,7 @@ body {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-shadow: 0 0 30px rgba(255, 77, 0, 0.35);
+  text-shadow: 0 0 30px rgba(255, 107, 44, 0.35);
 }
 
 .panel h2 {
@@ -205,7 +207,7 @@ body {
 .btn--primary {
   background: linear-gradient(160deg, var(--ember), var(--crimson));
   border-color: var(--gold);
-  box-shadow: 0 0 34px rgba(255, 77, 0, 0.35);
+  box-shadow: 0 0 34px rgba(255, 107, 44, 0.35);
   font-size: 18px;
 }
 
@@ -259,19 +261,19 @@ body {
 
 .card--common { border-color: rgba(217, 210, 221, 0.3); }
 .card--rare {
-  border-color: rgba(0, 229, 255, 0.55);
-  box-shadow: 0 0 26px rgba(0, 229, 255, 0.14);
+  border-color: rgba(34, 211, 238, 0.55);
+  box-shadow: 0 0 26px rgba(34, 211, 238, 0.16);
 }
 .card--legendary {
-  border-color: rgba(255, 179, 71, 0.75);
-  box-shadow: 0 0 34px rgba(255, 179, 71, 0.25);
+  border-color: rgba(255, 179, 0, 0.75);
+  box-shadow: 0 0 34px rgba(255, 179, 0, 0.25);
 }
 
 .card__icon {
   font-size: 30px;
   text-align: center;
   line-height: 1;
-  filter: drop-shadow(0 0 10px rgba(255, 122, 42, 0.6));
+  filter: drop-shadow(0 0 10px rgba(255, 107, 44, 0.6));
 }
 
 /* The card body is built from spans, so each row needs to be made a block
@@ -313,7 +315,7 @@ body {
 .tag--common { color: var(--rarity-common); }
 .tag--rare { color: var(--rarity-rare); }
 .tag--legendary { color: var(--rarity-legendary); }
-.tag--offense { color: var(--crimson); }
+.tag--offense { color: var(--ember); }
 .tag--defense { color: var(--cyan); }
 .tag--utility { color: var(--gold); }
 .tag--level { color: var(--ash-dim); }
@@ -373,7 +375,7 @@ body {
   padding: 8px 12px;
   border-radius: 999px;
   border: 1px solid var(--gold);
-  background: rgba(255, 179, 71, 0.12);
+  background: rgba(255, 179, 0, 0.12);
   font-size: 12px;
   letter-spacing: 0.08em;
   color: var(--gold);
@@ -461,7 +463,7 @@ body {
 
 .swatch[data-selected="true"] {
   border-color: var(--gold);
-  box-shadow: 0 0 22px rgba(255, 179, 71, 0.3);
+  box-shadow: 0 0 22px rgba(255, 179, 0, 0.3);
 }
 
 .swatch__req {
@@ -491,8 +493,8 @@ body {
 }
 
 .ach[data-earned="true"] {
-  border-color: rgba(255, 179, 71, 0.5);
-  background: rgba(255, 179, 71, 0.08);
+  border-color: rgba(255, 179, 0, 0.5);
+  background: rgba(255, 179, 0, 0.08);
 }
 
 .ach[data-earned="false"] {
@@ -567,7 +569,7 @@ body {
   padding: 12px 18px;
   border-radius: 14px;
   background: rgba(8, 5, 12, 0.86);
-  border: 1px solid rgba(255, 179, 71, 0.4);
+  border: 1px solid rgba(255, 179, 0, 0.4);
   color: var(--white);
   font-size: 14.5px;
   line-height: 1.45;

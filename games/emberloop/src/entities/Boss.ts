@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { BOSS } from '../config/GameConfig';
 import { TAU } from '../core/math';
 import type { Arena } from '../effects/Arena';
+import { BRAND, SIGNAL } from '../config/brand';
 import { TEX } from '../effects/Textures';
 
 export interface BossContext {
@@ -14,7 +15,8 @@ export interface BossContext {
   onStageChange: (stage: number) => void;
 }
 
-const STAGE_COLORS = [0xff6a00, 0x9b30ff, 0x00c8ff];
+// Stages walk the brand accents in order: Dragon fire → the unknown → systems.
+const STAGE_COLORS = [BRAND.emberOrange, SIGNAL.violet, BRAND.signalCyan];
 
 /**
  * THE ASHBORN — a three-stage boss.
@@ -54,7 +56,7 @@ export class Boss {
 
   constructor(scene: Phaser.Scene, depth: number) {
     this.telegraph = scene.add
-      .rectangle(0, 0, 4, 4, 0xff2a00, 0.4)
+      .rectangle(0, 0, 4, 4, BRAND.emberOrange, 0.4)
       .setOrigin(0, 0.5)
       .setBlendMode(Phaser.BlendModes.ADD)
       .setDepth(depth - 1)
@@ -109,7 +111,7 @@ export class Boss {
   private applyStageColor(): void {
     this.glow.setTint(this.color);
     this.aura.setTint(this.color);
-    this.body.setTint(0xfff0e0);
+    this.body.setTint(BRAND.ghostWhite);
   }
 
   /**

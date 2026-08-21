@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { ARENA, HAZARD } from '../config/GameConfig';
+import { BRAND, fireGradient } from '../config/brand';
 import { TAU } from '../core/math';
 import { TEX } from './Textures';
 
@@ -63,7 +64,7 @@ export class Arena {
       const img = scene.add
         .image(0, 0, TEX.smoke)
         .setBlendMode(Phaser.BlendModes.ADD)
-        .setTint(0xff5a1a)
+        .setTint(BRAND.emberOrange)
         .setAlpha(0.07)
         .setDepth(baseDepth + 2);
       this.haze.push(img);
@@ -200,14 +201,15 @@ export class Arena {
     const g = this.bg;
     g.clear();
     // Void backdrop beyond the caldera.
-    g.fillStyle(0x05030a, 1);
+    g.fillStyle(BRAND.voidBlack, 1);
     g.fillRect(0, 0, width, height);
 
     // The caldera floor: concentric obsidian bands, warmest at the rim.
     // Channels are blended by hand — Phaser's Color constructor takes separate
     // r/g/b arguments, so passing a packed hex to it silently blows out to red.
-    const inner = { r: 0x0d, g: 0x05, b: 0x08 };
-    const outer = { r: 0x2a, g: 0x0d, b: 0x10 };
+    // Void Black at the centre easing out to a warm Carbon at the rim.
+    const inner = { r: 0x0a, g: 0x0a, b: 0x0f };
+    const outer = { r: 0x24, g: 0x14, b: 0x18 };
     const bands = 14;
     for (let i = bands; i >= 0; i--) {
       const t = i / bands;
@@ -231,11 +233,11 @@ export class Arena {
     for (const crack of this.cracks) {
       // Each crack breathes on its own phase so the floor never looks static.
       const pulse = 0.35 + 0.35 * Math.sin(this.time * crack.speed + crack.phase);
-      g.lineStyle(crack.width * 3.4, 0xff3300, pulse * 0.2);
+      g.lineStyle(crack.width * 3.4, BRAND.emberOrange, pulse * 0.18);
       this.strokePolyline(g, crack.points);
-      g.lineStyle(crack.width, 0xff8a3d, pulse);
+      g.lineStyle(crack.width, fireGradient(0.45), pulse * 0.9);
       this.strokePolyline(g, crack.points);
-      g.lineStyle(crack.width * 0.4, 0xffd9a0, pulse * 0.9);
+      g.lineStyle(crack.width * 0.4, BRAND.rebirthGold, pulse * 0.95);
       this.strokePolyline(g, crack.points);
     }
   }
@@ -258,13 +260,13 @@ export class Arena {
     for (const sector of this.sectors) {
       const from = sector.angle - sector.halfWidth;
       const to = sector.angle + sector.halfWidth;
-      let color = 0xff2a00;
+      let color: number = BRAND.emberOrange;
       let alpha: number;
       if (sector.state === 'telegraph') {
         // Fast strobe while the ground is cracking — unmistakable warning.
         const t = 1 - sector.timer / HAZARD.telegraphTime;
         alpha = 0.1 + 0.22 * Math.abs(Math.sin(t * Math.PI * 6));
-        color = 0xffaa00;
+        color = BRAND.rebirthGold;
       } else if (sector.state === 'active') {
         alpha = 0.42 + 0.12 * Math.sin(this.time * 9);
       } else {
@@ -287,7 +289,7 @@ export class Arena {
       g.fillPath();
 
       if (sector.state !== 'telegraph') {
-        g.lineStyle(6, 0xffe08a, alpha * 0.8);
+        g.lineStyle(6, BRAND.rebirthGold, alpha * 0.8);
         g.strokePath();
       }
     }
@@ -297,11 +299,11 @@ export class Arena {
     const g = this.rimLayer;
     g.clear();
     const pulse = 0.55 + 0.2 * Math.sin(this.time * 1.5);
-    g.lineStyle(10, 0xff3d00, 0.1 * pulse);
+    g.lineStyle(10, BRAND.emberOrange, 0.1 * pulse);
     g.strokeEllipse(this.cx, this.cy, this.rx * 2, this.ry * 2);
-    g.lineStyle(3, 0xff7a2a, 0.55 * pulse);
+    g.lineStyle(3, BRAND.emberOrange, 0.55 * pulse);
     g.strokeEllipse(this.cx, this.cy, this.rx * 2, this.ry * 2);
-    g.lineStyle(1, 0xffd7a8, 0.7 * pulse);
+    g.lineStyle(1, BRAND.rebirthGold, 0.7 * pulse);
     g.strokeEllipse(this.cx, this.cy, this.rx * 2 - 3, this.ry * 2 - 3);
   }
 

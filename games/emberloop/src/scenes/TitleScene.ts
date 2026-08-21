@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { session } from '../core/Session';
 import { safeArea } from '../core/safeArea';
 import { applyCamera } from '../core/viewport';
+import { BRAND, BRAND_CSS } from '../config/brand';
 import { Arena } from '../effects/Arena';
 import { TEX } from '../effects/Textures';
 import { audio } from '../systems/AudioEngine';
@@ -60,7 +61,7 @@ export class TitleScene extends Phaser.Scene {
     this.titleGlow = this.add
       .image(width / 2, 0, TEX.glow)
       .setBlendMode(Phaser.BlendModes.ADD)
-      .setTint(0xff4d00)
+      .setTint(BRAND.emberOrange)
       .setDepth(19)
       .setScale(3.4, 1.1)
       .setAlpha(0.5);
@@ -72,19 +73,19 @@ export class TitleScene extends Phaser.Scene {
       .text(width / 2, 0, 'EMBERLOOP', {
         fontFamily: FONT_DISPLAY,
         fontSize: `${titleSize}px`,
-        color: '#fff1d6',
+        color: BRAND_CSS.ghostWhite,
         fontStyle: 'bold',
       })
       .setOrigin(0.5)
       .setDepth(20)
-      .setShadow(0, 0, '#ff4d00', 22, true, true);
+      .setShadow(0, 0, BRAND_CSS.emberOrange, 22, true, true);
     this.title.setLetterSpacing(5);
 
     this.subtitle = this.add
       .text(width / 2, 0, 'FIRE WITHIN · POWER UNLEASHED', {
         fontFamily: FONT_MONO,
         fontSize: '11px',
-        color: '#ffb347',
+        color: BRAND_CSS.rebirthGold,
       })
       .setOrigin(0.5)
       .setDepth(20);
@@ -94,7 +95,7 @@ export class TitleScene extends Phaser.Scene {
       .text(width / 2, 0, 'TAP TO RISE', {
         fontFamily: FONT_DISPLAY,
         fontSize: '20px',
-        color: '#fff6ee',
+        color: BRAND_CSS.ghostWhite,
         fontStyle: 'bold',
       })
       .setOrigin(0.5)
@@ -102,7 +103,7 @@ export class TitleScene extends Phaser.Scene {
     this.prompt.setLetterSpacing(4);
 
     this.best = this.add
-      .text(width / 2, 0, '', { fontFamily: FONT_MONO, fontSize: '12px', color: '#8b8090' })
+      .text(width / 2, 0, '', { fontFamily: FONT_MONO, fontSize: '12px', color: BRAND_CSS.steel })
       .setOrigin(0.5)
       .setDepth(20);
 
@@ -132,7 +133,7 @@ export class TitleScene extends Phaser.Scene {
 
     this.menu = items.map(({ label, run }) => {
       const text = this.add
-        .text(0, 0, label, { fontFamily: FONT_MONO, fontSize: '12px', color: '#cbbfc9' })
+        .text(0, 0, label, { fontFamily: FONT_MONO, fontSize: '12px', color: BRAND_CSS.steel })
         .setOrigin(0.5)
         .setDepth(21)
         // Padded hit area keeps these comfortably tappable without visual bulk.
