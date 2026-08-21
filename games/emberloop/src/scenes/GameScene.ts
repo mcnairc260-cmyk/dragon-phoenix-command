@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ARENA, BOSS, BURST, ELITE, ENEMY, HAZARD, PICKUP, PLAYER, SCORING } from '../config/GameConfig';
+import { ARENA, BOSS, BURST, CONTROL, DIFFICULTY, ELITE, ENEMY, HAZARD, PICKUP, PLAYER, SCORING } from '../config/GameConfig';
 import { ObjectPool } from '../core/ObjectPool';
 import { weightedIndex } from '../core/Rng';
 import { session } from '../core/Session';
@@ -15,10 +15,10 @@ import { Arena } from '../effects/Arena';
 import { Fx } from '../effects/Fx';
 import { TEX } from '../effects/Textures';
 import { audio } from '../systems/AudioEngine';
-import { bossStageHp, bossTimeFor, difficultyAt, shouldSpawnElite, type EnemyKind } from '../systems/Difficulty';
+import { bossStageHp, bossPhaseAt, bossTimeFor, difficultyAt, eliteIntervalAt, type EnemyKind } from '../systems/Difficulty';
 import { haptics } from '../systems/Haptics';
 import { addXp, createLevelState, levelProgress, type LevelState } from '../systems/Leveling';
-import { recordRun } from '../systems/Progression';
+import { CONTROL_MODES, recordRun, type ControlMode } from '../systems/Progression';
 import type { RunSummary } from '../systems/Achievements';
 import {
   breakCombo,
@@ -99,7 +99,17 @@ export class GameScene extends Phaser.Scene {
   private dead = false;
   private pendingLevelUps = 0;
 
+  /** Virtual steering target the player flies toward, in world coordinates. */
   private readonly pointer = { active: false, x: 0, y: 0 };
+  /** Where the finger went down, and where the phoenix was at that moment. */
+  private readonly touchAnchor = { x: 0, y: 0 };
+  private readonly playerAnchor = { x: 0, y: 0 };
+  private controlMode: ControlMode = 'relative';
+  private stick?: Phaser.GameObjects.Graphics;
+  private eliteTimer = 0;
+  private emberChain = 0;
+  private emberChainTimer = 0;
+  private phaseAnnounced = 0;
   private distanceMoved = 0;
   private runBursts = 0;
   private runDamage = 0;
@@ -147,6 +157,9 @@ export class GameScene extends Phaser.Scene {
       12,
     );
 
+    this.controlMode = session.settings.controlMode;
+    this.stick = this.add.graphics().setDepth(DEPTH.hud - 1).setBlendMode(Phaser.BlendModes.ADD);
+
     this.tutorial = new Tutorial(!session.save.tutorialSeen);
 
     // The first objective is visible immediately instead of relying on the
@@ -159,14 +172,15 @@ export class GameScene extends Phaser.Scene {
       this.fx.shockwave(this.player.x, this.player.y, session.palette.glow, 150, 360);
     }
 
-    // The pointer starts wherever the player tapped to launch the run, so the
-    // phoenix responds to the very first frame instead of waiting for a drag.
-    if (typeof data?.pointerX === 'number') {
+    // In absolute mode the phoenix should already be heading for the tap that
+    // launched the run. In the offset modes that would be a lurch toward a
+    // point the player never aimed at, so it simply holds station.
+    if (this.controlMode === 'absolute' && typeof data?.pointerX === 'number') {
       this.pointer.x = data.pointerX;
       this.pointer.y = data.pointerY ?? this.arena.cy;
     } else {
-      this.pointer.x = this.arena.cx;
-      this.pointer.y = this.arena.cy;
+      this.pointer.x = this.player.x;
+      this.pointer.y = this.player.y;
     }
 
     this.bindInput();
@@ -195,6 +209,10 @@ export class GameScene extends Phaser.Scene {
     this.trailDamageTimer = 0;
     this.hazardHitTimer = 0;
     this.timeScale = 1;
+    this.eliteTimer = DIFFICULTY.eliteIntervalStart;
+    this.emberChain = 0;
+    this.emberChainTimer = 0;
+    this.phaseAnnounced = 0;
     this.bossIndex = 0;
     this.bossWarned = false;
     this.bossActive = false;
@@ -216,14 +234,18 @@ export class GameScene extends Phaser.Scene {
       if (objects.length > 0) return; // pause button
       audio.unlock();
       this.pointer.active = true;
-      this.pointer.x = pointer.worldX;
-      this.pointer.y = pointer.worldY;
+      // Anchor both the finger and the phoenix, so relative/joystick steering
+      // is measured from where the drag began rather than from the screen.
+      this.touchAnchor.x = pointer.worldX;
+      this.touchAnchor.y = pointer.worldY;
+      this.playerAnchor.x = this.player.x;
+      this.playerAnchor.y = this.player.y;
+      this.updateSteerTarget(pointer.worldX, pointer.worldY);
     });
     this.input.on(Phaser.Input.Events.POINTER_MOVE, (pointer: Phaser.Input.Pointer) => {
       if (!pointer.isDown) return;
-      this.pointer.x = pointer.worldX;
-      this.pointer.y = pointer.worldY;
       this.pointer.active = true;
+      this.updateSteerTarget(pointer.worldX, pointer.worldY);
     });
     const release = () => {
       if (!this.pointer.active) return;
@@ -241,6 +263,71 @@ export class GameScene extends Phaser.Scene {
     });
     this.input.keyboard?.on('keydown-ESC', () => this.openPause());
     this.input.keyboard?.on('keydown-P', () => this.openPause());
+  }
+
+  /**
+   * Resolve a finger position into the point the phoenix should fly toward.
+   *
+   * All three control modes collapse to "here is a target": the player physics
+   * (speed ramps with distance to target) then behaves identically, so the
+   * modes differ only in where the target comes from.
+   */
+  private updateSteerTarget(fingerX: number, fingerY: number): void {
+    const dx = fingerX - this.touchAnchor.x;
+    const dy = fingerY - this.touchAnchor.y;
+
+    if (this.controlMode === 'absolute') {
+      this.pointer.x = fingerX;
+      this.pointer.y = fingerY;
+      return;
+    }
+
+    if (this.controlMode === 'joystick') {
+      // Direction from the planted stick; distance sets throttle. Aiming the
+      // target ahead of the phoenix keeps the existing speed ramp meaningful.
+      const dist = Math.hypot(dx, dy);
+      if (dist < 4) {
+        this.pointer.x = this.player.x;
+        this.pointer.y = this.player.y;
+        return;
+      }
+      const throttle = Math.min(1, dist / CONTROL.stickRadius);
+      const reach = PLAYER.fullSpeedDistance * throttle * 1.2;
+      this.pointer.x = this.player.x + (dx / dist) * reach;
+      this.pointer.y = this.player.y + (dy / dist) * reach;
+      return;
+    }
+
+    // Relative: the phoenix mirrors the finger's movement from where it was
+    // when the drag started, amplified so a short thumb sweep crosses the
+    // caldera. The finger never has to sit on top of the phoenix.
+    const target = {
+      x: this.playerAnchor.x + dx * CONTROL.relativeGain,
+      y: this.playerAnchor.y + dy * CONTROL.relativeGain,
+    };
+    this.arena.clamp(target, 1);
+    this.pointer.x = target.x;
+    this.pointer.y = target.y;
+  }
+
+  /** Draw the joystick ring while a joystick drag is active. */
+  private drawStick(): void {
+    if (!this.stick) return;
+    const g = this.stick;
+    g.clear();
+    if (this.controlMode !== 'joystick' || !this.pointer.active) return;
+    g.lineStyle(2, BRAND.steel, 0.35);
+    g.strokeCircle(this.touchAnchor.x, this.touchAnchor.y, CONTROL.stickRadius);
+    const dx = this.pointer.x - this.player.x;
+    const dy = this.pointer.y - this.player.y;
+    const dist = Math.hypot(dx, dy) || 1;
+    const throttle = Math.min(1, dist / (PLAYER.fullSpeedDistance * 1.2));
+    g.fillStyle(BRAND.emberOrange, 0.5);
+    g.fillCircle(
+      this.touchAnchor.x + (dx / dist) * CONTROL.stickRadius * throttle,
+      this.touchAnchor.y + (dy / dist) * CONTROL.stickRadius * throttle,
+      12,
+    );
   }
 
   private onResize(): void {
@@ -284,7 +371,7 @@ export class GameScene extends Phaser.Scene {
     const dt = rawDt * this.timeScale;
 
     this.elapsed += dt;
-    const difficulty = difficultyAt(this.elapsed, this.levels.level);
+    const difficulty = difficultyAt(this.elapsed);
 
     this.arena.update(dt);
     this.updatePlayer(dt);
@@ -298,11 +385,19 @@ export class GameScene extends Phaser.Scene {
     this.updateAutoAttacks(dt);
     this.checkCollisions(dt);
 
+    this.updateEliteSchedule(dt);
+    if (this.emberChainTimer > 0) {
+      this.emberChainTimer -= dt;
+      if (this.emberChainTimer <= 0) this.emberChain = 0;
+    }
+    this.announcePhase();
+
     scoreTime(this.score, dt);
     tickCombo(this.score, dt);
     this.player.setAscended(isAscended(this.score));
     this.runLongestClean = Math.max(this.runLongestClean, this.player.cleanTimer);
 
+    this.drawStick();
     this.updateHud(dt);
     this.updateTutorial(dt);
   }
@@ -716,7 +811,18 @@ export class GameScene extends Phaser.Scene {
     audio.pickup(this.score.combo);
     haptics.play('pickup');
     this.fx.burstEmbers(pickup.x, pickup.y, this.player.colors.glow, 5);
-    this.grantXp(PICKUP_XP);
+
+    // Ember Chain — shards gathered in quick succession pay escalating XP. This
+    // is the reward for collecting fast that replaces the old, backwards
+    // arrangement where levelling quickly made the run harder.
+    this.emberChain = this.emberChainTimer > 0 ? this.emberChain + 1 : 1;
+    this.emberChainTimer = PICKUP.chainWindow;
+    const bonus = Math.min(PICKUP.chainXpMax - 1, Math.floor(this.emberChain / PICKUP.chainStep));
+    if (bonus > 0 && this.emberChain % PICKUP.chainStep === 0) {
+      this.fx.floatText(pickup.x, pickup.y - 18, `CHAIN ×${this.emberChain}`, BRAND_CSS.signalCyan, 14);
+      this.fx.shockwave(pickup.x, pickup.y, BRAND.signalCyan, 90, 300);
+    }
+    this.grantXp(PICKUP_XP + bonus);
   }
 
   private grantXp(amount: number): void {
@@ -726,13 +832,34 @@ export class GameScene extends Phaser.Scene {
       audio.levelUp();
       haptics.play('levelUp');
       this.fx.shockwave(this.player.x, this.player.y, this.player.colors.accent, 220, 500);
-      if (shouldSpawnElite(this.levels.level)) this.spawnElite();
+      // No elite spawn here: levelling must never summon extra danger, or
+      // collecting well becomes self-punishing. Elites are on their own clock.
       this.openDraft();
     }
   }
 
+  /** Elites arrive on a clock that tightens with elapsed time only. */
+  private updateEliteSchedule(dt: number): void {
+    if (this.bossActive) return;
+    this.eliteTimer -= dt;
+    if (this.eliteTimer > 0) return;
+    this.eliteTimer = eliteIntervalAt(this.elapsed);
+    this.spawnElite();
+  }
+
+  /**
+   * Name the stretch of the run the player is in. Legible progress is most of
+   * what makes a survival run feel worth continuing.
+   */
+  private announcePhase(): void {
+    const phase = bossPhaseAt(this.elapsed);
+    if (phase <= this.phaseAnnounced) return;
+    this.phaseAnnounced = phase;
+    if (phase > 0) session.ui.toast(`Phase ${romanNumeral(phase + 1)}`, 2600);
+  }
+
   private spawnElite(): void {
-    const difficulty = difficultyAt(this.elapsed, this.levels.level);
+    const difficulty = difficultyAt(this.elapsed);
     const kinds: EnemyKind[] = difficulty.table.map((t) => t.kind).filter((k) => k !== 'mine');
     const kind = kinds.length > 0 ? kinds[Math.floor(Math.random() * kinds.length)] : 'cinder';
     const point = this.arena.randomEdgePoint();
@@ -830,7 +957,7 @@ export class GameScene extends Phaser.Scene {
     for (let i = 0; i < drops; i++) this.spawnPickup(x, y, 40 + Math.random() * 90);
 
     if (splitCount > 0) {
-      const difficulty = difficultyAt(this.elapsed, this.levels.level);
+      const difficulty = difficultyAt(this.elapsed);
       for (let i = 0; i < splitCount; i++) {
         const angle = (i / splitCount) * TAU;
         this.spawnEnemy(
@@ -996,6 +1123,13 @@ export class GameScene extends Phaser.Scene {
     this.runBosses += 1;
 
     scoreKill(this.score, SCORING.bossKillScore);
+    // Felling a boss restores health and pays a large XP lump. Without a reward
+    // this size there is no reason to fight one rather than kite it forever.
+    if (this.player.health < PLAYER.maxHealth) {
+      this.player.health = Math.min(PLAYER.maxHealth, this.player.health + BOSS.healOnKill);
+      this.fx.floatText(this.player.x, this.player.y - 46, '+1 LIFE', BRAND_CSS.rebirthGold, 18);
+    }
+    this.grantXp(BOSS.xpOnKill);
     audio.bossDeath();
     audio.setIntensity(0);
     haptics.play('boss');
@@ -1065,6 +1199,18 @@ export class GameScene extends Phaser.Scene {
       quit: () => {
         session.ui.closePanel();
         this.scene.start('Title');
+      },
+      control: () => {
+        // Cycle the steering style. Applied live so the player can feel the
+        // difference immediately on resume rather than restarting the run.
+        const order = CONTROL_MODES;
+        const next = order[(order.indexOf(session.settings.controlMode) + 1) % order.length];
+        session.setSetting('controlMode', next);
+        this.controlMode = next;
+        this.pointer.active = false;
+        audio.uiTap();
+        this.paused = false;
+        this.openPause();
       },
       toggle: (dataset) => {
         const key = dataset.key as 'sound' | 'music' | 'haptics' | 'reducedMotion' | undefined;
@@ -1221,5 +1367,11 @@ export class GameScene extends Phaser.Scene {
   }
 }
 
-/** XP awarded by a single ember shard. */
+/** XP awarded by a single ember shard, before any Ember Chain bonus. */
 const PICKUP_XP = 1;
+
+const NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+
+function romanNumeral(n: number): string {
+  return NUMERALS[Math.min(Math.max(n, 1), NUMERALS.length) - 1];
+}

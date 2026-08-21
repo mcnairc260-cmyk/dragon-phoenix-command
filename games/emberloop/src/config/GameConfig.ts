@@ -52,6 +52,18 @@ export const PLAYER = {
   nearMissCooldown: 0.5,
 } as const;
 
+/**
+ * Steering feel. `relative` is the default because on a phone the finger sits
+ * on top of whatever it is pointing at — with absolute steering the phoenix is
+ * permanently hidden under the thumb, exactly when you most need to see it.
+ */
+export const CONTROL = {
+  /** Relative mode: phoenix travel per pixel of finger travel. */
+  relativeGain: 1.75,
+  /** Joystick mode: distance from the planted stick at which throttle is full. */
+  stickRadius: 62,
+} as const;
+
 export const BURST = {
   maxEnergy: 100,
   /** Energy per second at full speed while the pointer is held. */
@@ -98,26 +110,42 @@ export const XP = {
 } as const;
 
 export const DIFFICULTY = {
-  /** Threat rises with elapsed time (per minute) and with player level. */
+  /**
+   * Threat rises with **elapsed time only**.
+   *
+   * It deliberately does NOT rise with player level. Levelling is driven by
+   * collecting shards, and tying enemy pressure to it punished the exact
+   * behaviour the game is built around: collect faster, get shot at more. Now
+   * the clock sets the pressure and levelling is pure upside — collecting fast
+   * means more upgrades against the same wave, which is the incentive we want.
+   */
   threatPerMinute: 1,
-  threatPerLevel: 0.34,
   spawnIntervalStart: 1.45,
   spawnIntervalDecay: 0.87,
-  spawnIntervalMin: 0.3,
-  speedPerThreat: 0.085,
-  speedMax: 2.15,
-  hpPerThreat: 0.34,
+  spawnIntervalMin: 0.32,
+  speedPerThreat: 0.075,
+  speedMax: 2.0,
+  hpPerThreat: 0.3,
   maxEnemiesStart: 6,
-  maxEnemiesPerThreat: 2.2,
-  maxEnemiesCap: 32,
-  /** An elite spawns every N player levels. */
-  eliteEveryLevels: 3,
-  /** First boss appears at this elapsed time (seconds), then every `bossInterval`. */
-  firstBossAt: 170,
-  bossInterval: 150,
+  maxEnemiesPerThreat: 2.0,
+  maxEnemiesCap: 28,
+  /**
+   * Elites are on the clock too, for the same reason. They are as much a reward
+   * (a big ember payout) as a threat, so they must not arrive faster just
+   * because the player is collecting well.
+   */
+  eliteIntervalStart: 46,
+  eliteIntervalMin: 26,
+  /**
+   * Boss cadence. The first boss lands early enough that a typical run actually
+   * meets one — the old 170s meant most runs ended without ever seeing the
+   * headline encounter, which is a poor reason to stop playing.
+   */
+  firstBossAt: 80,
+  bossInterval: 100,
   /** Seconds between arena sector collapses (scales down with threat). */
-  collapseIntervalStart: 22,
-  collapseIntervalMin: 8,
+  collapseIntervalStart: 24,
+  collapseIntervalMin: 9,
 } as const;
 
 /** Seconds of elapsed run time before each enemy archetype joins the spawn table. */
@@ -153,6 +181,10 @@ export const BOSS = {
   radius: 54,
   warningTime: 3,
   emberDrop: 40,
+  /** Health restored for felling a boss — the reason to fight rather than flee. */
+  healOnKill: 1,
+  /** Bonus XP on a boss kill, on top of the per-stage award. */
+  xpOnKill: 24,
   /** Boss contact damage ignores nothing — same 1 HP as anything else. */
 } as const;
 
@@ -165,8 +197,17 @@ export const PICKUP = {
   /** Chance an ordinary kill drops an ember shard. */
   dropChance: 0.72,
   /** Ambient shards spawned by the arena itself, seconds between. */
-  ambientInterval: 2.1,
-  maxAmbient: 14,
+  ambientInterval: 1.9,
+  maxAmbient: 16,
+  /**
+   * Ember Chain: shards collected within this window of each other build a
+   * streak that pays escalating XP. This is the positive incentive that
+   * replaces the old (backwards) "levelling makes it harder" pressure.
+   */
+  chainWindow: 2.8,
+  /** Every N chained shards adds +1 XP per shard, up to `chainXpMax`. */
+  chainStep: 4,
+  chainXpMax: 4,
 } as const;
 
 export const HAZARD = {

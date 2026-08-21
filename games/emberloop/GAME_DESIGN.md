@@ -11,13 +11,15 @@ document and a value in that file disagree, the file is right.
 ## 1. The loop
 
 1. Tap once from the title — you are already flying.
-2. Drag anywhere; the phoenix moves toward your finger with slight momentum.
-3. Sweep up **ember shards** (score + currency + XP).
+2. Drag anywhere; the phoenix mirrors your finger with slight momentum, so your
+   thumb never has to sit on top of it.
+3. Sweep up **ember shards** (score + currency + XP) — fast, in clusters, for the
+   Ember Chain bonus.
 4. Pass *close* to enemies and bullets to bank **Heat**, which raises the score
    multiplier.
 5. Level up → the game pauses and offers **three upgrade cards**; pick one.
-6. Difficulty rises with the clock *and* with your level.
-7. Elites arrive every 3 levels; **THE ASHBORN** wakes at 2:50.
+6. Difficulty rises with **the clock only** — levelling never makes it harder.
+7. Elites arrive every ~46 s; **THE ASHBORN** wakes at 1:20, then every 1:40.
 8. Three hits and the run ends. Results screen → **one tap to run again.**
 
 The core tension: Heat only comes from being near things that kill you, and a
@@ -25,16 +27,27 @@ single hit wipes the whole combo.
 
 ## 2. Controls
 
+**Three steering modes** (pause menu; the choice persists). All three resolve to
+"here is a target point", so the movement physics are identical between them —
+only where the target comes from differs.
+
+| Mode | How it steers | Why |
+|---|---|---|
+| **Drag (offset)** — default | The phoenix moves by the same delta your finger moves, from wherever it already was, amplified ×1.75 | On a phone your finger sits on top of whatever it points at. With fly-to-finger steering the phoenix is permanently hidden under your thumb, exactly when you need to see it to dodge. Park your thumb low; the phoenix stays visible. |
+| **Joystick** | Touch plants a stick; direction sets heading, distance sets throttle (full at 62 px) | Same benefit, familiar to twin-stick players. |
+| **Fly to finger** | The original absolute mode | Fine on desktop with a mouse, or on a tablet where the hand is off to one side. |
+
 | Input | Effect |
 |---|---|
-| Press and drag anywhere | Fly toward the pointer. Speed ramps with distance, hitting full speed ~90 px out, so small nudges give fine control. |
+| Press and drag anywhere | Steer per the mode above. Speed ramps with distance to the target, hitting full speed ~90 px out, so small nudges give fine control. |
 | Hold | Charge the Phoenix Burst meter (faster while moving; near-misses and kills add extra). |
 | Release | **Fire the Phoenix Burst** if a charge is stored. |
 | Pause button (top-right) | Pause + settings. |
 | Desktop extras | Space = burst, Esc/P = pause. |
 
-You never need a finger on the phoenix itself — it flies to the pointer, so your
-hand never covers the character.
+You never need a finger on the phoenix itself. In the default offset mode your
+thumb can rest at the bottom of the screen while the phoenix flies in the middle,
+which is the whole point: you can see what you are dodging.
 
 **Phoenix Burst:** 190 px radius (scalable), 4 damage, destroys every hostile
 bullet in range, screen shake, chromatic flash, 0.35× slow motion for 0.42 s, and
@@ -74,22 +87,34 @@ for risk, and losing it is the whole punishment.
 
 `src/systems/Difficulty.ts` — pure, unit-tested.
 
-Everything derives from one number:
+**Difficulty is a function of the clock, and nothing else.**
 
 ```
-threat = (elapsed_seconds / 60) + (player_level - 1) × 0.34
+threat = elapsed_seconds / 60
 ```
 
-Time and level both feed it, so a player who collects aggressively pulls the
-pressure forward: the game keeps pace with skill, not just the clock.
+This is the single most important rule in the game, and it is enforced by a
+test: `threatAt` and `difficultyAt` take *one* argument each, so there is no way
+for player progress to leak into enemy pressure.
+
+It did not always work this way. Threat used to include a term for player level,
+which meant collecting shards quickly — the entire point of the game — summoned
+more enemies, faster enemies and tougher enemies. That inverted the incentive:
+the optimal play was to *ignore* shards. Levelling is now pure upside. Collect
+fast and you face the same wave as everyone else, with more upgrades to face it.
 
 | Derived value | Formula | Range |
 |---|---|---|
-| Spawn interval | `1.45 × 0.87^threat` | 1.45 s → 0.30 s floor |
-| Enemy speed | `1 + threat × 0.085` | 1× → 2.15× cap |
-| Enemy HP | `1 + floor(threat) × 0.34` | steps in whole numbers |
-| Max live enemies | `6 + threat × 2.2` | 6 → 32 cap |
-| Arena collapse interval | `22 − threat × 2.2` | 22 s → 8 s floor |
+| Spawn interval | `1.45 × 0.87^threat` | 1.45 s → 0.32 s floor |
+| Enemy speed | `1 + threat × 0.075` | 1× → 2.0× cap |
+| Enemy HP | `1 + floor(threat) × 0.3` | steps in whole numbers |
+| Max live enemies | `6 + threat × 2.0` | 6 → 28 cap |
+| Elite interval | `46 − threat × 5` | 46 s → 26 s floor |
+| Arena collapse interval | `24 − threat × 2.2` | 24 s → 9 s floor |
+
+**Elites are on the clock too**, for the same reason — an elite is a 10-shard
+payout as much as a threat, and it must not arrive sooner because you played
+well. They used to spawn on every 3rd level-up.
 
 **Archetype unlocks** are on the clock, so the first minute teaches one threat at
 a time:
@@ -103,12 +128,21 @@ a time:
 | 1:14 | Splitter |
 | 1:36 | Magma Mine |
 
-**Levelling.** XP to reach the next level is `round(9 × 1.24^(n-1) + (n-1) × 3)`
-— 9 XP for the first level-up, so the first upgrade choice reliably lands inside
-the opening ~15–25 seconds. Shards and kills give 1 XP; elites 6; boss stages 10.
+### Rewarding fast collection
 
-**Elites** spawn on every 3rd level: a normal archetype with ~9× HP, 1.9× size,
-0.8× speed, a crown marker, a health bar and a 10-shard payout.
+Three things now pull in the same direction:
+
+1. **Levelling costs you nothing.** See above.
+2. **Ember Chain.** Shards collected within 2.8 s of each other build a streak.
+   Every 4 chained shards adds +1 XP per shard (capped at +3), announced on
+   screen at each step. Sweeping a cluster is worth materially more than
+   drifting between shards.
+3. **More shards to sweep.** Ambient spawn every 1.9 s, up to 16 on the floor.
+
+**Levelling.** XP to reach the next level is `round(9 × 1.24^(n-1) + (n-1) × 3)`
+— 9 XP for the first, so the first upgrade choice lands inside the opening
+~15 seconds. Shards give 1 XP plus the chain bonus; kills 1; elites 6; boss
+stages 10; a boss kill a further 24.
 
 ## 5. Enemies
 
@@ -128,8 +162,13 @@ legible at a glance in a crowded arena.
 
 ### The Ashborn (boss)
 
-Wakes at **2:50** and returns every 2:30 after that, with +45% HP per encounter.
+**Wakes at 1:20, and returns every 1:40** thereafter with +45% HP per encounter.
 A three-second warning (audio sting, screen flash, toast) precedes it.
+
+The first encounter used to sit at 2:50, which meant most runs ended without ever
+meeting the headline fight — a poor reason to stop playing. It now lands inside a
+typical run, and each cycle is announced as a named **Phase** so progress through
+a run is legible rather than an undifferentiated stream of enemies.
 
 | Stage | Behaviour |
 |---|---|
@@ -140,6 +179,11 @@ A three-second warning (audio sting, screen flash, toast) precedes it.
 Between stages it is briefly invulnerable while it re-forms: the screen clears of
 bullets, six shards drop and you get 10 XP. That beat is deliberate breathing
 room, not dead time.
+
+**Felling one pays properly** — 1,500 score, 40 shards, 24 XP, and **+1 health**.
+Without a reward that size there is no reason to fight a boss rather than kite it
+until it leaves, and "the fight is optional and unrewarding" is how a survival
+game loses its spine.
 
 ## 6. Arena hazards
 

@@ -392,6 +392,7 @@ body {
 .toggle {
   display: flex;
   align-items: center;
+  text-align: left;
   justify-content: space-between;
   gap: 12px;
   width: 100%;
@@ -407,6 +408,20 @@ body {
   cursor: pointer;
 }
 
+.toggle__hint {
+  display: block;
+  font-size: 11px;
+  color: var(--ash-dim);
+  letter-spacing: 0.02em;
+  margin-top: 3px;
+  max-width: 46vw;
+  line-height: 1.3;
+}
+
+.toggle__state--on {
+  color: var(--cyan);
+}
+
 .toggle__state {
   font-family: var(--font-mono);
   font-size: 12px;
@@ -416,11 +431,39 @@ body {
   border: 1px solid currentColor;
 }
 
-.toggle[data-on="true"] .toggle__state {
+.toggle[data-on="true"] .toggle__hint {
+  display: block;
+  font-size: 11px;
+  color: var(--ash-dim);
+  letter-spacing: 0.02em;
+  margin-top: 3px;
+  max-width: 46vw;
+  line-height: 1.3;
+}
+
+.toggle__state--on {
   color: var(--cyan);
 }
 
-.toggle[data-on="false"] .toggle__state {
+.toggle__state {
+  color: var(--cyan);
+}
+
+.toggle[data-on="false"] .toggle__hint {
+  display: block;
+  font-size: 11px;
+  color: var(--ash-dim);
+  letter-spacing: 0.02em;
+  margin-top: 3px;
+  max-width: 46vw;
+  line-height: 1.3;
+}
+
+.toggle__state--on {
+  color: var(--cyan);
+}
+
+.toggle__state {
   color: var(--ash-dim);
 }
 

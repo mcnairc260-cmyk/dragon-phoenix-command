@@ -2,11 +2,33 @@ import { STORAGE_KEY } from '../config/GameConfig';
 import { newlyEarned, type LifetimeTotals, type RunSummary } from './Achievements';
 import { unlockedPaletteIds, type LifetimeStats } from './Cosmetics';
 
+/**
+ * How dragging steers the phoenix.
+ *
+ * - `relative` (default): the phoenix moves by the same delta your finger
+ *   moves, from wherever it already was. Your thumb can sit low on the screen,
+ *   well away from the phoenix, so it never covers the thing you are dodging
+ *   with. This is the fix for "I can't see my character under my finger".
+ * - `joystick`: touch-down plants a stick; direction and distance from it set
+ *   heading and speed. Also keeps the thumb parked away from the action.
+ * - `absolute`: the original — the phoenix flies to the finger itself.
+ */
+export type ControlMode = 'relative' | 'joystick' | 'absolute';
+
+export const CONTROL_MODES: readonly ControlMode[] = ['relative', 'joystick', 'absolute'];
+
+export const CONTROL_MODE_LABEL: Record<ControlMode, string> = {
+  relative: 'Drag (offset)',
+  joystick: 'Joystick',
+  absolute: 'Fly to finger',
+};
+
 export interface Settings {
   sound: boolean;
   music: boolean;
   haptics: boolean;
   reducedMotion: boolean;
+  controlMode: ControlMode;
 }
 
 export interface SaveData {
@@ -30,6 +52,7 @@ export const DEFAULT_SETTINGS: Settings = {
   music: true,
   haptics: true,
   reducedMotion: false,
+  controlMode: 'relative',
 };
 
 export function createSave(): SaveData {
@@ -107,6 +130,9 @@ export function loadSave(storage: StorageLike | null | undefined): SaveData {
       music: settings.music !== false,
       haptics: settings.haptics !== false,
       reducedMotion: settings.reducedMotion === true,
+      controlMode: CONTROL_MODES.includes(settings.controlMode as ControlMode)
+        ? (settings.controlMode as ControlMode)
+        : DEFAULT_SETTINGS.controlMode,
     },
   };
 

@@ -18,19 +18,20 @@ export interface DifficultySnapshot {
 }
 
 /**
- * Threat = elapsed minutes + a contribution from player level.
+ * Threat = elapsed minutes. Nothing else.
  *
- * Levelling is player-driven, so an aggressive player who collects fast pulls
- * the difficulty forward: the game keeps pace with skill rather than only clock.
+ * This used to add a term for player level, which meant collecting shards
+ * quickly — the whole point of the game — summoned more enemies, faster
+ * enemies and tougher enemies. That inverted the incentive: the optimal play
+ * was to ignore shards. The clock alone now sets the pressure, so levelling is
+ * pure upside and collecting fast is rewarded rather than punished.
  */
-export function threatAt(elapsedSeconds: number, playerLevel: number): number {
-  const timeThreat = (elapsedSeconds / 60) * DIFFICULTY.threatPerMinute;
-  const levelThreat = Math.max(0, playerLevel - 1) * DIFFICULTY.threatPerLevel;
-  return timeThreat + levelThreat;
+export function threatAt(elapsedSeconds: number): number {
+  return (Math.max(0, elapsedSeconds) / 60) * DIFFICULTY.threatPerMinute;
 }
 
-export function difficultyAt(elapsedSeconds: number, playerLevel: number): DifficultySnapshot {
-  const threat = threatAt(elapsedSeconds, playerLevel);
+export function difficultyAt(elapsedSeconds: number): DifficultySnapshot {
+  const threat = threatAt(elapsedSeconds);
 
   const spawnInterval = clamp(
     DIFFICULTY.spawnIntervalStart * Math.pow(DIFFICULTY.spawnIntervalDecay, threat),
@@ -70,9 +71,29 @@ export function bossTimeFor(index: number): number {
   return DIFFICULTY.firstBossAt + index * DIFFICULTY.bossInterval;
 }
 
-/** True when a level-up should also spawn an elite. */
-export function shouldSpawnElite(level: number): boolean {
-  return level > 1 && level % DIFFICULTY.eliteEveryLevels === 0;
+/**
+ * Seconds between elite spawns at the given point in a run.
+ *
+ * Time-based for the same reason threat is: an elite is a big ember payout as
+ * much as a threat, and it must not arrive sooner just because the player is
+ * collecting well.
+ */
+export function eliteIntervalAt(elapsedSeconds: number): number {
+  const threat = threatAt(elapsedSeconds);
+  return clamp(
+    DIFFICULTY.eliteIntervalStart - threat * 5,
+    DIFFICULTY.eliteIntervalMin,
+    DIFFICULTY.eliteIntervalStart,
+  );
+}
+
+/**
+ * Which boss encounter number is due at this time (0 = none yet). Used to name
+ * the phase the player is in, so progress through a run is legible.
+ */
+export function bossPhaseAt(elapsedSeconds: number): number {
+  if (elapsedSeconds < DIFFICULTY.firstBossAt) return 0;
+  return Math.floor((elapsedSeconds - DIFFICULTY.firstBossAt) / DIFFICULTY.bossInterval) + 1;
 }
 
 /** Boss HP per stage scales with how many bosses have already been beaten. */

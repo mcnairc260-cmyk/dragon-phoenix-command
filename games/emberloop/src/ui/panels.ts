@@ -1,6 +1,6 @@
 import { ACHIEVEMENTS } from '../systems/Achievements';
 import { PALETTES } from '../systems/Cosmetics';
-import type { SaveData, Settings } from '../systems/Progression';
+import { CONTROL_MODE_LABEL, type SaveData, type Settings } from '../systems/Progression';
 import { UPGRADES_BY_ID, type UpgradeLevels } from '../upgrades/UpgradeDefs';
 import type { DraftedUpgrade } from '../upgrades/UpgradeDraft';
 import { esc, formatNumber, formatTime } from './Ui';
@@ -42,6 +42,10 @@ export function pausePanel(settings: Settings, build: UpgradeLevels): string {
       <h1>Paused</h1>
       ${buildChips(build)}
       <div class="toggle-list">
+        <button class="toggle" data-action="control">
+          <span>Controls<span class="toggle__hint">${esc(CONTROL_HINT[settings.controlMode])}</span></span>
+          <span class="toggle__state toggle__state--on">${esc(CONTROL_MODE_LABEL[settings.controlMode])}</span>
+        </button>
         ${toggle('sound', 'Sound effects', settings.sound)}
         ${toggle('music', 'Music', settings.music)}
         ${toggle('haptics', 'Haptics', settings.haptics)}
@@ -165,11 +169,11 @@ export function howToPanel(): string {
       <div class="eyebrow">How to fly</div>
       <h1>Emberloop</h1>
       <div class="ach-list">
-        ${howRow('👆', 'Drag anywhere', 'The phoenix flies toward your finger. You never cover it with your hand.')}
-        ${howRow('💎', 'Collect embers', 'Shards are score, currency and experience. Level up to draft an upgrade.')}
+        ${howRow('👆', 'Drag anywhere', 'The phoenix mirrors your finger from wherever it already is — rest your thumb low, away from the action, so you can always see it. Other control styles are in the pause menu.')}
+        ${howRow('💎', 'Collect embers, fast', 'Shards are score, currency and experience. Gather them in quick succession to build an Ember Chain for bonus XP — levelling never makes the enemies harder.')}
         ${howRow('🔥', 'Graze danger', 'Near-misses build Heat. Heat multiplies everything — but it cools fast.')}
         ${howRow('☄', 'Release to burst', 'Holding charges the Phoenix Burst. Let go when it is full to clear the screen.')}
-        ${howRow('❤', 'Three lives', 'Every hit costs one and breaks your combo. The Ashborn wakes at three minutes.')}
+        ${howRow('❤', 'Three lives', 'Every hit costs one and breaks your combo. The Ashborn wakes at 80 seconds — felling it restores a life.')}
       </div>
       <button class="btn btn--primary" data-action="close">Got it</button>
     </div>`;
@@ -186,7 +190,14 @@ function howRow(icon: string, name: string, desc: string): string {
     </div>`;
 }
 
-function toggle(key: keyof Settings, label: string, on: boolean): string {
+/** One-line explanation of what each control mode does, shown under the label. */
+const CONTROL_HINT: Record<string, string> = {
+  relative: 'Drag from anywhere — your thumb never covers the phoenix',
+  joystick: 'Touch plants a stick; push to steer',
+  absolute: 'The phoenix flies to your fingertip',
+};
+
+function toggle(key: 'sound' | 'music' | 'haptics' | 'reducedMotion', label: string, on: boolean): string {
   return `
     <button class="toggle" data-action="toggle" data-key="${esc(key)}" data-on="${on}">
       <span>${esc(label)}</span>
