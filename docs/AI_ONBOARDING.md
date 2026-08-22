@@ -56,10 +56,15 @@ dragon-phoenix-command/
 │   └── AI_ONBOARDING.md    # This file
 ├── brand/                  # Brand bible, story, lore
 ├── youtube/                # Strategy, backlog, scripts, asset log
-└── opportunity-radar/      # Opportunity Radar MVP — self-contained React/TS/Vite sub-app
-                            # (founder-approved framework exception, 2026-07-29; the root
-                            # site's zero-dependency rule still applies outside this folder.
-                            # See docs/OPPORTUNITY_RADAR_MVP.md + PROJECT_CONTEXT §16.)
+├── opportunity-radar/      # Opportunity Radar MVP — self-contained React/TS/Vite sub-app
+│                           # (founder-approved framework exception, 2026-07-29; the root
+│                           # site's zero-dependency rule still applies outside this folder.
+│                           # See docs/OPPORTUNITY_RADAR_MVP.md + PROJECT_CONTEXT §16.)
+└── careerforge/            # CareerForge MVP — self-contained Next.js/TS/Prisma sub-app
+                            # (founder-approved framework exception, 2026-08-22). The first
+                            # sub-app with a database and server-side state; it is NOT part
+                            # of the root Vercel deployment. See careerforge/README.md +
+                            # PROJECT_CONTEXT §18.
 ```
 
 ### 2.2 The web app (current state)
@@ -87,7 +92,7 @@ dragon-phoenix-command/
 
 The codebase is intentionally tiny. Match it; don't "professionalize" it uninvited.
 
-1. **No frameworks, no build step, no dependencies** unless the founder approves the change explicitly. The Blueprint's development philosophy is law: *"Never over-engineer. Validate ideas quickly. Keep systems modular."* A React migration, bundler, or `node_modules` tree is a founder-level decision, not a refactor.
+1. **No frameworks, no build step, no dependencies** unless the founder approves the change explicitly. Two scoped exceptions exist — `opportunity-radar/` and `careerforge/` — and neither licenses dependencies anywhere else. The Blueprint's development philosophy is law: *"Never over-engineer. Validate ideas quickly. Keep systems modular."* A React migration, bundler, or `node_modules` tree is a founder-level decision, not a refactor.
 2. **Match existing style:** 2-space indent, single quotes avoided in HTML/CSS (existing code uses a compact, pragmatic style — read it and mirror it), terse class names, CSS custom properties in `:root` for all colors, mobile-first responsive (`@media(max-width:560px)`).
 3. **All colors via CSS variables.** Never hard-code a hex in a rule; add to `:root` if genuinely new. (Palette itself is contested — §8.1.)
 4. **Secrets stay server-side.** Only `api/*` functions may touch `process.env`. Never move the API key, and never commit keys, tokens, or personal data. Note the existing client-side system prompt is a known privacy issue — don't replicate the pattern.

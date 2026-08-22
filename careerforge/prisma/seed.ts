@@ -9,8 +9,13 @@
  * Idempotent — re-running replaces the demo user's data and leaves every other
  * account untouched.
  */
-import { PrismaClient, type Prisma } from "@prisma/client";
+import { PrismaClient, type MaterialKind, type Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
+
+import { analyzeHeuristically } from "../src/lib/ai/heuristics";
+import { buildMaterial } from "../src/lib/ai/templates";
+import { analysisResultSchema } from "../src/lib/ai/schemas";
+import type { CandidateContext, JobContext } from "../src/lib/ai/types";
 
 const prisma = new PrismaClient();
 
@@ -639,8 +644,175 @@ async function main() {
     });
   }
 
+  // ------------------------------------------------- analyses and materials
+  //
+  // The demo is only useful if every screen has something on it: without a
+  // stored analysis, Today shows no ranked opportunities and analytics has no
+  // average fit score. These are produced by the same deterministic heuristics
+  // the mock provider uses, so the demo matches what a real run produces.
+
+  const profileForContext = await prisma.candidateProfile.findUniqueOrThrow({
+    where: { id: profile.id },
+    include: {
+      skills: true,
+      employments: true,
+      educations: true,
+      accomplishments: { include: { employment: true } },
+    },
+  });
+
+  const candidate: CandidateContext = {
+    fullName: profileForContext.fullName,
+    headline: profileForContext.headline,
+    email: profileForContext.email,
+    phone: profileForContext.phone,
+    location: profileForContext.location,
+    links: [
+      profileForContext.linkedIn
+        ? { label: "LinkedIn", url: profileForContext.linkedIn }
+        : null,
+      profileForContext.github
+        ? { label: "GitHub", url: profileForContext.github }
+        : null,
+    ].filter((l): l is { label: string; url: string } => l !== null),
+    targetRoles: profileForContext.targetRoles,
+    preferredLocations: profileForContext.preferredLocations,
+    workMode: profileForContext.workMode,
+    desiredSalaryMin: profileForContext.desiredSalaryMin,
+    desiredSalaryMax: profileForContext.desiredSalaryMax,
+    salaryCurrency: profileForContext.salaryCurrency,
+    masterResume: profileForContext.masterResume,
+    skills: profileForContext.skills.map((s) => ({
+      name: s.name,
+      category: s.category,
+      level: s.level,
+      yearsExperience: s.yearsExperience,
+    })),
+    employments: profileForContext.employments.map((e) => ({
+      company: e.company,
+      title: e.title,
+      location: e.location,
+      startDate: e.startDate.toISOString().slice(0, 10),
+      endDate: e.endDate ? e.endDate.toISOString().slice(0, 10) : null,
+      isCurrent: e.isCurrent,
+      summary: e.summary,
+    })),
+    educations: profileForContext.educations.map((e) => ({
+      institution: e.institution,
+      credential: e.credential,
+      field: e.field,
+      endDate: e.endDate ? e.endDate.toISOString().slice(0, 10) : null,
+      notes: e.notes,
+    })),
+    accomplishments: profileForContext.accomplishments.map((a) => ({
+      id: a.id,
+      title: a.title,
+      situation: a.situation,
+      task: a.task,
+      action: a.action,
+      result: a.result,
+      metric: a.metric,
+      skillTags: a.skillTags,
+      categories: a.categories,
+      company: a.employment?.company ?? null,
+    })),
+  };
+
+  const stored = await prisma.jobOpportunity.findMany({
+    where: { userId: user.id },
+  });
+
+  // One job is deliberately left unanalysed so the demo also shows the
+  // "not analysed yet" state and the focus task that offers to fix it.
+  const unanalysed = new Set(["Harbor Analytics"]);
+
+  for (const job of stored) {
+    if (unanalysed.has(job.company)) continue;
+
+    const jobContext: JobContext = {
+      title: job.title,
+      company: job.company,
+      location: job.location,
+      workMode: job.workMode,
+      salaryText: job.salaryText,
+      salaryMin: job.salaryMin,
+      salaryMax: job.salaryMax,
+      description: job.description,
+    };
+
+    const result = analysisResultSchema.parse(
+      analyzeHeuristically(candidate, jobContext),
+    );
+
+    await prisma.jobAnalysis.create({
+      data: {
+        jobId: job.id,
+        fitScore: result.fitScore,
+        recommendedPriority: result.recommendedPriority,
+        explanation: result.explanation,
+        requiredSkills:
+          result.requiredSkills as unknown as Prisma.InputJsonValue,
+        preferredSkills:
+          result.preferredSkills as unknown as Prisma.InputJsonValue,
+        matchedSkills: result.matchedSkills as unknown as Prisma.InputJsonValue,
+        missingQualifications:
+          result.missingQualifications as unknown as Prisma.InputJsonValue,
+        strengths: result.strengths as unknown as Prisma.InputJsonValue,
+        concerns: result.concerns as unknown as Prisma.InputJsonValue,
+        provider: "mock",
+        model: "deterministic-heuristics-v1",
+        // A placeholder hash: the demo should re-analyse on demand rather than
+        // serve a cached result whose inputs it cannot vouch for.
+        inputHash: "seeded",
+      },
+    });
+
+    await prisma.activity.create({
+      data: {
+        userId: user.id,
+        jobId: job.id,
+        type: "ANALYSIS_RUN",
+        message: `Fit analysed: ${result.fitScore}/100`,
+        createdAt: job.lastActivityAt,
+      },
+    });
+
+    // Two jobs get drafted materials so the workspace, the export, and the
+    // "ready to send" analytics finding all have something to show.
+    const withMaterials: Record<string, MaterialKind[]> = {
+      "Meridian Financial": [
+        "SUMMARY",
+        "COVER_LETTER",
+        "RESUME_BULLETS",
+        "INTERVIEW_QUESTIONS",
+      ],
+      "Lumen Grid": ["SUMMARY", "COVER_LETTER"],
+    };
+
+    for (const kind of withMaterials[job.company] ?? []) {
+      const built = buildMaterial(kind, {
+        candidate,
+        job: jobContext,
+        analysis: result,
+      });
+
+      await prisma.applicationMaterial.create({
+        data: {
+          jobId: job.id,
+          kind,
+          generatedContent: built.content,
+          content: built.content,
+          sourceAccomplishmentIds: built.sourceAccomplishmentIds,
+          provider: "mock",
+          model: "deterministic-heuristics-v1",
+        },
+      });
+    }
+  }
+
+  const analysedCount = stored.length - unanalysed.size;
   console.log(
-    `Seeded demo account ${DEMO_EMAIL} with ${jobs.length} opportunities.`,
+    `Seeded demo account ${DEMO_EMAIL}: ${jobs.length} opportunities, ${analysedCount} analysed, materials drafted for 2.`,
   );
 }
 

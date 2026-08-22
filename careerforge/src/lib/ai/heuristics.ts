@@ -306,12 +306,21 @@ function normalize(value: string): string {
   return value.toLowerCase().trim();
 }
 
-/** Word-boundary match that survives punctuation like "Node.js" and "C++". */
+/**
+ * Word-boundary match that survives punctuation like "Node.js" and "C++".
+ *
+ * The boundaries are lookarounds rather than character classes because a class
+ * that excludes "." to stop "node" matching inside "node.js" also stops any
+ * term matching at the end of a sentence — "You will need PostgreSQL." would
+ * find nothing. The rule is narrower than that: a dot only continues a token
+ * when a letter or digit follows it.
+ */
 function mentions(haystack: string, term: string): boolean {
   const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(?:^|[^a-z0-9+#.])${escaped}(?:$|[^a-z0-9+#.])`, "i").test(
-    haystack,
-  );
+  return new RegExp(
+    `(?<![a-z0-9+#])(?<![a-z0-9]\\.)${escaped}(?![a-z0-9+#])(?!\\.[a-z0-9])`,
+    "i",
+  ).test(haystack);
 }
 
 /**

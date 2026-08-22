@@ -99,7 +99,7 @@ export default async function JobDetailPage({
             {job.company}
             {job.location ? (
               <span className="text-ink-subtle inline-flex items-center gap-1">
-                {" · "}
+                {"\u00A0· "}
                 <MapPin className="size-3" aria-hidden />
                 {job.location}
               </span>

@@ -104,7 +104,11 @@ export function MaterialsPanel({
       </div>
 
       <MaterialEditor
-        key={active}
+        // Remounting when the material appears is what gives the editor its
+        // correct initial value: without it the textarea keeps the empty
+        // string it was created with, and autosave writes that back over the
+        // draft that was just generated.
+        key={`${active}:${current?.id ?? "none"}`}
         jobId={jobId}
         kind={active}
         material={current}
@@ -145,10 +149,14 @@ function MaterialEditor({
   function generate() {
     startTransition(async () => {
       const result = await generateMaterialAction(jobId, kind);
-      toast(
-        result.ok ? `${MATERIAL_LABEL[kind]} generated.` : result.error,
-        result.ok ? "success" : "error",
-      );
+      if (result.ok) {
+        // Regenerating keeps the same row, so the remount key does not change
+        // and the editor has to be told about the new text explicitly.
+        setContent(result.data.content);
+        toast(`${MATERIAL_LABEL[kind]} generated.`, "success");
+      } else {
+        toast(result.error, "error");
+      }
     });
   }
 

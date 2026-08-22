@@ -44,121 +44,128 @@ function storedAnalysis(row: unknown): AnalysisResult | null {
 export async function generateMaterialAction(
   jobId: string,
   kind: string,
-): Promise<ActionResult<{ kind: MaterialKind }>> {
-  return guarded("generateMaterial", async () => {
-    const user = await requireUserOrThrow();
-    if (!isMaterialKind(kind)) return fail("That material type is not valid.");
+): Promise<ActionResult<{ kind: MaterialKind; content: string }>> {
+  // The generated text is returned, not just persisted: the editor holds the
+  // draft in local state, and handing it the content directly is what keeps
+  // the textarea in step with what was just written.
+  return guarded<{ kind: MaterialKind; content: string }>(
+    "generateMaterial",
+    async () => {
+      const user = await requireUserOrThrow();
+      if (!isMaterialKind(kind))
+        return fail("That material type is not valid.");
 
-    const job = await prisma.jobOpportunity.findFirst({
-      where: { id: jobId, userId: user.id },
-      include: { analysis: true },
-    });
-    if (!job) return fail("That opportunity no longer exists.");
-
-    const candidate = await buildCandidateContext(user.id);
-    if (!candidate) {
-      return fail(
-        "Create your profile first — generated material is assembled from it and nothing else.",
-      );
-    }
-
-    const limit = checkRateLimit(`material:${user.id}`);
-    if (!limit.allowed) {
-      return fail(
-        `You have hit the generation limit. Try again in ${describeRetryAfter(limit.retryAfterSeconds)}.`,
-      );
-    }
-
-    const provider = getAiProvider();
-    const analysis = job.analysis
-      ? storedAnalysis({
-          fitScore: job.analysis.fitScore,
-          recommendedPriority: job.analysis.recommendedPriority,
-          explanation: job.analysis.explanation,
-          requiredSkills: job.analysis.requiredSkills,
-          preferredSkills: job.analysis.preferredSkills,
-          matchedSkills: job.analysis.matchedSkills,
-          missingQualifications: job.analysis.missingQualifications,
-          strengths: job.analysis.strengths,
-          concerns: job.analysis.concerns,
-        })
-      : null;
-
-    let result;
-    try {
-      result = await provider.generateMaterial({
-        candidate,
-        job: toJobContext(job),
-        kind,
-        analysis,
+      const job = await prisma.jobOpportunity.findFirst({
+        where: { id: jobId, userId: user.id },
+        include: { analysis: true },
       });
-    } catch (error) {
-      if (error instanceof AiProviderError) return fail(error.message);
-      console.error("[generateMaterial] provider failed");
-      return fail("The draft could not be generated. Try again.");
-    }
+      if (!job) return fail("That opportunity no longer exists.");
 
-    // A provider — mock or model — can only claim provenance for the user's
-    // own accomplishments. Anything else is dropped rather than displayed.
-    const ownIds = new Set(candidate.accomplishments.map((a) => a.id));
-    const sourceAccomplishmentIds = result.sourceAccomplishmentIds.filter(
-      (id) => ownIds.has(id),
-    );
+      const candidate = await buildCandidateContext(user.id);
+      if (!candidate) {
+        return fail(
+          "Create your profile first — generated material is assembled from it and nothing else.",
+        );
+      }
 
-    const existing = await prisma.applicationMaterial.findUnique({
-      where: { jobId_kind: { jobId: job.id, kind } },
-      select: { id: true, isEdited: true },
-    });
+      const limit = checkRateLimit(`material:${user.id}`);
+      if (!limit.allowed) {
+        return fail(
+          `You have hit the generation limit. Try again in ${describeRetryAfter(limit.retryAfterSeconds)}.`,
+        );
+      }
 
-    await prisma.$transaction(async (tx) => {
-      await tx.applicationMaterial.upsert({
-        where: { jobId_kind: { jobId: job.id, kind } },
-        create: {
-          jobId: job.id,
+      const provider = getAiProvider();
+      const analysis = job.analysis
+        ? storedAnalysis({
+            fitScore: job.analysis.fitScore,
+            recommendedPriority: job.analysis.recommendedPriority,
+            explanation: job.analysis.explanation,
+            requiredSkills: job.analysis.requiredSkills,
+            preferredSkills: job.analysis.preferredSkills,
+            matchedSkills: job.analysis.matchedSkills,
+            missingQualifications: job.analysis.missingQualifications,
+            strengths: job.analysis.strengths,
+            concerns: job.analysis.concerns,
+          })
+        : null;
+
+      let result;
+      try {
+        result = await provider.generateMaterial({
+          candidate,
+          job: toJobContext(job),
           kind,
-          generatedContent: result.content,
-          content: result.content,
-          sourceAccomplishmentIds,
-          provider: provider.name,
-          model: provider.model,
-        },
-        update: {
-          generatedContent: result.content,
-          content: result.content,
-          isEdited: false,
-          sourceAccomplishmentIds,
-          provider: provider.name,
-          model: provider.model,
-        },
+          analysis,
+        });
+      } catch (error) {
+        if (error instanceof AiProviderError) return fail(error.message);
+        console.error("[generateMaterial] provider failed");
+        return fail("The draft could not be generated. Try again.");
+      }
+
+      // A provider — mock or model — can only claim provenance for the user's
+      // own accomplishments. Anything else is dropped rather than displayed.
+      const ownIds = new Set(candidate.accomplishments.map((a) => a.id));
+      const sourceAccomplishmentIds = result.sourceAccomplishmentIds.filter(
+        (id) => ownIds.has(id),
+      );
+
+      const existing = await prisma.applicationMaterial.findUnique({
+        where: { jobId_kind: { jobId: job.id, kind } },
+        select: { id: true, isEdited: true },
       });
 
-      await tx.activity.create({
-        data: {
-          userId: user.id,
-          jobId: job.id,
-          type: "MATERIAL_GENERATED",
-          message: `${existing ? "Regenerated" : "Generated"} ${MATERIAL_LABEL[kind].toLowerCase()}`,
-        },
+      await prisma.$transaction(async (tx) => {
+        await tx.applicationMaterial.upsert({
+          where: { jobId_kind: { jobId: job.id, kind } },
+          create: {
+            jobId: job.id,
+            kind,
+            generatedContent: result.content,
+            content: result.content,
+            sourceAccomplishmentIds,
+            provider: provider.name,
+            model: provider.model,
+          },
+          update: {
+            generatedContent: result.content,
+            content: result.content,
+            isEdited: false,
+            sourceAccomplishmentIds,
+            provider: provider.name,
+            model: provider.model,
+          },
+        });
+
+        await tx.activity.create({
+          data: {
+            userId: user.id,
+            jobId: job.id,
+            type: "MATERIAL_GENERATED",
+            message: `${existing ? "Regenerated" : "Generated"} ${MATERIAL_LABEL[kind].toLowerCase()}`,
+          },
+        });
+
+        await tx.jobOpportunity.update({
+          where: { id: job.id },
+          data: {
+            lastActivityAt: new Date(),
+            status:
+              job.status === "DISCOVERED" || job.status === "EVALUATING"
+                ? "PREPARING"
+                : job.status,
+          },
+        });
       });
 
-      await tx.jobOpportunity.update({
-        where: { id: job.id },
-        data: {
-          lastActivityAt: new Date(),
-          status:
-            job.status === "DISCOVERED" || job.status === "EVALUATING"
-              ? "PREPARING"
-              : job.status,
-        },
-      });
-    });
+      revalidatePath(`/jobs/${job.id}`);
+      revalidatePath("/today");
+      revalidatePath("/jobs");
 
-    revalidatePath(`/jobs/${job.id}`);
-    revalidatePath("/today");
-    revalidatePath("/jobs");
-
-    return ok({ kind });
-  });
+      return ok({ kind, content: result.content });
+    },
+  );
 }
 
 export async function saveMaterialAction(

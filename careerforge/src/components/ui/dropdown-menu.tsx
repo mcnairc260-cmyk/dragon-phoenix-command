@@ -12,11 +12,15 @@ export const DropdownMenuGroup = DropdownMenuPrimitive.Group;
 export const DropdownMenuContent = React.forwardRef<
   React.ComponentRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
+>(({ className, sideOffset = 4, collisionPadding = 12, ...props }, ref) => (
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
+      // The account menu sits at the very bottom of the sidebar, where a menu
+      // that only flips can still land with its last item under the viewport
+      // edge. Padding the collision box keeps every item clickable.
+      collisionPadding={collisionPadding}
       className={cn(
         "bg-surface-raised border-line text-ink z-50 min-w-40 overflow-hidden rounded-md border p-1 shadow-lg",
         className,
