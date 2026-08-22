@@ -9,7 +9,12 @@ export function Card({
   return (
     <div
       className={cn(
-        "bg-surface border-line rounded-lg border shadow-sm",
+        // min-w-0 is load-bearing: a grid or flex item defaults to
+        // min-width:auto, so a card containing `truncate` text (which is
+        // white-space:nowrap, and therefore has a min-content width of the
+        // whole untruncated string) would push its container wider than the
+        // viewport instead of letting the text ellipsise.
+        "bg-surface border-line min-w-0 rounded-lg border shadow-sm",
         className,
       )}
       {...props}
