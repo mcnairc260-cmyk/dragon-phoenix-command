@@ -56,11 +56,18 @@ dragon-phoenix-command/
 │   └── AI_ONBOARDING.md    # This file
 ├── brand/                  # Brand bible, story, lore
 ├── youtube/                # Strategy, backlog, scripts, asset log
-└── opportunity-radar/      # Opportunity Radar MVP — self-contained React/TS/Vite sub-app
-                            # (founder-approved framework exception, 2026-07-29; the root
-                            # site's zero-dependency rule still applies outside this folder.
-                            # See docs/OPPORTUNITY_RADAR_MVP.md + PROJECT_CONTEXT §16.)
+├── opportunity-radar/      # Opportunity Radar MVP — self-contained React/TS/Vite sub-app
+│                           # (founder-approved framework exception, 2026-07-29; the root
+│                           # site's zero-dependency rule still applies outside this folder.
+│                           # See docs/OPPORTUNITY_RADAR_MVP.md + PROJECT_CONTEXT §16.)
+└── games/emberloop/        # EMBERLOOP — self-contained Vite/TS/Phaser 3 mobile game + PWA
+                            # (founder-approved framework exception, 2026-08-16 — the second
+                            # such sub-app. Built and tested, NOT deployed; deploying it is
+                            # Tier 3. See games/emberloop/README.md + GAME_DESIGN.md and
+                            # PROJECT_CONTEXT §18.)
 ```
+
+**The sub-app rule** (established by the two exceptions above): a sub-app in its own folder may carry its own toolchain *when the founder has approved it for that app*; the root site (`index.html`, `api/`, `vercel.json`, root `package.json`) stays vanilla and zero-dependency regardless. Adding a build step to the **root** Vercel deployment is still a founder-level decision, not a consequence of a sub-app existing.
 
 ### 2.2 The web app (current state)
 
