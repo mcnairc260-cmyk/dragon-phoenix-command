@@ -29,5 +29,20 @@ mcs -langversion:7.2 -target:library \
   "$ROOT/Assets/BREAKPOINT/Runtime/Input/"*.cs \
   "$ROOT/Assets/BREAKPOINT/Runtime/UI/"*.cs
 
+echo "== shape-checking the play-mode tests =="
+# These can never run here — they need a player loop — but compiling them stops
+# a syntax error sitting undiscovered until someone opens the editor.
+mcs -langversion:7.2 -target:library \
+  -r:"$OUT/Breakpoint.Core.dll" \
+  -out:"$OUT/Breakpoint.Tests.PlayMode.dll" \
+  "$ROOT/tools/compile-check/UnityApiStub.cs" \
+  "$ROOT/tools/compile-check/UnityTestToolsStub.cs" \
+  "$ROOT/tools/parity/NUnitShim.cs" \
+  "$ROOT/Assets/BREAKPOINT/Runtime/Rendering/"*.cs \
+  "$ROOT/Assets/BREAKPOINT/Runtime/Presentation/"*.cs \
+  "$ROOT/Assets/BREAKPOINT/Runtime/Input/"*.cs \
+  "$ROOT/Assets/BREAKPOINT/Runtime/UI/"*.cs \
+  "$ROOT/Assets/BREAKPOINT/Tests/PlayMode/"*.cs
+
 echo
 echo "shape check passed — this is not a Unity build"

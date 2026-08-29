@@ -226,7 +226,7 @@ still compared exactly.
 
 ### Executed, passing
 
-`./tools/parity/run-tests.sh` — **86 tests, 86 passed, 0 failed.**
+`./tools/parity/run-tests.sh` — **93 tests, 93 passed, 0 failed.**
 
 | Suite | Tests | What it covers |
 | --- | --- | --- |
@@ -236,6 +236,8 @@ still compared exactly.
 | `ShotRecordTests` | contact graph, rail flags, jaw separation, scratch, replay | |
 | `PresentationMathTests` | render-frame conversion, aiming ray | |
 | `TableMeshTests` | triangulation, bed area, hole coverage, cushion nose alignment, winding | |
+| `DemonstrationShotTests` | one shot producing strike, contact, cushion, pocket and rest; spin proven to alter the trajectory | |
+| `AllocationTests` | zero steady-state allocation, bounded cold-break allocation | |
 
 The TypeScript reference was re-validated after the changes described in §8:
 `tsc -b --noEmit` clean, `eslint .` clean, **123 tests passing**, production
@@ -244,8 +246,9 @@ build succeeds.
 ### Executed, passing — but weaker than it sounds
 
 `./tools/compile-check/run.sh` compiles `Runtime/Rendering`,
-`Runtime/Presentation`, `Runtime/Input` and `Runtime/UI` against a hand-written
-stub of the Unity API (`tools/compile-check/UnityApiStub.cs`).
+`Runtime/Presentation`, `Runtime/Input`, `Runtime/UI` and the play-mode tests
+against a hand-written stub of the Unity API
+(`tools/compile-check/UnityApiStub.cs`).
 
 **This is not a Unity build and must not be read as one.** It proves the code
 parses, that every type and member it names exists with a compatible shape,
@@ -267,7 +270,11 @@ says the Unity-facing code is at least self-consistent, not that it is right.
 - **The Unity edit-mode run.** The edit-mode tests pass under the standalone
   Mono harness. They have not been run through the Unity Test Framework.
 - **All play-mode tests.** `PresentationContractTests` requires a player loop
-  and has never been executed.
+  and has never been executed — including
+  `DemonstrationShotRunsThroughTheBridge`, which is the one that would prove a
+  complete shot runs through Unity. Its edit-mode twin,
+  `DemonstrationShotTests`, *has* been executed and passes, so the shot itself
+  is verified; what is unverified is the bridge carrying it.
 - **The scene.** `Breakpoint.unity` has never been opened.
 - **Any visual result.** No frame of this project has been rendered. Nothing in
   `BREAKPOINT_VISUAL_STYLE.md` has been seen.
@@ -341,7 +348,68 @@ settings above are the ones that then need changing.
 
 ---
 
-## 10. Mobile targets
+## 10. Platform packages and settings
+
+The manifest is deliberately minimal — every package in it is used. Adding one
+"for later" costs build size and a dependency that has to be kept current.
+
+| Package | Why it is there |
+| --- | --- |
+| `com.unity.render-pipelines.universal` | The rendering pipeline the art direction assumes |
+| `com.unity.ugui` | Canvas, Image, Text, Button — the UI foundation |
+| `com.unity.test-framework` | Edit-mode and play-mode tests |
+| `com.unity.modules.physics` | **Only** for the cloth trigger box and its raycast. No rigidbodies exist. |
+| `com.unity.modules.particlesystem` | Present for the VFX seam; nothing uses it yet |
+| `com.unity.modules.audio` | Present for the audio seam; nothing uses it yet |
+
+`com.unity.inputsystem` was **removed**. Phase A uses the legacy `Input` class
+deliberately — it handles mouse, touch and pen through one code path, which is
+the requirement — and leaving an unused package installed would have forced the
+project into "Both" input handling for no benefit. Migrating to the Input
+System is a later task with its own testing.
+
+### Per-platform settings
+
+Not committed, because `ProjectSettings.asset` is not committed (see §9). These
+are the settings to apply, listed rather than guessed at:
+
+**All platforms**
+- Colour space: **Linear**
+- Auto Graphics API: off; assign the URP asset in Graphics *and* in every
+  Quality level
+- Active Input Handling: **Input Manager (Old)**
+- Managed stripping level: Low, until there is a reason to raise it — the
+  simulation is reflection-free, so higher levels are viable later
+
+**iOS**
+- Minimum version: iOS 13 (matches the A12-and-later target)
+- Scripting backend: IL2CPP, ARM64
+- Target frame rate: set explicitly to 60 in code;
+  `Application.targetFrameRate` defaults to 30 on iOS
+- Orientation: portrait and portrait-upside-down, with landscape allowed —
+  the camera framing solves for both
+
+**Android**
+- Minimum API level: 26
+- Scripting backend: IL2CPP, ARM64 only (drop ARMv7)
+- Graphics APIs: Vulkan first, OpenGLES3 as fallback
+- Optimized Frame Pacing: on
+- Blit type: Auto
+
+**Web**
+- Secondary target, and the one with real caveats. WebGL has no multithreading
+  by default, so the simulation runs on the main thread — at the measured
+  throughput that is comfortable, but it has not been tested in a browser.
+- Compression: Brotli, with server headers configured; Gzip if not
+- Exception support: Explicitly Thrown Exceptions Only
+- Decompression fallback: on
+
+None of these has been applied or verified, because none of them can be
+without the editor.
+
+---
+
+## 11. Mobile targets
 
 The intended envelope, from the same requirements the TypeScript slice was
 hardened against:
@@ -356,13 +424,39 @@ the reference, where it was written *after* mobile screenshots showed a fixed
 framing cropping half the cloth. `OverviewFramingCoversTheTableInPortrait`
 asserts it — and has not been run.
 
-No performance claim is made for Unity. The TypeScript simulation runs at
-about 256× realtime warm (~33 µs per step, 0.065 ms of a 16.7 ms frame); the
-C# port has not been profiled, on a device or otherwise.
+### Measured performance and allocation
+
+Measured here, under Mono on this machine — **not** on a phone, and not through
+Unity's IL2CPP:
+
+| | |
+| --- | --- |
+| Full break, 879 steps to rest | 7.0 ms wall clock |
+| Per 120 Hz step | ~8 µs |
+| Realtime factor | ~1000× |
+| Steady-state allocation | **0 bytes** across 904 steps |
+| Cold break allocation | ~10 KB total, all of it event-list growth |
+
+The zero is asserted by `AllocationTests.AWarmedUpShotAllocatesNothing`, not
+merely observed. Every working buffer in `PhysicsWorld` is a reused field,
+every vector is a struct, and the batch solver copies bodies into pooled
+instances. That last part was a change made during this phase: the solver
+previously cloned a `BallBody` per body per relaxation pass, which cost about
+**85 KB per break** — the allocation audit §24 asked for found it, and pooling
+removed it with the parity fixtures proving the physics is bit-identical either
+side of the change.
+
+There is no LINQ anywhere in the simulation. The only `ToArray` calls are in
+`ShotRecord.Summarise` (once per shot) and `TableGeometry.Create` (once at
+startup).
+
+**No claim is made about frame rate on a device.** These numbers are the
+simulation only, on a desktop runtime, with no rendering. The 60 fps target on
+real phone hardware remains unverified, as it did after Phase 1.
 
 ---
 
-## 11. What was deliberately not done
+## 12. What was deliberately not done
 
 Phase 2 has not been started. There are no WPA 8-ball rules, no turn or foul
 logic, no AI opponent, no progression, no cosmetics system, no multiplayer and

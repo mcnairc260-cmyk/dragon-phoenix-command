@@ -222,6 +222,17 @@ namespace UnityEngine
 
     public class BoxCollider : Collider { public Vector3 size { get; set; } }
 
+    /// <summary>
+    /// Present only so the play-mode test that asserts there are *no*
+    /// rigidbodies in the scene can name the type it is looking for.
+    /// Nothing in BREAKPOINT creates one.
+    /// </summary>
+    public class Rigidbody : Component
+    {
+        public bool isKinematic { get; set; }
+        public Vector3 velocity { get; set; }
+    }
+
     public class Texture : Object { public int anisoLevel { get; set; } }
 
     public enum TextureFormat { RGBA32 }

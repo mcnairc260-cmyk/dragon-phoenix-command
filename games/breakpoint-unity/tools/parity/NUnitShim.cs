@@ -40,6 +40,16 @@ namespace NUnit.Framework
         }
     }
 
+    [AttributeUsage(AttributeTargets.Method)]
+    public sealed class SetUpAttribute : Attribute
+    {
+    }
+
+    [AttributeUsage(AttributeTargets.Method)]
+    public sealed class TearDownAttribute : Attribute
+    {
+    }
+
     /// <summary>Thrown when an assertion fails. The runner catches it.</summary>
     public sealed class AssertionException : Exception
     {
@@ -83,6 +93,23 @@ namespace NUnit.Framework
                 throw new AssertionException(
                     "expected " + expected.ToString("R") + " +/- " + tolerance.ToString("R") +
                     ", was " + actual.ToString("R") + Describe(message));
+            }
+        }
+
+        public static void AreSame(object expected, object actual, string message = "")
+        {
+            if (!ReferenceEquals(expected, actual))
+            {
+                throw new AssertionException("expected the same instance" + Describe(message));
+            }
+        }
+
+        public static void AreEqual(long expected, long actual, string message = "")
+        {
+            if (expected != actual)
+            {
+                throw new AssertionException(
+                    "expected " + expected + ", was " + actual + Describe(message));
             }
         }
 

@@ -27,7 +27,7 @@ a table coordinate. There are no rigidbodies.
 Neither of these needs Unity, a licence, or a graphics device.
 
 ```sh
-./tools/parity/run-tests.sh      # 86 tests: physics, determinism, parity, geometry
+./tools/parity/run-tests.sh      # 93 tests: physics, determinism, parity, geometry, allocation
 ./tools/compile-check/run.sh     # shape-check the Unity-facing code (NOT a Unity build)
 ```
 

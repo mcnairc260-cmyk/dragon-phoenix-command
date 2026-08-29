@@ -143,6 +143,114 @@ namespace Breakpoint.Tests.PlayMode
         }
 
         /// <summary>
+        /// The whole point of the migration, end to end: a shot composed
+        /// through the intent API, resolved by the custom simulation, and
+        /// displayed by Unity — with the balls arriving where the simulation
+        /// says they are and nowhere else.
+        ///
+        /// The same shot, and the same assertions about what it produces, run
+        /// in the edit-mode suite as DemonstrationShotTests. That version has
+        /// actually been executed; this one exists so the *bridge* is covered
+        /// the first time this project is opened in an editor.
+        /// </summary>
+        [UnityTest]
+        public IEnumerator DemonstrationShotRunsThroughTheBridge()
+        {
+            yield return null;
+
+            PhysicsWorld world = _game.Runner.World;
+            BallBody cue = world.CueBall;
+
+            // Clear the rack down to one object ball, so the shot is the
+            // straight pot the edit-mode test describes rather than a break.
+            BallBody target = null;
+            for (int i = 0; i < world.Balls.Count; i++)
+            {
+                BallBody ball = world.Balls[i];
+                if (ball == cue) continue;
+                if (ball.Number == 9) target = ball;
+                else ball.Pocketed = true;
+            }
+            Assert.IsNotNull(target, "the 9 ball is missing from the rack");
+
+            cue.Position = DemonstrationCueStart;
+            cue.Resting = true;
+            target.Position = DemonstrationObjectStart;
+            target.Resting = true;
+
+            // Aim through the intent API, exactly as the input layer would.
+            _game.SetTip(0.35f, 0f);
+            _game.AimAt(GhostBallPoint(world));
+
+            int ballContacts = 0;
+            int railContacts = 0;
+            int pockets = 0;
+            _game.Runner.Observed += e =>
+            {
+                if (e.Type == SimEventType.BallBall) ballContacts++;
+                else if (e.Type == SimEventType.Rail) railContacts++;
+                else if (e.Type == SimEventType.Pocket) pockets++;
+            };
+
+            Assert.IsTrue(_game.Fire(0.42f), "the shot was refused");
+
+            for (int frame = 0; frame < 900 && _game.Runner.IsRunning; frame++) yield return null;
+
+            Assert.IsFalse(_game.Runner.IsRunning, "the table never settled");
+            Assert.GreaterOrEqual(ballContacts, 1, "no ball-ball contact was observed");
+            Assert.GreaterOrEqual(railContacts, 1, "no cushion contact was observed");
+            Assert.GreaterOrEqual(pockets, 1, "nothing was potted");
+            Assert.IsTrue(target.Pocketed, "the object ball was not potted");
+            Assert.IsFalse(world.Corrupted);
+
+            for (int i = 0; i < world.Balls.Count; i++)
+            {
+                Assert.IsTrue(world.Balls[i].IsFinite, "a ball finished with a non-finite value");
+            }
+
+            // And Unity is showing what the simulation decided.
+            for (int i = 0; i < _game.Presenters.Count; i++)
+            {
+                BallPresenter presenter = _game.Presenters[i];
+                if (presenter.Ball.Pocketed) continue;
+
+                Vector3 expected = TableFrame.Plane(
+                    presenter.Ball.Position, (float)PhysicsConstants.BallRadius);
+                Assert.AreEqual(expected.x, presenter.transform.position.x, 1e-4f);
+                Assert.AreEqual(expected.z, presenter.transform.position.z, 1e-4f);
+            }
+
+            // A second shot can begin immediately.
+            Assert.IsTrue(_game.Fire(0.3f), "a second shot was refused after the table settled");
+        }
+
+        private static readonly Vec2 DemonstrationCueStart = new Vec2(0.515, 0.020);
+        private static readonly Vec2 DemonstrationObjectStart = new Vec2(1.10, 0.50);
+
+        /// <summary>
+        /// The ghost-ball point that sends the object ball at the corner
+        /// pocket. Derived rather than hard-coded, so a change to the table
+        /// geometry moves the aim with it instead of silently breaking the test.
+        /// </summary>
+        private static Vec2 GhostBallPoint(PhysicsWorld world)
+        {
+            Pocket corner = null;
+            foreach (Pocket p in world.Table.Pockets)
+            {
+                if (p.Id == "pocket-corner-rt") corner = p;
+            }
+            Assert.IsNotNull(corner);
+
+            double px = corner.Centre.X - DemonstrationObjectStart.X;
+            double py = corner.Centre.Y - DemonstrationObjectStart.Y;
+            double length = System.Math.Sqrt(px * px + py * py);
+
+            return new Vec2(
+                DemonstrationObjectStart.X - 2.0 * PhysicsConstants.BallRadius * px / length,
+                DemonstrationObjectStart.Y - 2.0 * PhysicsConstants.BallRadius * py / length);
+        }
+
+        /// <summary>
         /// The camera has to survive a phone. A portrait aspect must still frame
         /// the whole table when the shot is being watched — the failure this
         /// guards against showed up only in mobile screenshots the first time.

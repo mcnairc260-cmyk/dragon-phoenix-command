@@ -400,8 +400,7 @@ namespace Breakpoint.Simulation
                 if (c.B >= 0) AccumulateLoad(c.B, ref maxPerBody);
             }
 
-            _batchBefore.Clear();
-            for (int i = 0; i < _batchIndices.Count; i++) _batchBefore.Add(_balls[_batchIndices[i]].Clone());
+            SnapshotBatch(_batchBefore);
             double energyBefore = EnergyOf(_batchIndices);
             int eventsBefore = _events.Count;
 
@@ -411,8 +410,7 @@ namespace Breakpoint.Simulation
 
             for (int pass = 0; pass < MaxBatchPasses; pass++)
             {
-                _batchPre.Clear();
-                for (int i = 0; i < _batchIndices.Count; i++) _batchPre.Add(_balls[_batchIndices[i]].Clone());
+                SnapshotBatch(_batchPre);
 
                 _batchDeltas.Clear();
                 for (int i = 0; i < _batchIndices.Count; i++) _batchDeltas.Add(default(BodyDelta));
@@ -500,6 +498,30 @@ namespace Breakpoint.Simulation
             {
                 EmitContactEvent(contacts[i], _batchImpulses[i]);
                 RetireIfInert(contacts[i], _batchImpulses[i]);
+            }
+        }
+
+        /// <summary>
+        /// Copy the batch's bodies into a scratch list, reusing the
+        /// <see cref="BallBody"/> objects already in it.
+        ///
+        /// This is called once for the whole batch and again on every solver
+        /// pass, so cloning here would allocate bodies × passes objects per
+        /// simultaneous contact — and a break is nothing but simultaneous
+        /// contacts. Reusing the instances makes the whole step allocation-free
+        /// once the lists have grown, which is what keeps the collector out of
+        /// a 120 Hz loop on a phone.
+        ///
+        /// The list is only ever read back at indices below
+        /// <c>_batchIndices.Count</c>, so leaving stale entries beyond that is
+        /// safe and is what lets the buffer stay grown between steps.
+        /// </summary>
+        private void SnapshotBatch(List<BallBody> into)
+        {
+            while (into.Count < _batchIndices.Count) into.Add(new BallBody(0, 0, Vec2.Zero));
+            for (int i = 0; i < _batchIndices.Count; i++)
+            {
+                into[i].CopyStateFrom(_balls[_batchIndices[i]]);
             }
         }
 
