@@ -8,6 +8,38 @@ be verified in the environment this work was done in.
 
 ---
 
+## 0. Where this work lives
+
+Two branches, with a deliberate division:
+
+| Branch | What it is |
+| --- | --- |
+| `claude/breakpoint-phase-1-pool-1sjmmi` | The **historical Phase 1 implementation**, frozen at `b67701f` — the verified, hardened baseline. Preserved as the reference; not developed on. |
+| `claude/breakpoint-unity-migration-phase-a` | **This work.** Branched from `b67701f`, carrying Phase 1 unchanged plus the Unity migration. |
+
+`b67701f` is the baseline because it is the newest verified commit containing
+the *complete* Phase 1 implementation. `main` is one generation behind it: PR
+#14 merged the original Phase 1 (`62967b3`), but the validation-and-hardening
+pass never reached `main`. So `main` lacks the simultaneous-contact fix, the
+table containment rule, the mobile camera framing fix, the extended shot
+records, the 122-test suite and the CI workflow. Branching from `main` would
+have ported a physics engine with two known defects in it.
+
+The Unity commits were originally made on the Phase 1 branch, before the
+instruction arrived that they belonged on their own. They were moved by
+creating this branch at the same commits and reverting them forward on the
+Phase 1 branch — no history rewritten, no force-push, both commits still
+reachable from both branches. The Phase 1 branch's tree is now byte-identical
+to `b67701f` again.
+
+One consequence: the Phase 1 branch no longer carries the `AimPredictor`
+tangent-sign fix that the port discovered (§8). That fix lives here. It is an
+aiming-overlay defect that no physics reads and no parity fixture covers, so
+the reference branch sits at exactly the state it was verified in — which is
+what a reference branch should be.
+
+---
+
 ## 1. Why Unity
 
 The TypeScript/three.js implementation in `games/breakpoint/` is a complete,

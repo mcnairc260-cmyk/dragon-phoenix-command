@@ -8,6 +8,18 @@ this port is measured against, fixture by fixture.
 
 ---
 
+## Branches
+
+This project lives on `claude/breakpoint-unity-migration-phase-a`, branched
+from `b67701f` — the verified, hardened Phase 1 baseline, which is newer than
+what `main` carries.
+
+`claude/breakpoint-phase-1-pool-1sjmmi` is preserved as the historical Phase 1
+implementation and is not developed on. See
+`docs/BREAKPOINT_UNITY_MIGRATION.md` §0.
+
+---
+
 ## The one rule
 
 **Unity draws the game. It does not decide it.**

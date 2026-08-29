@@ -325,7 +325,9 @@ The other four: the `is-locked` class was applied to the wrong element so the co
 
 ## 21. BREAKPOINT — Unity migration, Phase A (2026-08-29)
 
-A founder-directed session began migrating BREAKPOINT from TypeScript/three.js to **Unity 6 + a custom deterministic C# physics engine**. New sub-project: `games/breakpoint-unity/`. Same branch, `claude/breakpoint-phase-1-pool-1sjmmi`. Full record: `games/breakpoint-unity/docs/BREAKPOINT_UNITY_MIGRATION.md`.
+A founder-directed session began migrating BREAKPOINT from TypeScript/three.js to **Unity 6 + a custom deterministic C# physics engine**. New sub-project: `games/breakpoint-unity/`. Full record: `games/breakpoint-unity/docs/BREAKPOINT_UNITY_MIGRATION.md`.
+
+**Branch structure, and why it matters.** The migration lives on `claude/breakpoint-unity-migration-phase-a`, branched from **`b67701f`** — the verified, hardened Phase 1 baseline. `claude/breakpoint-phase-1-pool-1sjmmi` is preserved as the frozen historical Phase 1 reference and is not developed on; its tree is byte-identical to `b67701f`. **`main` is one generation behind that baseline**: PR #14 merged the original Phase 1 (`62967b3`), but §20's validation-and-hardening pass never reached `main`, so `main` still lacks the simultaneous-contact fix, the table containment rule, the mobile camera framing fix, the extended shot records, the 122-test suite and the CI workflow. **A successor branching BREAKPOINT work from `main` would be starting from a physics engine with two known defects in it.** Getting §20 onto `main` is outstanding.
 
 **The three.js implementation was not deleted and must not be.** `games/breakpoint/` remains in the repository as the **physics oracle** — the reference the C# port is measured against. It was re-validated at the end of the session and is intact: typecheck clean, lint clean, 123 tests passing, production build clean. A successor who "tidies up" by removing it invalidates every parity fixture in the Unity project.
 
