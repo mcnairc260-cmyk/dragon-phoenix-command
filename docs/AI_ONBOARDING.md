@@ -60,11 +60,17 @@ dragon-phoenix-command/
 │                           # (founder-approved framework exception, 2026-07-29; the root
 │                           # site's zero-dependency rule still applies outside this folder.
 │                           # See docs/OPPORTUNITY_RADAR_MVP.md + PROJECT_CONTEXT §16.)
-└── games/emberloop/        # EMBERLOOP — self-contained Vite/TS/Phaser 3 mobile game + PWA
-                            # (founder-approved framework exception, 2026-08-16 — the second
-                            # such sub-app. Built and tested, NOT deployed; deploying it is
-                            # Tier 3. See games/emberloop/README.md + GAME_DESIGN.md and
-                            # PROJECT_CONTEXT §18.)
+├── games/emberloop/        # EMBERLOOP — self-contained Vite/TS/Phaser 3 mobile game + PWA
+│                           # (founder-approved framework exception, 2026-08-16 — the second
+│                           # such sub-app. Built and tested, NOT deployed; deploying it is
+│                           # Tier 3. See games/emberloop/README.md + GAME_DESIGN.md and
+│                           # PROJECT_CONTEXT §18.)
+└── games/breakpoint/       # BREAKPOINT — self-contained Vite/TS/three.js 3D pool game
+                            # (founder-approved framework exception, 2026-08-29 — the third
+                            # such sub-app. Phase 1 vertical slice: deterministic 120 Hz
+                            # physics + the full shot loop, no rules or multiplayer. Built,
+                            # tested and browser-verified, NOT deployed. See
+                            # games/breakpoint/README.md and PROJECT_CONTEXT §19.)
 ```
 
 **The sub-app rule** (established by the two exceptions above): a sub-app in its own folder may carry its own toolchain *when the founder has approved it for that app*; the root site (`index.html`, `api/`, `vercel.json`, root `package.json`) stays vanilla and zero-dependency regardless. Adding a build step to the **root** Vercel deployment is still a founder-level decision, not a consequence of a sub-app existing.
