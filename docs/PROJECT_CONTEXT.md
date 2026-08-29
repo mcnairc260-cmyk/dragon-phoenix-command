@@ -320,3 +320,35 @@ The other four: the `is-locked` class was applied to the wrong element so the co
 **Real-device testing did not happen.** Browser validation ran under SwiftShader software rendering, which proves correctness, layout and interaction but says nothing about frame rate. The 60 fps target on real phone hardware remains unverified, and the report says so rather than implying otherwise.
 
 **Phase 2 was not started.** No referee, no group assignment, no fouls, no ball-in-hand, no AI, no networking, no progression.
+
+---
+
+## 21. BREAKPOINT — Unity migration, Phase A (2026-08-29)
+
+A founder-directed session began migrating BREAKPOINT from TypeScript/three.js to **Unity 6 + a custom deterministic C# physics engine**. New sub-project: `games/breakpoint-unity/`. Same branch, `claude/breakpoint-phase-1-pool-1sjmmi`. Full record: `games/breakpoint-unity/docs/BREAKPOINT_UNITY_MIGRATION.md`.
+
+**The three.js implementation was not deleted and must not be.** `games/breakpoint/` remains in the repository as the **physics oracle** — the reference the C# port is measured against. It was re-validated at the end of the session and is intact: typecheck clean, lint clean, 123 tests passing, production build clean. A successor who "tidies up" by removing it invalidates every parity fixture in the Unity project.
+
+**The single most important architectural decision: Unity PhysX is not, and cannot become, the authoritative billiards simulation.** That is enforced structurally, not by convention. `Breakpoint.Simulation` and `Breakpoint.Geometry` both declare `"noEngineReferences": true` in their assembly definitions, so the code that decides where a ball goes cannot name `Rigidbody`, `Transform`, `Time.deltaTime` or `UnityEngine.Random` — the compiler stops it, not a reviewer. The only collider in the entire scene is a trigger box used to turn a screen tap into a table coordinate, and there are no rigidbodies at all. CI asserts the `noEngineReferences` flags directly, because if someone flips them every other check would still pass.
+
+**Everything authoritative is `double`.** Nothing was narrowed to `float` for convenience. `float` appears only where a position becomes a `Transform` or a `Mesh`, and nothing narrowed there is ever read back. The 120 Hz fixed timestep and its accumulator carry over unchanged; determinism is asserted across six frame rates by bit-identical fingerprints.
+
+**Cross-implementation parity is measured, not asserted.** 18 fixtures generated from the TypeScript oracle at 17 significant figures, replayed in C#. **Every fixture produces an identical event count and an identical event sequence, including 47 events through a full break** — the two implementations agree on what happened, in what order, to which balls, off which cushions, into which pockets. Numeric tolerances were set from measured divergence across all 113 recorded impulses, not guessed: worst absolute impulse error 5.4 × 10⁻⁵ N·s, worst final position error 0.016 mm — about 1/1800 of a ball radius. The `full-break` fixture is exempt from the *position* comparison only, because a 15-ball break amplifies micro-differences; its event stream is still compared exactly.
+
+**A defect was found in the oracle and fixed in both implementations.** `AimPredictor`'s 90-degree tangent line pointed backwards down the cue ball's own path. The existing TypeScript test asserted only perpendicularity, which does not pin the sign, so it survived. This is a defect in the *overlay*, not the simulation — no physics reads it and no fixture covers it — but it is recorded because an oracle that has been corrected should say so. Three further bugs were caught by new tests during the port: half the cushions were generated inside out, the bed triangulator returned nothing at all, and the cushion end caps were wound backwards.
+
+**Assumption added to the register:** that the founder's directive to migrate to "Unity 6 + custom deterministic C# physics" constitutes approval for Unity as a fourth toolchain exception, on the same basis as §16, §18 and §19. The Unity project is entirely self-contained in `games/breakpoint-unity/` and touches nothing else.
+
+**Honest verification status — this matters most for a successor.** Unity is **not installed in this environment and cannot be** (`dotnet` is unavailable and `builds.dotnet.microsoft.com` is blocked by the outbound proxy). So:
+
+- **Genuinely verified:** 86 C# tests passing under a standalone Mono harness — parity, physics behaviour, determinism, shot records, render-frame conversion, generated table geometry. This is real, and it covers all the authoritative code.
+- **Weakly verified:** the Unity-facing code (presentation, rendering, input, UI) compiles against a hand-written Unity API stub. That proves it parses and names only members that exist. It is **not** a Unity build and is not reported as one.
+- **Not verified at all:** the Unity compile, the Unity Test Framework run, every play-mode test, the scene, and any visual result whatsoever. **No frame of this project has ever been rendered.** The first task of the next session with a Unity install is to open it, compile it, and fix what that surfaces.
+
+**Second CI workflow added.** `.github/workflows/breakpoint-unity.yml` runs the Mono test suite, the shape check, and structural guardrails (the `noEngineReferences` flags, no `UnityEngine` usage in the authoritative assemblies, the oracle files still present). It does **not** run Unity: that needs a licensed editor image, and claiming a Unity result we did not produce would be worse than having no job at all.
+
+**Editor settings that cannot be set from here** are listed rather than guessed at in the migration doc §9 — Linear colour space, a URP asset, legacy Input Manager, Unity 6000.0.23f1. `ProjectSettings.asset` and `QualitySettings.asset` are deliberately absent: hand-writing them blind risks a project that will not open, and Unity regenerates them with defaults.
+
+**Four major visual decisions remain unanswered and are not implemented:** ember/magma rail glow, cue equipment detail (carbon grip, gold collar), the room/environment beyond the black void, and a dragon/phoenix motif in the 3D scene. A fifth is now on the list: **the DPA Brand Bible §5 palette and the approved BREAKPOINT reference sheet are not the same palette** — the master reads as fire (Ember `#FF6B2C`, Gold `#FFB300`, Cyan `#22D3EE`), the sheet reads as forged metal (Gold `#D4AF37`, Silver `#C0C0C0`, no ember, no cyan). The code follows the sheet, because the sheet is the approved BREAKPOINT artefact. Whether the master should be amended, whether BREAKPOINT is a documented exception, or whether they should converge is a founder decision and is recorded as unresolved in `BREAKPOINT_VISUAL_STYLE.md` §2.1.
+
+**Phase 2 was not started.** No WPA rules, no turn or foul logic, no AI, no progression, no cosmetics system, no multiplayer, no monetisation. `BreakpointTheme` is the seam a cosmetics system would attach to and nothing more. Nothing was published, deployed, or paid for.
