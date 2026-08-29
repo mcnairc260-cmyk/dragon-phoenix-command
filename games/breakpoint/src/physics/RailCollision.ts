@@ -142,8 +142,12 @@ export function depenetrateJaw(ball: BallBody, jaw: Jaw): void {
   ball.position.y += dy * push;
 }
 
-export function resolveRailCollision(ball: BallBody, rail: RailSegment): number {
-  const j = resolveCushionContact(ball, rail.normal.x, rail.normal.y, RAIL_RESTITUTION, RAIL_FRICTION);
+export function resolveRailCollision(
+  ball: BallBody,
+  rail: RailSegment,
+  restitution: number = RAIL_RESTITUTION,
+): number {
+  const j = resolveCushionContact(ball, rail.normal.x, rail.normal.y, restitution, RAIL_FRICTION);
   // Push clear of the face so the next step does not re-detect the same hit.
   const d = (ball.position.x - rail.a.x) * rail.normal.x + (ball.position.y - rail.a.y) * rail.normal.y;
   const overlap = BALL_RADIUS - d;
@@ -154,7 +158,11 @@ export function resolveRailCollision(ball: BallBody, rail: RailSegment): number 
   return j;
 }
 
-export function resolveJawCollision(ball: BallBody, jaw: Jaw): number {
+export function resolveJawCollision(
+  ball: BallBody,
+  jaw: Jaw,
+  restitution: number = JAW_RESTITUTION,
+): number {
   let nx = ball.position.x - jaw.centre.x;
   let ny = ball.position.y - jaw.centre.y;
   const dist = Math.hypot(nx, ny);
@@ -166,7 +174,7 @@ export function resolveJawCollision(ball: BallBody, jaw: Jaw): number {
     ny /= dist;
   }
 
-  const j = resolveCushionContact(ball, nx, ny, JAW_RESTITUTION, JAW_FRICTION);
+  const j = resolveCushionContact(ball, nx, ny, restitution, JAW_FRICTION);
 
   const reach = BALL_RADIUS + jaw.radius;
   const overlap = reach - dist;

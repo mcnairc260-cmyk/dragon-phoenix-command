@@ -69,9 +69,16 @@ dragon-phoenix-command/
                             # (founder-approved framework exception, 2026-08-29 — the third
                             # such sub-app. Phase 1 vertical slice: deterministic 120 Hz
                             # physics + the full shot loop, no rules or multiplayer. Built,
-                            # tested and browser-verified, NOT deployed. See
-                            # games/breakpoint/README.md and PROJECT_CONTEXT §19.)
+                            # tested, browser-verified and independently hardened, NOT
+                            # deployed. See games/breakpoint/README.md and
+                            # PROJECT_CONTEXT §19 + §20.)
 ```
+
+**CI (added 2026-08-29):** `.github/workflows/breakpoint.yml` is the repository's only CI,
+and it covers `games/breakpoint/**` alone — install, typecheck, lint, test, build. The root
+site still has none, and its deploy is still its own test (§2.2). Do not widen the workflow's
+path filter without a reason; it exists because BREAKPOINT carries a physics engine whose
+guarantees are worthless unless they are checked on every change.
 
 **The sub-app rule** (established by the two exceptions above): a sub-app in its own folder may carry its own toolchain *when the founder has approved it for that app*; the root site (`index.html`, `api/`, `vercel.json`, root `package.json`) stays vanilla and zero-dependency regardless. Adding a build step to the **root** Vercel deployment is still a founder-level decision, not a consequence of a sub-app existing.
 
@@ -79,7 +86,7 @@ dragon-phoenix-command/
 
 - **Frontend:** one static HTML file. Vanilla JS, inline CSS, Google Fonts (Syne + JetBrains Mono), emoji as icons. No framework, no bundler, no npm packages. Chat UI + quick prompts + "pillar" cards, all driven by three JS arrays (`QUICK`, `PILLARS`, `SYSTEM`).
 - **Backend:** one serverless function (`api/chat.js`) that forwards `{messages, system}` to `https://api.anthropic.com/v1/messages` with `ANTHROPIC_API_KEY` from Vercel env vars, returns `{reply}`.
-- **Deployment:** Vercel, auto-deploys from GitHub `main`. **Every merge to `main` ships to production immediately.** There is no staging environment, no tests, no CI.
+- **Deployment:** Vercel, auto-deploys from GitHub `main`. **Every merge to `main` ships to production immediately.** There is no staging environment, and the root site itself has no tests and no CI. (Since 2026-08-29 there is one CI workflow, scoped to `games/breakpoint/**` only — see §2.1.)
 - **Current product identity:** a *personal* AI business mentor for the founder (his profile is hard-coded in the client-side `SYSTEM` prompt). The Blueprint's *public* Cognitive Command Center is the destination; migration is an unresolved decision (§8.2).
 - **Known defects** (documented, deliberately not yet fixed — confirm with founder before fixing): model ID `claude-sonnet-4-6` is likely invalid; CORS is `*` with no rate limiting; personal details exposed in page source. See `PROJECT_CONTEXT.md` §7.
 

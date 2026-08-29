@@ -11,8 +11,11 @@ import { applyClothFriction } from './FrictionModel';
 import {
   BALL_INERTIA,
   BALL_MASS,
+  BALL_RESTITUTION,
   FIXED_DT,
+  JAW_RESTITUTION,
   MAX_SHOT_SECONDS,
+  RAIL_RESTITUTION,
 } from './PhysicsConstants';
 import { capture, findCapture } from './PocketPhysics';
 import {
@@ -58,6 +61,16 @@ export type SimEvent =
 const MAX_SUBSTEPS = 48;
 /** Sub-step times below this are treated as zero to avoid a stall loop. */
 const TIME_EPSILON = 1e-9;
+/**
+ * Contacts within this many seconds of each other are treated as simultaneous.
+ * At the fastest legal ball speed (12 m/s) it is a separation of 1.2 µm, four
+ * orders of magnitude below a ball radius — far too close to call an order.
+ */
+const SIMULTANEITY_EPSILON = 1e-7;
+/** Slack allowed when checking a batch resolution did not create energy. */
+const ENERGY_EPSILON = 1e-12;
+/** Relaxation passes allowed when solving a simultaneous batch. */
+const MAX_BATCH_PASSES = 12;
 
 /** Stable identity for a contact, used to retire inert ones within a step. */
 function contactKey(c: Contact): string {
@@ -84,6 +97,16 @@ export class PhysicsWorld {
 
   /** Contacts retired for the current step; see `step()`. */
   private readonly inert = new Set<string>();
+  /**
+   * Scratch buffers for contact detection, reused across sub-steps.
+   *
+   * `findSimultaneousContacts` runs up to MAX_SUBSTEPS times per 120 Hz step,
+   * so allocating fresh arrays there would churn thousands of short-lived
+   * objects a second for no reason. These are private and are consumed before
+   * the next call, so reuse is safe.
+   */
+  private readonly candidates: Contact[] = [];
+  private readonly batch: Contact[] = [];
 
   constructor(table: TableGeometry = createTable()) {
     this.table = table;
@@ -135,22 +158,15 @@ export class PhysicsWorld {
     this.inert.clear();
 
     for (let iter = 0; iter < MAX_SUBSTEPS && remaining > TIME_EPSILON; iter++) {
-      const contact = this.findEarliestContact(remaining);
-      const dt = contact ? Math.max(contact.time, 0) : remaining;
+      const batch = this.findSimultaneousContacts(remaining);
+      const dt = batch.length > 0 ? Math.max(batch[0].time, 0) : remaining;
 
       if (dt > TIME_EPSILON) this.integrate(dt);
       remaining -= dt;
 
-      if (!contact) break;
+      if (batch.length === 0) break;
 
-      // A contact that produces no impulse is *inert*: geometrically touching,
-      // but not actually approaching once the contact point's own motion is
-      // taken into account (a ball with heavy draw held against a cushion is
-      // the usual case). Left in the candidate set it would be re-detected at
-      // t = 0 for the rest of the step and the loop would spin without
-      // advancing time — the balls would appear to freeze mid-table. Retiring
-      // it for the remainder of this step is what guarantees forward progress.
-      if (this.resolve(contact) <= 0) this.inert.add(contactKey(contact));
+      this.resolveBatch(batch);
     }
 
     this.depenetrate();
@@ -227,18 +243,28 @@ export class PhysicsWorld {
       const cy = fromY + dy * t - pocket.centre.y;
       if (cx * cx + cy * cy <= pocket.captureRadius * pocket.captureRadius) return pocket;
     }
-    return null;
+    // The swept test only covers the capture point. A ball that threaded a
+    // mouth without passing close enough to it is caught by the throat rule in
+    // `findCapture`, evaluated where the ball actually ended up.
+    return findCapture(b, this.table);
   }
 
   /**
-   * Earliest contact in (0, limit], scanning in a fixed order so that ties
-   * always resolve the same way. Determinism depends on this ordering.
+   * Every contact that happens at the earliest contact time in (0, limit].
+   *
+   * Returning the whole simultaneous set rather than just the first one is what
+   * lets `resolveBatch` treat them as the simultaneous event they physically
+   * are. The scan order is fixed, so the *contents* of the batch — and
+   * therefore the result — are deterministic.
    */
-  private findEarliestContact(limit: number): Contact | null {
-    let best: Contact | null = null;
+  private findSimultaneousContacts(limit: number): Contact[] {
+    const found = this.candidates;
+    found.length = 0;
+    let earliest = Infinity;
     const take = (c: Contact) => {
       if (this.inert.has(contactKey(c))) return;
-      if (!best || c.time < best.time) best = c;
+      if (c.time < earliest) earliest = c.time;
+      found.push(c);
     };
 
     const n = this.balls.length;
@@ -266,10 +292,253 @@ export class PhysicsWorld {
       }
     }
 
-    return best;
+    const batch = this.batch;
+    batch.length = 0;
+    for (const c of found) {
+      if (c.time - earliest <= SIMULTANEITY_EPSILON) batch.push(c);
+    }
+    return batch;
   }
 
-  private resolve(c: Contact): number {
+  /**
+   * Resolve every contact that happens at the same instant, together.
+   *
+   * A cue ball splitting a frozen pair touches both object balls at the same
+   * moment. Resolving them one after another gives the first contact a clean
+   * cue ball and the second one a cue ball that has already been deflected, so
+   * a dead-centre split squirts the cue ball sideways and the two object balls
+   * leave at different speeds — an outcome that also depends on which ball
+   * happens to sit earlier in the array. A rack is full of frozen pairs, so
+   * this fires on every break.
+   *
+   * The fix is to compute each impulse in the batch against the *same*
+   * pre-impulse state and then apply the sum (a Jacobi step). Symmetric input
+   * then gives symmetric output, and the result no longer depends on storage
+   * order.
+   *
+   * Summing full impulses can in principle over-correct when one ball takes
+   * several at once, so the batch is checked against the energy it started
+   * with and abandoned in favour of the sequential result if it would ever
+   * create energy. The no-energy-created invariant outranks the symmetry fix.
+   *
+   * A batch of one — overwhelmingly the common case — takes the sequential
+   * path unchanged.
+   */
+  private resolveBatch(contacts: Contact[]): void {
+    if (contacts.length === 1) {
+      this.retireIfInert(contacts[0], this.emitResolve(contacts[0]));
+      return;
+    }
+
+    const indices: number[] = [];
+    let maxPerBody = 1;
+    const load = new Map<number, number>();
+    for (const c of contacts) {
+      for (const i of c.b >= 0 ? [c.a, c.b] : [c.a]) {
+        if (!indices.includes(i)) indices.push(i);
+        const n = (load.get(i) ?? 0) + 1;
+        load.set(i, n);
+        if (n > maxPerBody) maxPerBody = n;
+      }
+    }
+
+    const before = indices.map((i) => cloneBall(this.balls[i]));
+    const energyBefore = this.energyOf(indices);
+    const eventsBefore = this.events.length;
+
+    // Applying every contact's full impulse at once double-counts on a ball
+    // that takes several of them, which overshoots and creates energy. Sharing
+    // the ball out between its contacts and iterating converges on the
+    // simultaneous answer instead, and because every pass is computed from one
+    // shared state the symmetry is preserved at every step.
+    //
+    // The iteration runs perfectly inelastically (restitution zero), because
+    // repeatedly applying -(1+e)·vn converges on vn = 0 whatever e is, landing
+    // somewhere between the inelastic and the elastic answer depending on where
+    // the passes happen to stop. Solving for vn = 0 exactly and then scaling
+    // the whole result by (1+e) is the standard Poisson treatment of a
+    // simultaneous impact, and for the frozen-pair case it reproduces the
+    // closed-form elastic solution exactly.
+    const relaxation = 1 / maxPerBody;
+    const impulses = contacts.map(() => 0);
+
+    for (let pass = 0; pass < MAX_BATCH_PASSES; pass++) {
+      const pre = indices.map((i) => cloneBall(this.balls[i]));
+      const deltas = indices.map(() => ({ vx: 0, vy: 0, wx: 0, wy: 0, wz: 0, px: 0, py: 0 }));
+      let active = 0;
+
+      for (let ci = 0; ci < contacts.length; ci++) {
+        this.restoreBodies(indices, pre);
+        const impulse = this.applyContact(contacts[ci], 0);
+        if (impulse > 0) {
+          active++;
+          impulses[ci] += impulse * relaxation;
+        }
+        for (let k = 0; k < indices.length; k++) {
+          const now = this.balls[indices[k]];
+          const base = pre[k];
+          const d = deltas[k];
+          d.vx += now.velocity.x - base.velocity.x;
+          d.vy += now.velocity.y - base.velocity.y;
+          d.wx += now.spin.x - base.spin.x;
+          d.wy += now.spin.y - base.spin.y;
+          d.wz += now.spin.z - base.spin.z;
+          d.px += now.position.x - base.position.x;
+          d.py += now.position.y - base.position.y;
+        }
+      }
+
+      this.restoreBodies(indices, pre);
+      if (active === 0) break;
+
+      for (let k = 0; k < indices.length; k++) {
+        const ball = this.balls[indices[k]];
+        const d = deltas[k];
+        ball.velocity.x += d.vx * relaxation;
+        ball.velocity.y += d.vy * relaxation;
+        ball.spin.x += d.wx * relaxation;
+        ball.spin.y += d.wy * relaxation;
+        ball.spin.z += d.wz * relaxation;
+        ball.position.x += d.px * relaxation;
+        ball.position.y += d.py * relaxation;
+      }
+    }
+
+    // Restitution: add e times the whole inelastic result, giving (1+e) times
+    // it in total. Positions are excluded — separation is geometric, not an
+    // impulse, and scaling it would push balls apart by more than they overlap.
+    const e = this.batchRestitution(contacts);
+    for (let k = 0; k < indices.length; k++) {
+      const ball = this.balls[indices[k]];
+      const base = before[k];
+      const dvx = ball.velocity.x - base.velocity.x;
+      const dvy = ball.velocity.y - base.velocity.y;
+      const dwx = ball.spin.x - base.spin.x;
+      const dwy = ball.spin.y - base.spin.y;
+      const dwz = ball.spin.z - base.spin.z;
+      ball.velocity.x += dvx * e;
+      ball.velocity.y += dvy * e;
+      ball.spin.x += dwx * e;
+      ball.spin.y += dwy * e;
+      ball.spin.z += dwz * e;
+      if (dvx !== 0 || dvy !== 0 || dwx !== 0 || dwy !== 0 || dwz !== 0) ball.resting = false;
+    }
+    for (let i = 0; i < impulses.length; i++) impulses[i] *= 1 + e;
+
+    if (this.energyOf(indices) > energyBefore + ENERGY_EPSILON) {
+      this.restoreBodies(indices, before);
+      this.events.length = eventsBefore;
+      for (const c of contacts) this.retireIfInert(c, this.emitResolve(c));
+      return;
+    }
+
+    for (let i = 0; i < contacts.length; i++) {
+      this.emitContactEvent(contacts[i], impulses[i]);
+      this.retireIfInert(contacts[i], impulses[i]);
+    }
+  }
+
+  /**
+   * A contact that produces no impulse is *inert*: geometrically touching, but
+   * not actually approaching once the contact point's own motion is taken into
+   * account (a ball held against a cushion with heavy draw is the usual case).
+   * Left in the candidate set it would be re-detected at t = 0 for the rest of
+   * the step and the loop would spin without advancing time — the balls would
+   * appear to freeze mid-table. Retiring it for the remainder of this step is
+   * what guarantees forward progress.
+   */
+  private retireIfInert(c: Contact, impulse: number): void {
+    if (impulse <= 0) this.inert.add(contactKey(c));
+  }
+
+  /** Kinetic energy of just the listed balls. */
+  private energyOf(indices: readonly number[]): number {
+    let e = 0;
+    for (const i of indices) {
+      const b = this.balls[i];
+      if (b.pocketed) continue;
+      const v2 = b.velocity.x * b.velocity.x + b.velocity.y * b.velocity.y;
+      const w2 = b.spin.x * b.spin.x + b.spin.y * b.spin.y + b.spin.z * b.spin.z;
+      e += 0.5 * BALL_MASS * v2 + 0.5 * BALL_INERTIA * w2;
+    }
+    return e;
+  }
+
+  private restoreBodies(indices: readonly number[], snapshot: readonly BallBody[]): void {
+    for (let k = 0; k < indices.length; k++) {
+      const ball = this.balls[indices[k]];
+      const base = snapshot[k];
+      ball.position.x = base.position.x;
+      ball.position.y = base.position.y;
+      ball.velocity.x = base.velocity.x;
+      ball.velocity.y = base.velocity.y;
+      ball.spin.x = base.spin.x;
+      ball.spin.y = base.spin.y;
+      ball.spin.z = base.spin.z;
+      ball.resting = base.resting;
+    }
+  }
+
+  /** Mutate state for one contact and return its normal impulse. No events. */
+  private applyContact(c: Contact, restitution?: number): number {
+    if (c.kind === 'ball') {
+      return resolveBallCollision(this.balls[c.a], this.balls[c.b], restitution);
+    }
+    if (c.kind === 'rail') {
+      return resolveRailCollision(this.balls[c.a], this.table.rails[c.railIndex], restitution);
+    }
+    return resolveJawCollision(this.balls[c.a], this.table.jaws[c.railIndex], restitution);
+  }
+
+  /** The least elastic coefficient in a batch — the conservative choice. */
+  private batchRestitution(contacts: readonly Contact[]): number {
+    let e = Infinity;
+    for (const c of contacts) {
+      const own =
+        c.kind === 'ball' ? BALL_RESTITUTION : c.kind === 'rail' ? RAIL_RESTITUTION : JAW_RESTITUTION;
+      if (own < e) e = own;
+    }
+    return e;
+  }
+
+  private emitContactEvent(c: Contact, impulse: number): void {
+    if (impulse <= 0) return;
+    if (c.kind === 'ball') {
+      const a = this.balls[c.a];
+      const b = this.balls[c.b];
+      this.events.push({
+        type: 'ball-ball',
+        time: this.time,
+        a: a.id,
+        b: b.id,
+        impulse,
+        at: { x: (a.position.x + b.position.x) / 2, y: (a.position.y + b.position.y) / 2 },
+      });
+      return;
+    }
+    const ball = this.balls[c.a];
+    if (c.kind === 'rail') {
+      this.events.push({
+        type: 'rail',
+        time: this.time,
+        ball: ball.id,
+        rail: this.table.rails[c.railIndex].id,
+        impulse,
+        at: { x: ball.position.x, y: ball.position.y },
+      });
+      return;
+    }
+    this.events.push({
+      type: 'jaw',
+      time: this.time,
+      ball: ball.id,
+      jaw: this.table.jaws[c.railIndex].id,
+      impulse,
+      at: { x: ball.position.x, y: ball.position.y },
+    });
+  }
+
+  private emitResolve(c: Contact): number {
     if (c.kind === 'ball') {
       const a = this.balls[c.a];
       const b = this.balls[c.b];

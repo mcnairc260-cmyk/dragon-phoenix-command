@@ -1,0 +1,61 @@
+# CI for the BREAKPOINT sub-app only.
+#
+# The repository has no CI otherwise, and deliberately so: the root site is a
+# zero-dependency static page whose deploy is its own test. BREAKPOINT is
+# different — it carries a physics engine whose guarantees (determinism, no
+# energy created, no ball escaping the table) are only worth anything if they
+# are checked on every change. This workflow does exactly what a contributor
+# runs locally, nothing more, and touches no deployment.
+name: BREAKPOINT
+
+on:
+  push:
+    paths:
+      - 'games/breakpoint/**'
+      - '.github/workflows/breakpoint.yml'
+  pull_request:
+    paths:
+      - 'games/breakpoint/**'
+      - '.github/workflows/breakpoint.yml'
+
+# A new push supersedes an in-flight run on the same ref.
+concurrency:
+  group: breakpoint-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: games/breakpoint
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: games/breakpoint/package-lock.json
+
+      # `ci`, not `install`: the lockfile is the point, and a silent dependency
+      # drift is exactly the kind of thing that makes a physics regression look
+      # like a code regression.
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build

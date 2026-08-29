@@ -15,6 +15,25 @@ import type { Vec2, Vec3 } from '../physics/Vec';
  * a complete, portable shot.
  */
 
+/** One ball-to-ball contact, by ball number. */
+export interface BallContact {
+  a: number;
+  b: number;
+  /** Normal impulse magnitude, N·s. */
+  impulse: number;
+  /** True if this happened after the cue ball's first object-ball contact. */
+  afterFirstContact: boolean;
+}
+
+/** One cushion or jaw contact, by ball number. */
+export interface RailContact {
+  ball: number;
+  /** Rail or jaw id from the table geometry. */
+  id: string;
+  impulse: number;
+  afterFirstContact: boolean;
+}
+
 export interface BallSnapshot {
   id: number;
   number: number;
@@ -54,10 +73,37 @@ export interface ShotRecord {
   ballsPocketed: number[];
   /** Pocket ids, parallel to `ballsPocketed`. */
   pocketsUsed: string[];
-  /** Rail ids contacted, in order, with duplicates preserved. */
-  railContacts: string[];
+  /**
+   * Every ball-to-ball contact, in order, by ball number.
+   *
+   * A referee needs the whole contact graph, not just the first one: whether
+   * the cue ball went on to touch anything else, and which object balls drove
+   * which, are both ordinary questions about a shot.
+   */
+  ballContacts: BallContact[];
+  /**
+   * Every cushion contact, in order.
+   *
+   * Recorded per ball and flagged relative to the cue ball's first object-ball
+   * contact, because the question a rules engine actually asks is "after the
+   * legal first contact, did any ball reach a cushion" — which a bare list of
+   * rail ids cannot answer.
+   */
+  railContacts: RailContact[];
+  /**
+   * Pocket-jaw contacts, kept separate from cushions on purpose: a jaw is part
+   * of the pocket casting, not a cushion, so it must not satisfy a
+   * ball-to-rail requirement.
+   */
+  jawContacts: RailContact[];
   /** Number of the first object ball the cue ball touched, or null. */
   firstObjectBallContact: number | null;
+  /**
+   * Index into `events` of that first contact, or null. Lets any consumer
+   * partition the event stream into before and after the legal contact without
+   * re-deriving it.
+   */
+  firstContactEventIndex: number | null;
   /** True if the cue ball was pocketed. */
   scratch: boolean;
   postShotBalls: BallSnapshot[];
@@ -95,31 +141,74 @@ export function summariseEvents(
 ) {
   const ballsPocketed: number[] = [];
   const pocketsUsed: string[] = [];
-  const railContacts: string[] = [];
+  const ballContacts: BallContact[] = [];
+  const railContacts: RailContact[] = [];
+  const jawContacts: RailContact[] = [];
   let firstObjectBallContact: number | null = null;
+  let firstContactEventIndex: number | null = null;
   let scratch = false;
 
-  for (const e of events) {
+  const after = () => firstContactEventIndex !== null;
+
+  for (let i = 0; i < events.length; i++) {
+    const e = events[i];
     switch (e.type) {
-      case 'ball-ball':
-        if (firstObjectBallContact === null) {
-          if (e.a === cueBallId) firstObjectBallContact = ballNumberById(e.b);
-          else if (e.b === cueBallId) firstObjectBallContact = ballNumberById(e.a);
+      case 'ball-ball': {
+        const involvesCue = e.a === cueBallId || e.b === cueBallId;
+        if (firstObjectBallContact === null && involvesCue) {
+          firstObjectBallContact = ballNumberById(e.a === cueBallId ? e.b : e.a);
+          firstContactEventIndex = i;
+          // This contact *is* the first contact, so it is not "after" it.
+          ballContacts.push({
+            a: ballNumberById(e.a),
+            b: ballNumberById(e.b),
+            impulse: e.impulse,
+            afterFirstContact: false,
+          });
+          break;
         }
+        ballContacts.push({
+          a: ballNumberById(e.a),
+          b: ballNumberById(e.b),
+          impulse: e.impulse,
+          afterFirstContact: after(),
+        });
         break;
+      }
       case 'rail':
-        railContacts.push(e.rail);
+        railContacts.push({
+          ball: ballNumberById(e.ball),
+          id: e.rail,
+          impulse: e.impulse,
+          afterFirstContact: after(),
+        });
+        break;
+      case 'jaw':
+        jawContacts.push({
+          ball: ballNumberById(e.ball),
+          id: e.jaw,
+          impulse: e.impulse,
+          afterFirstContact: after(),
+        });
         break;
       case 'pocket':
         ballsPocketed.push(ballNumberById(e.ball));
         pocketsUsed.push(e.pocket);
         if (e.ball === cueBallId) scratch = true;
         break;
-      case 'jaw':
       case 'rest':
         break;
     }
   }
 
-  return { ballsPocketed, pocketsUsed, railContacts, firstObjectBallContact, scratch };
+  return {
+    ballsPocketed,
+    pocketsUsed,
+    ballContacts,
+    railContacts,
+    jawContacts,
+    firstObjectBallContact,
+    firstContactEventIndex,
+    scratch,
+  };
 }

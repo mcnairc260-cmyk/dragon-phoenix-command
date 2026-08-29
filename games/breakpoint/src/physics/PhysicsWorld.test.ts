@@ -435,19 +435,60 @@ describe('13. side-pocket capture', () => {
 
 describe('14. pocket rejection', () => {
   it('a ball that clips the jaw rattles out instead of dropping', () => {
+    // Aimed a little past the corner pocket, so the ball meets the far jaw at
+    // an angle that kicks it back onto the table rather than into the throat.
+    //
+    // This scenario replaced an earlier one during the Phase 1 validation
+    // pass. The old case fired a ball into a 24 mm band of entry angles that
+    // missed both jaws *and* the capture point, so it left the table
+    // altogether — the test passed only because the ball escaped, not because
+    // the pocket rejected it. That containment gap is now closed, and this
+    // case exercises a genuine jaw rebound instead.
     const w = world();
-    const table = w.table;
-    // The jaw at the end of the right-hand short rail, which juts into the
-    // corner pocket mouth. A ball arriving along the rail but a little too
-    // high strikes the jaw nose instead of finding the throat.
-    const jaw = table.jaws.find((j) => j.id === 'jaw-corner-1-short-top')!;
-    const b = w.addBall(1, { x: jaw.centre.x - 0.5, y: jaw.centre.y + 0.021 });
-    b.velocity = { x: 3.4, y: 0 };
+    const b = w.addBall(1, { x: 0.55, y: 0.42 });
+    const dx = 1.296 - 0.55;
+    const dy = 0.69 - 0.42;
+    const d = Math.hypot(dx, dy);
+    b.velocity = { x: (dx / d) * 3, y: (dy / d) * 3 };
     b.resting = false;
 
     w.simulateToRest();
     expect(w.events.some((e) => e.type === 'jaw')).toBe(true);
     expect(b.pocketed).toBe(false);
+    // Back on the cloth, not stranded outside the cushions.
+    expect(Math.abs(b.position.x)).toBeLessThan(TABLE_LENGTH / 2);
+    expect(Math.abs(b.position.y)).toBeLessThan(TABLE_WIDTH / 2);
+  });
+
+  it('never lets a ball escape the table instead of being pocketed', () => {
+    // The containment invariant, swept across every entry line into a corner
+    // mouth: a ball either drops or stays on the cloth. Before the Phase 1
+    // validation pass a narrow band did neither and sailed off the table.
+    let escapes = 0;
+    let pocketed = 0;
+    let rejected = 0;
+    for (let y = 0.42; y <= 0.632; y += 0.012) {
+      for (const speed of [1.5, 4, 8]) {
+        const w = world();
+        const b = w.addBall(1, { x: 0.55, y });
+        const dx = 1.296 - 0.55;
+        const dy = 0.661 - y;
+        const d = Math.hypot(dx, dy);
+        b.velocity = { x: (dx / d) * speed, y: (dy / d) * speed };
+        b.resting = false;
+        w.simulateToRest();
+
+        const outside =
+          Math.abs(b.position.x) > TABLE_LENGTH / 2 || Math.abs(b.position.y) > TABLE_WIDTH / 2;
+        if (b.pocketed) pocketed++;
+        else if (outside) escapes++;
+        else rejected++;
+      }
+    }
+    expect(escapes).toBe(0);
+    // And the pocket is not a vacuum: some of those approaches must rattle out.
+    expect(pocketed).toBeGreaterThan(0);
+    expect(rejected).toBeGreaterThan(0);
   });
 
   it('a ball rolling parallel past a pocket mouth does not get sucked in', () => {

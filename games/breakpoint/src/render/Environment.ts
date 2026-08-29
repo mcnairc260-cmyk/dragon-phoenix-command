@@ -18,8 +18,19 @@ import { BRAND, TABLE } from '../config/brand';
 
 export interface SceneLighting {
   lamp: THREE.SpotLight;
-  lampMesh: THREE.Mesh;
+  /**
+   * The visible fixture — the glowing panel and its shade.
+   *
+   * Grouped and handed back because it hangs between an overhead camera and
+   * the table: from the pulled-back view it is a black slab across the middle
+   * of the cloth. The renderer hides it whenever the camera climbs above it.
+   */
+  fixture: THREE.Group;
+  /** Height of the fixture, so the renderer knows when it is in the way. */
+  fixtureHeight: number;
 }
+
+const FIXTURE_HEIGHT = 1.52;
 
 export function setupLighting(scene: THREE.Scene, tableLength: number): SceneLighting {
   scene.add(new THREE.AmbientLight(0xdfe9ff, 0.09));
@@ -44,6 +55,7 @@ export function setupLighting(scene: THREE.Scene, tableLength: number): SceneLig
   scene.add(lamp.target);
 
   // The visible fixture. Emissive only — it does not light anything itself.
+  const fixture = new THREE.Group();
   const lampMesh = new THREE.Mesh(
     new THREE.BoxGeometry(tableLength * 0.62, 0.06, 0.34),
     new THREE.MeshStandardMaterial({
@@ -53,15 +65,16 @@ export function setupLighting(scene: THREE.Scene, tableLength: number): SceneLig
       roughness: 0.4,
     }),
   );
-  lampMesh.position.set(0, 1.52, 0);
-  scene.add(lampMesh);
+  lampMesh.position.set(0, FIXTURE_HEIGHT, 0);
+  fixture.add(lampMesh);
 
   const shade = new THREE.Mesh(
     new THREE.BoxGeometry(tableLength * 0.66, 0.12, 0.4),
     new THREE.MeshStandardMaterial({ color: 0x101018, roughness: 0.5, metalness: 0.3 }),
   );
-  shade.position.set(0, 1.6, 0);
-  scene.add(shade);
+  shade.position.set(0, FIXTURE_HEIGHT + 0.08, 0);
+  fixture.add(shade);
+  scene.add(fixture);
 
   // Warm and cool rim lights. Kept very low and placed symmetrically about the
   // long axis: asymmetric rims make one cushion glow while the opposite one
@@ -74,7 +87,7 @@ export function setupLighting(scene: THREE.Scene, tableLength: number): SceneLig
   cool.position.set(2.6, 1.3, -1.6);
   scene.add(cool);
 
-  return { lamp, lampMesh };
+  return { lamp, fixture, fixtureHeight: FIXTURE_HEIGHT };
 }
 
 /**

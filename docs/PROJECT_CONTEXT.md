@@ -292,3 +292,31 @@ A founder-directed session built **BREAKPOINT**, a physics-first 3D pool game, a
 **Assumption added to the register:** that the task prompt's commissioning of a "premium-feeling playable 3D" game constitutes founder approval for the three.js toolchain, on the same basis as §16 and §18. If that reading is wrong, the sub-app is self-contained and can be removed without touching anything else.
 
 **Explicitly not started:** Phase 2. The directive said to stop after the verified Phase 1 slice, and nothing beyond it was begun — no rules engine, no AI, no replay UI, no multiplayer, no progression.
+
+---
+
+## 20. BREAKPOINT — Phase 1 validation and hardening (2026-08-29)
+
+A founder-directed follow-up session independently validated the Phase 1 slice from §19 rather than trusting its completion report, fixed what failed, and froze a baseline for the WPA referee and AI work to come. Branch `claude/breakpoint-phase-1-pool-1sjmmi`, restarted from `main` after PR #14 merged. Full record: `games/breakpoint/README.md` § "Validation status".
+
+**The baseline held up.** Re-run from a clean `npm ci`, the 43 tests, typecheck, lint and build all passed exactly as §19 reported. Nothing in that report was found to be false.
+
+**But six real defects were found that the original suite did not cover.** Three were physics or architecture, three were rendering and UI. The two that matter most:
+
+1. **Simultaneous contacts were resolved sequentially.** A cue ball splitting a frozen pair dead centre acquired 0.47 m/s of transverse velocity out of a perfectly symmetric shot, the object balls left at speeds differing by 48%, and reversing which ball was stored first flipped the result — the physics depended on array index order. Since a rack is full of frozen pairs this fired on every break, and an AI trained against it in Phase 2 would have learned an artefact. Contacts at the same instant are now solved together (relaxation to the inelastic solution, then scaled by 1 + e, which is the Poisson treatment of a simultaneous impact) and the result now matches the closed-form elastic answer. A batch that would create energy falls back to the old sequential path, so the no-energy-created invariant outranks the symmetry fix and cannot be traded away for it.
+
+2. **Balls could escape the table entirely.** A 24 mm band of entry angles at each corner threaded the pocket mouth, missing both jaws *and* the capture point, with nothing beyond the mouth to stop them — the ball left the table and came to rest in mid-air, neither pocketed nor in play. Containment now uses the rule the cushions already imply: the cushions enclose the surface completely except at the six mouths, so a ball centre outside the rectangle can only have gone through one, and a ball that has gone through a mouth is in that pocket — unless it is still travelling back towards the table, which is what rattling out is. Verified across 576 swept corner approaches: zero escapes, and 165 still reject.
+
+The other four: the `is-locked` class was applied to the wrong element so the control lock-out was invisible *and* the pads kept swallowing touches during a shot; the overview camera could not fit the table on a portrait phone (three.js states `fov` vertically, so the horizontal field collapses) meaning a mobile player could not see the shot they had just played; the pendant lamp occluded the table once that framing was corrected; and two latent leaks (undisposed GPU resources on re-rack, unbounded shot history at ~12 kB/shot).
+
+**Shot records were extended for the referee that does not exist yet.** `railContacts` was a bare list of rail ids — it could not answer "after the legal first contact, did any ball reach a cushion", which is the central question of a WPA legal shot. Records now carry the full ball-to-ball contact graph, per-ball cushion contacts each flagged relative to the first contact, jaw contacts kept *separate* from cushions (a jaw is pocket casting, not a rail, and must not satisfy a ball-to-rail requirement), and an index into the raw event stream marking the first contact. **The referee itself was not implemented** — that is Phase 2.
+
+**Two things were investigated and found correct, not defective**, and are recorded so a successor does not "fix" them: a ball rolled at 0.35 m/s from half a metre stops short of the pocket instead of being drawn in (pockets are deliberately not vacuums), and a ball's net displacement is far shorter than its path length because each cushion contact removes most of its linear energy.
+
+**Verification performed.** 122 automated tests (up from 43), typecheck, lint and production build all clean from a clean install; 63 browser checks across 1280×800, 390×844 and 430×932 with touch emulation, each also flipped to landscape mid-shot, all passing with zero console errors; physics measured at 116× realtime (~72 µs per 120 Hz step). Defects 3, 4 and 5 were found *only* by looking at browser screenshots, which is the third session running in which visual review caught what tests could not.
+
+**CI added — the repository's first.** `.github/workflows/breakpoint.yml` runs install, typecheck, lint, test and build on any push or PR touching `games/breakpoint/**`. It is deliberately narrow: the root site remains CI-free and its deploy is still its own test, and nothing about deployment was changed. Onboarding §2.2's "there is no CI" is now true only of the root site.
+
+**Real-device testing did not happen.** Browser validation ran under SwiftShader software rendering, which proves correctness, layout and interaction but says nothing about frame rate. The 60 fps target on real phone hardware remains unverified, and the report says so rather than implying otherwise.
+
+**Phase 2 was not started.** No referee, no group assignment, no fouls, no ball-in-hand, no AI, no networking, no progression.

@@ -80,6 +80,9 @@ export function ballTexture(number: number): THREE.CanvasTexture {
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 8;
   texture.needsUpdate = true;
+  // Cached and shared between every mesh that uses this ball number, so mesh
+  // disposal must not free it.
+  texture.userData.shared = true;
   cache.set(number, texture);
   return texture;
 }

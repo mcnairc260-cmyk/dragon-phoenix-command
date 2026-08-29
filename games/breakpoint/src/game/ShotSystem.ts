@@ -26,7 +26,17 @@ export interface ShotSystemOptions {
   onShotComplete?: (record: ShotRecord) => void;
   /** Called with events produced this frame, for audio and effects. */
   onEvents?: (events: readonly SimEvent[]) => void;
+  /**
+   * How many recent shot records to retain. A record carries two full ball
+   * snapshots and the whole event stream — measured at roughly 12 kB — so an
+   * uncapped history grows without bound over a long session. Every record is
+   * still handed to `onShotComplete`, so a consumer that wants them all can
+   * keep them; this cap only bounds what the system itself holds on to.
+   */
+  historyLimit?: number;
 }
+
+const DEFAULT_HISTORY_LIMIT = 200;
 
 export class ShotSystem {
   world: PhysicsWorld;
@@ -41,6 +51,9 @@ export class ShotSystem {
   tip: Vec2 = { x: 0, y: 0 };
 
   readonly history: ShotRecord[] = [];
+  /** Shots committed this session. Keeps `record.index` monotonic under the
+   *  history cap, so indices remain stable identifiers. */
+  private shotCount = 0;
 
   private shotStartTime = 0;
   private shotStartSteps = 0;
@@ -166,7 +179,7 @@ export class ShotSystem {
     const summary = summariseEvents(this.world.events, cueId, numberById);
 
     const record: ShotRecord = {
-      index: this.history.length,
+      index: this.shotCount++,
       timestamp: Date.now(),
       preShotBalls: pending.preShotBalls,
       cueBallPosition: pending.cueBallPosition,
@@ -186,6 +199,8 @@ export class ShotSystem {
     };
 
     this.history.push(record);
+    const limit = this.options.historyLimit ?? DEFAULT_HISTORY_LIMIT;
+    if (this.history.length > limit) this.history.splice(0, this.history.length - limit);
     this.options.onShotComplete?.(record);
 
     // Point the cue at something sensible so the next shot starts usefully

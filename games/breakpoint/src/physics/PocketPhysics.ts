@@ -17,7 +17,23 @@ export interface PocketCapture {
   pocket: Pocket;
 }
 
-/** The pocket this ball has dropped into, or null. */
+/**
+ * The pocket this ball has dropped into, or null.
+ *
+ * Two ways in. The first is the obvious one: the ball's centre reaches the
+ * capture point set back inside the throat.
+ *
+ * The second matters more than it looks. The capture point is small and set
+ * back, so a ball can thread a corner mouth on a line that misses both jaws
+ * *and* stays outside the capture radius — and then there is nothing beyond the
+ * mouth to stop it, so it sails off the table and comes to rest in mid-air.
+ * That really happened: a 24 mm band of entry angles at each corner escaped
+ * containment entirely. The cushions enclose the playing surface completely
+ * except at the six mouths, so a centre that has left the rectangle can only
+ * have gone through one of them, and a ball that has gone through a mouth is in
+ * that pocket. Rattling out is unaffected, because a jaw deflects a ball while
+ * it is still inside the rectangle, before this rule can apply.
+ */
 export function findCapture(ball: BallBody, table: TableGeometry): Pocket | null {
   if (ball.pocketed) return null;
   for (const pocket of table.pockets) {
@@ -27,7 +43,39 @@ export function findCapture(ball: BallBody, table: TableGeometry): Pocket | null
       return pocket;
     }
   }
+  // Containment backstop. A ball still travelling back towards the playing
+  // area is left alone: it can reach a jaw and be kicked out, which is what
+  // rattling out of a pocket is. One that has stopped, or that is still heading
+  // away from the table, has nowhere left to go but down.
+  if (isInPocketThroat(ball, table) && !isReturningToTable(ball, table)) {
+    return nearestPocket(ball, table);
+  }
   return null;
+}
+
+/** Is this ball outside the cushions but still travelling back towards them? */
+function isReturningToTable(ball: BallBody, table: TableGeometry): boolean {
+  const hx = table.length / 2;
+  const hy = table.width / 2;
+  if (Math.abs(ball.position.x) > hx && ball.position.x * ball.velocity.x < 0) return true;
+  if (Math.abs(ball.position.y) > hy && ball.position.y * ball.velocity.y < 0) return true;
+  return false;
+}
+
+/** The pocket whose centre is closest to this ball. */
+function nearestPocket(ball: BallBody, table: TableGeometry): Pocket {
+  let best = table.pockets[0];
+  let bestDistance = Infinity;
+  for (const pocket of table.pockets) {
+    const dx = ball.position.x - pocket.centre.x;
+    const dy = ball.position.y - pocket.centre.y;
+    const d = dx * dx + dy * dy;
+    if (d < bestDistance) {
+      bestDistance = d;
+      best = pocket;
+    }
+  }
+  return best;
 }
 
 /** Remove a ball from play. Its state freezes at the moment of capture. */

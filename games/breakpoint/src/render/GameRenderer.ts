@@ -7,7 +7,7 @@ import type { Vec2 } from '../physics/Vec';
 import { AimOverlay } from './AimOverlay';
 import { buildBalls, syncBalls, type BallMesh } from './BallMeshes';
 import { CueMesh } from './CueMesh';
-import { buildEnvironment, setupLighting } from './Environment';
+import { buildEnvironment, setupLighting, type SceneLighting } from './Environment';
 import { GameCamera } from './GameCamera';
 import { buildTable } from './TableMesh';
 import { renderToPlane } from './frame';
@@ -30,6 +30,7 @@ export class GameRenderer {
   private readonly cue = new CueMesh();
   private readonly aim = new AimOverlay();
   private readonly clothSurface: THREE.Mesh;
+  private readonly lighting: SceneLighting;
   private readonly raycaster = new THREE.Raycaster();
   private readonly pointer = new THREE.Vector2();
 
@@ -55,7 +56,7 @@ export class GameRenderer {
     this.scene.background = new THREE.Color(BRAND.voidBlack);
     this.scene.fog = new THREE.Fog(BRAND.voidBlack, 3.2, 9);
     this.scene.environment = buildEnvironment(this.renderer);
-    setupLighting(this.scene, system.world.table.length);
+    this.lighting = setupLighting(this.scene, system.world.table.length);
 
     const table = buildTable(system.world.table);
     this.scene.add(table.root);
@@ -89,9 +90,12 @@ export class GameRenderer {
    * world is replaced wholesale.
    */
   rebuildBalls(): void {
+    // Removing a mesh from the scene graph does not free its GPU buffers, so a
+    // re-rack would leak a geometry, sixteen materials and a shadow texture
+    // every time without this.
     for (const item of this.balls) {
-      item.mesh.removeFromParent();
-      item.shadow.removeFromParent();
+      disposeMesh(item.mesh);
+      disposeMesh(item.shadow);
     }
     const built = buildBalls(this.system.world.balls);
     this.scene.add(built.group);
@@ -119,6 +123,13 @@ export class GameRenderer {
         this.aim.visible = false;
       }
     }
+
+    // The pendant lamp hangs between an overhead camera and the cloth, where
+    // it reads as a black slab lying across the table. It belongs in the low
+    // aiming view and nowhere else, so it goes away once the camera is above
+    // it — which only ever happens during the pulled-back watch shot.
+    const cameraHeight = this.gameCamera.camera.position.y;
+    this.lighting.fixture.visible = cameraHeight < this.lighting.fixtureHeight - 0.1;
 
     syncBalls(this.balls);
     this.renderer.render(this.scene, this.gameCamera.camera);
@@ -151,6 +162,28 @@ export class GameRenderer {
   }
 
   dispose(): void {
+    for (const item of this.balls) {
+      disposeMesh(item.mesh);
+      disposeMesh(item.shadow);
+    }
+    this.balls.length = 0;
     this.renderer.dispose();
   }
+}
+
+/** Detach a mesh and free everything it owns on the GPU. */
+function disposeMesh(mesh: THREE.Mesh): void {
+  mesh.removeFromParent();
+  mesh.geometry.dispose();
+  for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+    const map = (material as THREE.MeshStandardMaterial).map;
+    // Ball albedo maps are shared from a cache and must outlive any one mesh;
+    // the per-mesh shadow texture is not, so only non-cached maps are freed.
+    if (map && !isSharedTexture(map)) map.dispose();
+    material.dispose();
+  }
+}
+
+function isSharedTexture(texture: THREE.Texture): boolean {
+  return texture.userData.shared === true;
 }

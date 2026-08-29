@@ -24,6 +24,11 @@ import { clamp } from '../physics/Vec';
  * you need to see the whole table (high).
  */
 
+/** Vertical field of view, in degrees. */
+const FIELD_OF_VIEW = 46;
+/** Elevation the overview camera looks down from, in radians (about 58°). */
+const WATCH_ELEVATION = 1.01;
+
 const MIN_ELEVATION = 0.16;
 const MAX_ELEVATION = 1.25;
 const MIN_DISTANCE = 0.45;
@@ -43,11 +48,18 @@ export class GameCamera {
   private readonly target = new THREE.Vector3();
   private initialised = false;
 
-  constructor(private readonly table: TableGeometry, aspect: number) {
-    this.camera = new THREE.PerspectiveCamera(46, aspect, 0.02, 60);
+  private aspect: number;
+
+  constructor(
+    private readonly table: TableGeometry,
+    aspect: number,
+  ) {
+    this.aspect = aspect;
+    this.camera = new THREE.PerspectiveCamera(FIELD_OF_VIEW, aspect, 0.02, 60);
   }
 
   setAspect(aspect: number): void {
+    this.aspect = aspect;
     this.camera.aspect = aspect;
     this.camera.updateProjectionMatrix();
   }
@@ -124,11 +136,50 @@ export class GameCamera {
     return { position, target };
   }
 
+  /**
+   * The overview the camera pulls back to while the balls run.
+   *
+   * The framing is computed rather than fixed, because a fixed one does not
+   * survive a phone. three.js expresses `fov` vertically, so on a tall narrow
+   * screen the horizontal field collapses: a distance chosen to fit the table
+   * in landscape shows only a patch of cloth in portrait, and the player cannot
+   * see the shot they just took — which is the entire purpose of this pose.
+   *
+   * Two things fix it. The table is turned to lie along the long axis of the
+   * screen, so a portrait phone views it end-on and a landscape screen views it
+   * side-on; and the distance is solved from both the horizontal and the
+   * vertical field, so whichever is tighter is the one that decides.
+   */
   private watchingPose() {
-    // High and square-on, far enough back that the whole table plus a margin of
-    // rail fits the frame at the widest aspect ratios a phone will produce.
+    const portrait = this.aspect < 1;
+    // Half-extents as they will appear on screen. The margin is deliberately
+    // wider than the rail: a fit that lands flush against the frame edge has
+    // the far corners clipping in and out as the camera eases into place.
+    const margin = 0.26;
+    const halfAcross = (portrait ? this.table.width : this.table.length) / 2 + margin;
+    const halfUp = (portrait ? this.table.length : this.table.width) / 2 + margin;
+
+    const tanHalfFov = Math.tan((this.camera.fov * Math.PI) / 360);
+    // The near edge of the table sits this much closer to the camera than the
+    // centre does, and perspective makes it the widest thing on screen. Fitting
+    // to the centre distance alone leaves the near corners hanging off the
+    // sides, so the constraint is written at the near edge and the offset added
+    // back to give the distance to the centre.
+    const nearEdge = halfUp * Math.cos(WATCH_ELEVATION);
+    const forWidth = halfAcross / (tanHalfFov * this.aspect) + nearEdge;
+    // The table lies flat, so its extent up the screen is foreshortened by the
+    // viewing elevation; dividing by the sine is what stops a low camera from
+    // cropping the far end.
+    const forHeight = halfUp / (tanHalfFov * Math.sin(WATCH_ELEVATION)) + nearEdge;
+    const distance = Math.max(forWidth, forHeight);
+
+    const horizontal = distance * Math.cos(WATCH_ELEVATION);
+    const height = distance * Math.sin(WATCH_ELEVATION);
+
     return {
-      position: new THREE.Vector3(0, this.table.length * 0.66, this.table.width * 1.15),
+      position: portrait
+        ? new THREE.Vector3(-horizontal, height, 0)
+        : new THREE.Vector3(0, height, horizontal),
       target: new THREE.Vector3(0, 0, 0),
     };
   }

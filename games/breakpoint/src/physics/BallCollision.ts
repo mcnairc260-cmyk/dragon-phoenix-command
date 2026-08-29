@@ -61,8 +61,16 @@ export function timeOfImpact(a: BallBody, b: BallBody, limit: number): number | 
  *
  * Returns the normal impulse magnitude, which the audio layer uses to scale the
  * click and the shot record stores as the collision's strength.
+ *
+ * `restitution` defaults to the real coefficient. The simultaneous-contact
+ * solver overrides it with zero to reach the perfectly inelastic solution
+ * first, then scales that result back up — see `PhysicsWorld.resolveBatch`.
  */
-export function resolveBallCollision(a: BallBody, b: BallBody): number {
+export function resolveBallCollision(
+  a: BallBody,
+  b: BallBody,
+  restitution: number = BALL_RESTITUTION,
+): number {
   let nx = b.position.x - a.position.x;
   let ny = b.position.y - a.position.y;
   const dist = Math.hypot(nx, ny);
@@ -83,7 +91,7 @@ export function resolveBallCollision(a: BallBody, b: BallBody): number {
   if (vn > 0) return 0; // already separating
 
   // Normal impulse. Reduced mass for equal masses is m/2.
-  const j = (-(1 + BALL_RESTITUTION) * vn * BALL_MASS) / 2;
+  const j = (-(1 + restitution) * vn * BALL_MASS) / 2;
   const jx = j * nx;
   const jy = j * ny;
   a.velocity.x -= jx / BALL_MASS;

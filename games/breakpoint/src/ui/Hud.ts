@@ -11,6 +11,15 @@ import type { Vec2 } from '../physics/Vec';
  */
 
 export class Hud {
+  /**
+   * The `.hud` element, not the container it was mounted into.
+   *
+   * The lock-out styling is written as `.hud.is-locked .cue-pad`, so putting
+   * the class on the container silently does nothing: the pads keep their full
+   * opacity and, worse, keep their `pointer-events`, so they still swallow
+   * touches while the balls are running. The shot system refuses the input
+   * either way, but the player gets no signal that the table is busy.
+   */
   readonly root: HTMLElement;
   readonly cuePad: HTMLElement;
   readonly spinPad: HTMLElement;
@@ -59,7 +68,7 @@ export class Hud {
       </div>
     `;
 
-    this.root = container;
+    this.root = container.querySelector('.hud')!;
     this.cuePad = container.querySelector('#hud-cue')!;
     this.spinPad = container.querySelector('#hud-spin')!;
     this.powerFill = container.querySelector('#hud-power')!;
