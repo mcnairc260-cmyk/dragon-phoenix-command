@@ -20,6 +20,7 @@ Every document in the DPA ecosystem, its job, and when it must be updated. **Con
 | `youtube/scripts/*.md` | Production-ready scripts | New videos |
 | `youtube/PRODUCTION_ASSETS.md` | Generated-media ledger (job IDs, costs, URLs) + render plans | **Every** media generation |
 | `README.md` | Repo front door & map | New top-level docs |
+| `interviews/README.md` | Interviews sub-app: how it works, storage/model setup, access model, limits, how it was verified | Any change under `interviews/` or `api/interview*.js` |
 | `CHANGELOG.md` | One-line history of material changes | Every merged PR |
 
 ## Architecture layer (`docs/architecture/`)

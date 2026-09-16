@@ -34,7 +34,8 @@ Read in exactly this order. Do not skip #1 — every other document derives its 
 | 7 | `youtube/CHANNEL_STRATEGY.md` | Channel positioning, series, video formula, packaging, funnel, launch plan. | Fully before any YouTube work |
 | 8 | `youtube/VIDEO_BACKLOG.md` + `youtube/scripts/*` | The 30-video plan and four finished scripts (study script 01 as the format exemplar). | Skim; fully before writing scripts |
 | 9 | `youtube/PRODUCTION_ASSETS.md` | Generated media, job IDs, trailer render plan and budget. | Before any media generation |
-| 10 | `index.html`, `api/chat.js`, `vercel.json` | The entire codebase (~350 lines). | Fully before any code work |
+| 10 | `index.html`, `api/chat.js`, `vercel.json` | The root web app (~350 lines). | Fully before any code work |
+| 11 | `interviews/README.md`, then `interviews/*`, `api/interviews.js`, `api/interview-ai.js` | The Interviews sub-app (vanilla, ~1,400 lines): AI-moderated research conversations. | Before any Interviews work |
 
 **Precedence when documents conflict:** Constitution > Blueprint > Brand Bible > everything else. One known conflict already exists (two color palettes — see §6 and §8); do not resolve it yourself.
 
@@ -48,7 +49,12 @@ Read in exactly this order. Do not skip #1 — every other document derives its 
 dragon-phoenix-command/
 ├── index.html              # The entire web app UI (single page, no build step)
 ├── api/chat.js             # Vercel serverless function: proxies Anthropic Messages API
-├── vercel.json             # Rewrites "/" → index.html; nothing else
+├── api/interviews.js       # Interviews storage (Vercel KV / Upstash over REST; memory fallback)
+├── api/interview-ai.js     # Interviews model calls (guide/turn/summarize/synthesize/ask, structured JSON)
+├── interviews/             # Interviews — AI-moderated research conversations. Vanilla HTML/JS,
+│                           # zero dependencies, deploys with the root site. See interviews/README.md
+│                           # and PROJECT_CONTEXT §20. Durable storage (KV) not yet provisioned (Tier 3).
+├── vercel.json             # Rewrites "/" → index.html and "/i/:id" → interviews/join.html; 60 s timeout for interview-ai
 ├── package.json            # Metadata only — zero dependencies
 ├── docs/
 │   ├── founding/           # Constitution + Blueprint (source of truth)
@@ -79,6 +85,7 @@ dragon-phoenix-command/
 
 - **Frontend:** one static HTML file. Vanilla JS, inline CSS, Google Fonts (Syne + JetBrains Mono), emoji as icons. No framework, no bundler, no npm packages. Chat UI + quick prompts + "pillar" cards, all driven by three JS arrays (`QUICK`, `PILLARS`, `SYSTEM`).
 - **Backend:** one serverless function (`api/chat.js`) that forwards `{messages, system}` to `https://api.anthropic.com/v1/messages` with `ANTHROPIC_API_KEY` from Vercel env vars, returns `{reply}`.
+- **Interviews (2026-09):** `interviews/index.html` (researcher: studies, AI-drafted guide, share link, responses, synthesis, ask-your-data, export) and `interviews/join.html` (participant: AI moderator chat, optional voice), backed by `api/interviews.js` (storage) and `api/interview-ai.js` (all model calls, system prompts built server-side, structured outputs, model set by `INTERVIEW_MODEL`, default `claude-opus-5`). Same vanilla rules as the root site. Without `KV_REST_API_URL`/`KV_REST_API_TOKEN` it runs on memory storage and says so in the UI.
 - **Deployment:** Vercel, auto-deploys from GitHub `main`. **Every merge to `main` ships to production immediately.** There is no staging environment, no tests, no CI.
 - **Current product identity:** a *personal* AI business mentor for the founder (his profile is hard-coded in the client-side `SYSTEM` prompt). The Blueprint's *public* Cognitive Command Center is the destination; migration is an unresolved decision (§8.2).
 - **Known defects** (documented, deliberately not yet fixed — confirm with founder before fixing): model ID `claude-sonnet-4-6` is likely invalid; CORS is `*` with no rate limiting; personal details exposed in page source. See `PROJECT_CONTEXT.md` §7.
@@ -218,6 +225,7 @@ Do **not** decide these yourself. If your task collides with one, surface the co
 | The Ascension Loop | Understanding → awareness → decisions → action → transformation |
 | A Rising | One full pass of the loop (lore) |
 | Operators | The community (proposed name, unapproved) |
+| Interviews | The AI-moderated research tool at `/interviews/` (module name only; no product name chosen) |
 | Observatory / Forge / Archive / Aviary / Engine Room | YouTube explainers / tools / knowledge base / community / AI stack (lore "rooms" = content series) |
 | The Static / The Fog / The Mimic / The Anchor / Siren of Sparks | Named adversary patterns: attention economy / self-ignorance / AI dependency / willpower myth / hype |
 | The Seven Laws | The brand's operating principles (Constitution, final section) |

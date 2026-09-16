@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interviews — Dragon Phoenix Command</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="brand">
+      <a href="/" class="mark" title="Command Center">🐉</a>
+      <div><div class="bname">Dragon Phoenix</div><div class="btag">Interviews // AI-moderated research</div></div>
+    </div>
+    <div class="status"><div class="dot" id="dot"></div><span id="statusText">CHECKING</span></div>
+  </div>
+
+  <div class="layout">
+    <aside class="side">
+      <div class="nav" id="nav"></div>
+    </aside>
+    <main id="main"></main>
+  </div>
+
+  <footer><div class="fb">Dragon Phoenix Ascension</div><div class="ft">Fire Within // Power Unleashed // 2026</div></footer>
+</div>
+<div id="modalHost"></div>
+
+<script src="shared.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const { esc, nl } = DPI;
+  const OWNER = DPI.ownerKey();
+  const state = { studies: DPI.ls.get("studies", []), responses: {}, synthesis: {}, ask: {}, persistent: null, online: true };
+
+  // ---- data ------------------------------------------------------------------
+
+  function saveLocal() { DPI.ls.set("studies", state.studies); }
+  function getStudy(id) { return state.studies.find(s => s.id === id); }
+  function upsertLocal(study) {
+    const i = state.studies.findIndex(s => s.id === study.id);
+    if (i >= 0) state.studies[i] = study; else state.studies.unshift(study);
+    saveLocal();
+  }
+  async function saveStudy(study) {
+    study.updatedAt = Date.now();
+    upsertLocal(study);
+    try { await DPI.store({ op: "saveStudy", study: DPI.publicStudy(study), ownerKey: OWNER }); study._synced = true; }
+    catch (e) { study._synced = false; study._syncError = e.message; }
+    upsertLocal(study);
+  }
+  async function loadResponses(id) {
+    try {
+      const d = await DPI.store({ op: "listResponses", studyId: id, ownerKey: OWNER });
+      state.responses[id] = d.responses; state.synthesis[id] = d.synthesis || state.synthesis[id] || null;
+      DPI.ls.set("resp." + id, d.responses); if (d.synthesis) DPI.ls.set("synth." + id, d.synthesis);
+    } catch (e) {
+      state.responses[id] = state.responses[id] || DPI.ls.get("resp." + id, []);
+      state.synthesis[id] = state.synthesis[id] || DPI.ls.get("synth." + id, null);
+      state.responses[id]._error = e.message;
+    }
+    return state.responses[id];
+  }
+  async function boot() {
+    try {
+      const h = await DPI.store({ op: "health" });
+      state.persistent = h.persistent; state.online = true;
+      $("statusText").textContent = h.persistent ? "ONLINE · STORED" : "ONLINE · DEMO STORAGE";
+      $("dot").classList.toggle("warn", !h.persistent);
+      const d = await DPI.store({ op: "listStudies", ownerKey: OWNER });
+      for (const s of d.studies) {
+        const local = getStudy(s.id);
+        if (!local || (s.updatedAt || 0) >= (local.updatedAt || 0)) upsertLocal({ ...local, ...s, _synced: true });
+        else await saveStudy(local);
+      }
+      // push local-only studies (created while offline or after a store reset)
+      for (const s of state.studies) if (!d.studies.find(x => x.id === s.id)) await saveStudy(s);
+    } catch (e) {
+      state.online = false; $("statusText").textContent = "OFFLINE · LOCAL ONLY"; $("dot").classList.add("warn");
+    }
+    route();
+  }
+
+  // ---- routing ---------------------------------------------------------------
+
+  function route() {
+    const parts = location.hash.replace(/^#\/?/, "").split("/");
+    renderNav(parts);
+    if (parts[0] === "new") viewNew(parts[1]);
+    else if (parts[0] === "study" && getStudy(parts[1])) viewStudy(parts[1], parts[2] || "overview");
+    else if (parts[0] === "settings") viewSettings();
+    else viewDashboard();
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", route);
+  const go = h => { location.hash = h; };
+
+  function renderNav(parts) {
+    const on = (k, v) => (parts[0] === k && (v === undefined || parts[1] === v) ? "on" : "");
+    $("nav").innerHTML = `
+      <a href="#/" class="${parts[0] === "" ? "on" : ""}">▦ Dashboard</a>
+      <a href="#/new" class="${on("new")}">＋ New study</a>
+      <a href="#/settings" class="${on("settings")}">⚙ Settings</a>
+      <div class="sl">// Studies</div>
+      ${state.studies.map(s => `<a href="#/study/${s.id}" class="${on("study", s.id)}">${esc(s.title || "Untitled")} <span class="mono muted">${s.status === "live" ? "●" : ""}</span></a>`).join("") || `<span class="muted small" style="padding:0 11px">None yet</span>`}`;
+  }
+
+  function storageBanner() {
+    if (state.persistent === false) return `<div class="banner">Demo storage: the server has no database configured, so studies and answers live only while the server instance is warm (studies are also kept in this browser). To keep data for real, add a Vercel KV / Upstash Redis store and set <span class="mono">KV_REST_API_URL</span> + <span class="mono">KV_REST_API_TOKEN</span>.</div>`;
+    if (!state.online) return `<div class="banner err">The server could not be reached. You can edit studies here, but interviews and AI features need the server.</div>`;
+    return "";
+  }
+
+  // ---- dashboard --------------------------------------------------------------
+
+  function viewDashboard() {
+    const studies = state.studies;
+    const total = studies.reduce((n, s) => n + (state.responses[s.id]?.length ?? s.responseCount ?? 0), 0);
+    $("main").innerHTML = `
+      <div class="eyebrow">// Research command</div>
+      <h1><span class="fire">Interviews.</span> <span class="muted" style="font-size:.6em;font-weight:400">Ask a hundred people. Read one report.</span></h1>
+      <p class="sd" style="margin-top:10px">Describe what you want to learn. An AI moderator interviews each person one-on-one from a shareable link, then every conversation is summarized and synthesized into themes you can act on. AI does the listening at scale; the decisions stay yours.</p>
+      ${storageBanner()}
+      <div class="stats">
+        <div class="stat"><div class="statn">${studies.length}</div><div class="statl">Studies</div></div>
+        <div class="stat"><div class="statn">${studies.filter(s => s.status === "live").length}</div><div class="statl">Live now</div></div>
+        <div class="stat"><div class="statn c">${total}</div><div class="statl">Conversations</div></div>
+        <div class="stat"><div class="statn c">${studies.filter(s => state.synthesis[s.id]).length}</div><div class="statl">Synthesized</div></div>
+      </div>
+      <div class="row between" style="margin-bottom:12px"><div class="sl" style="margin:0">// Your studies</div><button class="btn sm" onclick="go('#/new')">＋ New study</button></div>
+      <div id="list"></div>
+      <div class="sl" style="margin-top:28px">// Start from a template</div>
+      <div class="templates">${DPI.TEMPLATES.map(t => `<div class="tpl" onclick="go('#/new/${t.id}')"><div class="ti">${t.icon}</div><div class="tn">${esc(t.name)}</div><div class="tt">${esc(t.tagline)}</div></div>`).join("")}</div>`;
+    $("list").innerHTML = studies.length ? studies.map(s => {
+      const n = state.responses[s.id]?.length ?? s.responseCount ?? 0;
+      return `<div class="card click" onclick="go('#/study/${s.id}')">
+        <div class="row between"><h3 style="margin:0">${esc(s.title || "Untitled")}</h3><span class="pill ${s.status}">${s.status}</span></div>
+        <div class="muted small" style="margin:6px 0">${esc((s.goal || "").slice(0, 160))}${(s.goal || "").length > 160 ? "…" : ""}</div>
+        <div class="row mono muted"><span>${s.questions.length} questions</span><span>·</span><span>${n} conversations</span><span>·</span><span>${DPI.fmtDay(s.createdAt)}</span>${s._synced === false ? `<span class="pill gold">not synced</span>` : ""}</div>
+      </div>`; }).join("") : `<div class="empty"><div class="big">🎙</div>No studies yet. Pick a template below or start blank.</div>`;
+  }
+
+  // ---- guide editor (shared by New and Guide tab) -------------------------------
+
+  function blankStudy(tpl) {
+    const t = tpl || DPI.TEMPLATES.find(x => x.id === "blank");
+    return { id: DPI.uid(12), title: t.id === "blank" ? "" : t.name, goal: t.goal, audience: t.audience, intro: "", closing: "",
+      questions: t.questions.map(q => ({ id: DPI.uid(6), text: q.text, probes: [...q.probes] })), estimatedMinutes: 0,
+      settings: { interviewerName: "Alex", tone: "warm", maxFollowUps: 1, language: "English", collectName: true, collectEmail: false },
+      status: "draft", createdAt: Date.now(), updatedAt: Date.now() };
+  }
+
+  function editorHtml(s) {
+    const st = s.settings;
+    return `
+      <div class="card">
+        <label>Study title</label><input id="eTitle" value="${esc(s.title)}" placeholder="e.g. Why do first-time buyers hesitate?">
+        <label>What do you want to learn? (the research goal)</label><textarea id="eGoal" placeholder="Be specific. The AI drafts the guide from this, and the moderator uses it to judge which follow-ups matter.">${esc(s.goal)}</textarea>
+        <label>Who are you talking to?</label><input id="eAud" value="${esc(s.audience)}" placeholder="e.g. customers who cancelled in the last 60 days">
+        <div class="row" style="margin-top:12px"><button class="btn cyan" id="draft">✦ Draft guide with AI</button><span class="muted small">Writes an intro, questions with probes, a closing and a time estimate from your goal. You edit everything.</span></div>
+        <div class="banner err hidden" id="draftErr"></div>
+      </div>
+      <div class="card">
+        <div class="row between"><h3 style="margin:0">Discussion guide</h3><span class="muted small">Asked in order, one at a time. Probes are optional follow-up angles.</span></div>
+        <label>Opening message (what the moderator says first)</label><textarea id="eIntro" placeholder="Leave blank for a sensible default.">${esc(s.intro)}</textarea>
+        <label>Questions</label>
+        <div class="qlist" id="qlist"></div>
+        <div class="row" style="margin-top:8px"><button class="btn ghost sm" id="addQ">＋ Add question</button></div>
+        <label>Closing message</label><textarea id="eClosing" placeholder="Leave blank for a sensible default.">${esc(s.closing)}</textarea>
+      </div>
+      <div class="card">
+        <h3>Moderator settings</h3>
+        <div class="grid3">
+          <div><label>Moderator name</label><input id="eMod" value="${esc(st.interviewerName)}"></div>
+          <div><label>Tone</label><select id="eTone">${["warm", "neutral", "direct"].map(t => `<option ${st.tone === t ? "selected" : ""}>${t}</option>`).join("")}</select></div>
+          <div><label>Max follow-ups per question</label><select id="eFU">${[0, 1, 2, 3].map(n => `<option value="${n}" ${st.maxFollowUps === n ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+          <div><label>Language</label><input id="eLang" value="${esc(st.language)}"></div>
+          <div><label>Estimated minutes (0 = auto)</label><input id="eMins" type="number" min="0" value="${s.estimatedMinutes || 0}"></div>
+        </div>
+        <label class="switch"><input type="checkbox" id="eName" ${st.collectName ? "checked" : ""}> Ask for the participant's name</label>
+        <label class="switch"><input type="checkbox" id="eEmail" ${st.collectEmail ? "checked" : ""}> Ask for the participant's email</label>
+      </div>`;
+  }
+  function renderQs(qs) {
+    $("qlist").innerHTML = qs.map((q, i) => `
+      <div class="q" data-i="${i}">
+        <div class="num">${String(i + 1).padStart(2, "0")}</div>
+        <div><textarea class="qt" placeholder="An open question, no leading">${esc(q.text)}</textarea>
+          <div class="probes"><input class="qp" placeholder="Probes, separated by | (optional)" value="${esc(q.probes.join(" | "))}"></div></div>
+        <div class="ctl"><button class="icon" data-act="up" title="Move up">↑</button><button class="icon" data-act="down" title="Move down">↓</button><button class="icon" data-act="del" title="Remove">✕</button></div>
+      </div>`).join("") || `<div class="muted small">No questions yet — draft with AI or add one.</div>`;
+  }
+  function readQs() {
+    return Array.from(document.querySelectorAll("#qlist .q")).map(el => ({
+      id: DPI.uid(6), text: el.querySelector(".qt").value.trim(),
+      probes: el.querySelector(".qp").value.split("|").map(p => p.trim()).filter(Boolean)
+    })).filter(q => q.text);
+  }
+  function readEditor(s) {
+    return { ...s, title: $("eTitle").value.trim(), goal: $("eGoal").value.trim(), audience: $("eAud").value.trim(), intro: $("eIntro").value.trim(), closing: $("eClosing").value.trim(),
+      questions: readQs(), estimatedMinutes: parseInt($("eMins").value, 10) || 0,
+      settings: { interviewerName: $("eMod").value.trim() || "Alex", tone: $("eTone").value, maxFollowUps: parseInt($("eFU").value, 10), language: $("eLang").value.trim() || "English", collectName: $("eName").checked, collectEmail: $("eEmail").checked } };
+  }
+  function wireEditor(s) {
+    let qs = s.questions.map(q => ({ ...q }));
+    renderQs(qs);
+    $("qlist").onclick = e => {
+      const b = e.target.closest("button[data-act]"); if (!b) return;
+      qs = readQs(); const i = +b.closest(".q").dataset.i;
+      if (b.dataset.act === "del") qs.splice(i, 1);
+      if (b.dataset.act === "up" && i > 0) [qs[i - 1], qs[i]] = [qs[i], qs[i - 1]];
+      if (b.dataset.act === "down" && i < qs.length - 1) [qs[i + 1], qs[i]] = [qs[i], qs[i + 1]];
+      renderQs(qs);
+    };
+    $("addQ").onclick = () => { qs = readQs(); qs.push({ id: DPI.uid(6), text: "", probes: [] }); renderQs(qs); $("qlist").querySelector(".q:last-child .qt")?.focus(); };
+    $("draft").onclick = async () => {
+      const goal = $("eGoal").value.trim();
+      $("draftErr").classList.add("hidden");
+      if (!goal) { $("draftErr").textContent = "Write the research goal first — that is what the draft is built from."; $("draftErr").classList.remove("hidden"); return; }
+      $("draft").disabled = true; $("draft").textContent = "Drafting…";
+      try {
+        const d = await DPI.ai({ op: "guide", goal, audience: $("eAud").value.trim(), title: $("eTitle").value.trim(), count: Math.max(readQs().length, 6) });
+        const g = d.guide;
+        if (!$("eTitle").value.trim()) $("eTitle").value = g.title;
+        $("eIntro").value = g.intro; $("eClosing").value = g.closing; $("eMod").value = g.interviewer_name || $("eMod").value; $("eMins").value = g.estimated_minutes || 0;
+        qs = g.questions.map(q => ({ id: DPI.uid(6), text: q.text, probes: q.probes || [] })); renderQs(qs);
+      } catch (e) { $("draftErr").textContent = e.message; $("draftErr").classList.remove("hidden"); }
+      $("draft").disabled = false; $("draft").textContent = "✦ Draft guide with AI";
+    };
+  }
+
+  // ---- new study ---------------------------------------------------------------
+
+  function viewNew(tplId) {
+    const tpl = DPI.TEMPLATES.find(t => t.id === tplId);
+    const s = blankStudy(tpl);
+    $("main").innerHTML = `
+      <div class="eyebrow">// New study</div>
+      <h2>Set up the conversation</h2>
+      <p class="sd">Pick a starting point, state the goal, then let AI draft the guide or write your own. Nothing goes live until you say so.</p>
+      <div class="templates" style="margin-bottom:14px">${DPI.TEMPLATES.map(t => `<div class="tpl ${tpl && tpl.id === t.id ? "on" : ""}" onclick="go('#/new/${t.id}')"><div class="ti">${t.icon}</div><div class="tn">${esc(t.name)}</div><div class="tt">${esc(t.tagline)}</div></div>`).join("")}</div>
+      ${editorHtml(s)}
+      <div class="banner err hidden" id="saveErr"></div>
+      <div class="row" style="margin-top:14px"><button class="btn lg" id="create">Create study →</button><span class="muted small">Saved as a draft. You can go live from the study page.</span></div>`;
+    wireEditor(s);
+    $("create").onclick = async () => {
+      const st = readEditor(s);
+      if (!st.title) { $("saveErr").textContent = "Give the study a title."; $("saveErr").classList.remove("hidden"); return; }
+      if (!st.questions.length) { $("saveErr").textContent = "Add at least one question, or draft the guide with AI."; $("saveErr").classList.remove("hidden"); return; }
+      $("create").disabled = true;
+      await saveStudy(st);
+      go(`#/study/${st.id}`);
+    };
+  }
+
+  // ---- study page ---------------------------------------------------------------
+
+  function metrics(rs) {
+    const started = rs.length, done = rs.filter(r => r.status === "completed");
+    const dur = done.filter(r => r.durationSec).map(r => r.durationSec);
+    const sent = { positive: 0, neutral: 0, negative: 0, mixed: 0 };
+    rs.forEach(r => { if (r.summary?.sentiment in sent) sent[r.summary.sentiment]++; });
+    return { started, completed: done.length, rate: started ? Math.round((done.length / started) * 100) : 0,
+      avgDur: dur.length ? Math.round(dur.reduce((a, b) => a + b, 0) / dur.length) : 0,
+      avgMsgs: started ? Math.round(rs.reduce((a, r) => a + (r.transcript || []).filter(m => m.role === "user").length, 0) / started) : 0, sent };
+  }
+  function sentimentBar(sent) {
+    const total = Object.values(sent).reduce((a, b) => a + b, 0);
+    if (!total) return `<div class="muted small">No summarized conversations yet.</div>`;
+    const seg = (k, c) => sent[k] ? `<div style="width:${(sent[k] / total) * 100}%;background:${c}" title="${k}: ${sent[k]}"></div>` : "";
+    return `<div class="sent">${seg("positive", "var(--pos)")}${seg("mixed", "var(--gold)")}${seg("neutral", "var(--smoke)")}${seg("negative", "var(--neg)")}</div>
+      <div class="row mono muted small" style="margin-top:6px">${Object.entries(sent).filter(([, n]) => n).map(([k, n]) => `<span>${DPI.SENTIMENT[k][0]} ${n}</span>`).join("")}</div>`;
+  }
+
+  async function viewStudy(id, tab) {
+    const s = getStudy(id);
+    const tabs = ["overview", "guide", "share", "responses", "insights", "ask"];
+    $("main").innerHTML = `
+      <div class="row between">
+        <div><div class="eyebrow">// Study</div><h2 style="margin:0">${esc(s.title)}</h2></div>
+        <div class="row"><span class="pill ${s.status}">${s.status}</span>${s._synced === false ? `<span class="pill gold" title="${esc(s._syncError || "")}">not synced</span>` : ""}</div>
+      </div>
+      <div class="tabs">${tabs.map(t => `<button class="tab ${tab === t ? "on" : ""}" onclick="go('#/study/${id}/${t}')">${t}${t === "responses" ? `<span class="n" id="rcount"></span>` : ""}</button>`).join("")}</div>
+      ${storageBanner()}
+      <div id="tabBody"><div class="empty muted">Loading…</div></div>`;
+    if (!state.responses[id] || tab === "responses" || tab === "overview") await loadResponses(id);
+    const rs = state.responses[id] || [];
+    $("rcount").textContent = rs.length;
+    if (rs._error && state.online) $("tabBody").insertAdjacentHTML("beforebegin", `<div class="banner err">Could not load responses from the server: ${esc(rs._error)}. Showing what this browser has cached.</div>`);
+    ({ overview: tabOverview, guide: tabGuide, share: tabShare, responses: tabResponses, insights: tabInsights, ask: tabAsk }[tab] || tabOverview)(s, rs);
+  }
+
+  async function setStatus(s, status) {
+    if (status === "live" && !s.questions.length) return alert("Add at least one question before going live.");
+    s.status = status; await saveStudy(s); route();
+  }
+
+  function tabOverview(s, rs) {
+    const m = metrics(rs);
+    const recent = [...rs].sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0)).slice(0, 3);
+    $("tabBody").innerHTML = `
+      <div class="card">
+        <div class="row between">
+          <div><h3 style="margin:0">Status</h3><div class="muted small">${{ draft: "Draft — the link does not accept answers yet.", live: "Live — anyone with the link can be interviewed.", closed: "Closed — the link no longer accepts answers." }[s.status]}</div></div>
+          <div class="row">
+            ${s.status !== "live" ? `<button class="btn sm" onclick="setStatus(getStudy('${s.id}'),'live')">● Go live</button>` : `<button class="btn ghost sm" onclick="setStatus(getStudy('${s.id}'),'closed')">■ Close</button>`}
+            ${s.status === "closed" ? `<button class="btn ghost sm" onclick="setStatus(getStudy('${s.id}'),'draft')">Back to draft</button>` : ""}
+          </div>
+        </div>
+        ${s.status === "live" ? `<label>Share link</label><div class="code" id="linkBox">${esc(linkFor(s))}</div><div class="row" style="margin-top:8px"><button class="btn sm" onclick="copyLink('${s.id}')">Copy link</button><a class="btn ghost sm" href="${esc(previewFor(s))}" target="_blank">Preview as participant ↗</a></div>` : ""}
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="statn">${m.started}</div><div class="statl">Started</div></div>
+        <div class="stat"><div class="statn">${m.completed}</div><div class="statl">Completed</div></div>
+        <div class="stat"><div class="statn c">${m.rate}%</div><div class="statl">Completion</div></div>
+        <div class="stat"><div class="statn c">${DPI.fmtDur(m.avgDur)}</div><div class="statl">Avg duration</div></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>Sentiment</h3>${sentimentBar(m.sent)}</div>
+        <div class="card"><h3>Goal</h3><div class="small">${nl(s.goal) || "<span class=muted>—</span>"}</div><div class="mono muted" style="margin-top:8px">${s.questions.length} questions · ${esc(s.settings.interviewerName)} · ${s.settings.tone} · ${m.avgMsgs} answers per conversation</div></div>
+      </div>
+      <div class="card" style="margin-top:10px">
+        <div class="row between"><h3 style="margin:0">Latest conversations</h3><a href="#/study/${s.id}/responses" class="small">See all →</a></div>
+        ${recent.length ? recent.map(r => responseRow(s, r)).join("") : `<div class="muted small" style="margin-top:8px">Nobody has been interviewed yet. ${s.status === "live" ? "Share the link above." : "Go live and share the link."}</div>`}
+      </div>`;
+  }
+  function responseRow(s, r) {
+    const sent = r.summary?.sentiment;
+    return `<div class="card inner click" style="margin-top:8px" onclick="openResponse('${s.id}','${r.id}')">
+      <div class="row between"><b class="small">${esc(r.participant?.name || "Anonymous")}</b><div class="row">${sent ? `<span class="pill ${sent === "positive" ? "pos" : sent === "negative" ? "neg" : sent === "mixed" ? "gold" : "closed"}">${sent}</span>` : ""}<span class="pill ${r.status === "completed" ? "live" : "closed"}">${r.status}</span></div></div>
+      <div class="small" style="margin-top:4px">${esc(r.summary?.headline || firstAnswer(r))}</div>
+      <div class="mono muted" style="margin-top:4px">${DPI.fmtDate(r.startedAt)} · ${DPI.fmtDur(r.durationSec)} · ${(r.transcript || []).filter(m => m.role === "user").length} answers</div></div>`;
+  }
+  const linkFor = s => DPI.shareUrl(s, state.persistent === true);
+  const previewFor = s => DPI.shareUrl(s).replace("?s=", "?preview=1&s=");
+  const firstAnswer = r => { const u = (r.transcript || []).find(m => m.role === "user"); return u ? u.content.slice(0, 140) : "(no answers yet)"; };
+  async function copyLink(id) { const url = linkFor(getStudy(id)); try { await navigator.clipboard.writeText(url); $("linkBox").textContent = "Copied ✓  " + url; } catch { prompt("Copy this link:", url); } }
+
+  function tabGuide(s) {
+    $("tabBody").innerHTML = `${editorHtml(s)}<div class="banner err hidden" id="saveErr"></div>
+      <div class="row" style="margin-top:14px"><button class="btn lg" id="saveG">Save changes</button><span class="muted small">Changes apply to new interviews. Conversations already in progress keep the old guide.</span><span class="spacer"></span><button class="btn danger sm" id="delS">Delete study</button></div>`;
+    wireEditor(s);
+    $("saveG").onclick = async () => {
+      const st = readEditor(s);
+      if (!st.title || !st.questions.length) { $("saveErr").textContent = "A title and at least one question are required."; $("saveErr").classList.remove("hidden"); return; }
+      $("saveG").disabled = true; await saveStudy(st); go(`#/study/${s.id}/overview`);
+    };
+    $("delS").onclick = async () => {
+      if (!confirm(`Delete "${s.title}" and every conversation in it? This cannot be undone.`)) return;
+      try { await DPI.store({ op: "deleteStudy", id: s.id, ownerKey: OWNER }); } catch (e) { if (e.status !== 404) return alert(e.message); }
+      state.studies = state.studies.filter(x => x.id !== s.id); saveLocal(); DPI.ls.del("resp." + s.id); DPI.ls.del("synth." + s.id); go("#/");
+    };
+  }
+
+  function tabShare(s) {
+    const url = linkFor(s);
+    $("tabBody").innerHTML = `
+      ${s.status !== "live" ? `<div class="banner">This study is <b>${s.status}</b>. The link opens, but answers are only accepted while it is live. <button class="btn sm" style="margin-left:8px" onclick="setStatus(getStudy('${s.id}'),'live')">● Go live</button></div>` : ""}
+      <div class="card"><h3>Interview link</h3><p class="muted small">Send this anywhere: email, a message, a post, a QR code. Each person who opens it gets their own private conversation with the moderator.${state.persistent ? "" : " While the server runs on demo storage the link is long: it carries a copy of the guide so it keeps working even if the store is reset. With a database configured it becomes a short <span class=mono>/i/…</span> link."}</p>
+        <div class="code" id="linkBox">${esc(url)}</div>
+        <div class="row" style="margin-top:8px"><button class="btn sm" onclick="copyLink('${s.id}')">Copy link</button>${navigator.share ? `<button class="btn ghost sm" id="nshare">Share…</button>` : ""}<a class="btn ghost sm" href="${esc(previewFor(s))}" target="_blank">Preview as participant ↗</a></div></div>
+      <div class="card"><h3>Embed on a page</h3><p class="muted small">Paste this where you want the interview to appear.</p>
+        <div class="code">${esc(`<iframe src="${url}" style="width:100%;height:640px;border:0;border-radius:12px" allow="microphone"></iframe>`)}</div></div>
+      <div class="card"><h3>Invitation text</h3><p class="muted small">A plain, honest invitation you can adapt.</p>
+        <div class="code" style="color:var(--ash);user-select:text">Hi — I'm trying to understand ${esc(s.goal ? s.goal.replace(/^understand\s+/i, "").split(/[.\n]/)[0].toLowerCase() : "how people experience this")}. Would you spend about ${s.estimatedMinutes || Math.max(3, Math.round(s.questions.length * 1.5))} minutes on a short conversation? An AI moderator asks the questions and I read every answer. No prep needed, there are no wrong answers, and you can stop any time: ${esc(url)}</div></div>`;
+    $("nshare")?.addEventListener("click", () => navigator.share({ title: s.title, url }).catch(() => {}));
+  }
+
+  function tabResponses(s, rs) {
+    const sorted = [...rs].sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0));
+    $("tabBody").innerHTML = `
+      <div class="row between" style="margin-bottom:10px"><div class="muted small">${rs.length} conversation${rs.length === 1 ? "" : "s"} · ${rs.filter(r => r.summary).length} summarized</div>
+        <div class="row"><button class="btn ghost sm" onclick="viewStudy('${s.id}','responses')">↻ Refresh</button><button class="btn ghost sm" onclick="summarizeMissing('${s.id}')">✦ Summarize missing</button><button class="btn ghost sm" onclick="exportStudy('${s.id}','csv')">⇩ CSV</button><button class="btn ghost sm" onclick="exportStudy('${s.id}','json')">⇩ JSON</button></div></div>
+      ${sorted.length ? `<div class="card" style="padding:0;overflow-x:auto"><table><thead><tr><th>Participant</th><th>When</th><th>Status</th><th>Length</th><th>Sentiment</th><th>Headline</th></tr></thead><tbody>
+        ${sorted.map(r => `<tr class="click" onclick="openResponse('${s.id}','${r.id}')"><td><b>${esc(r.participant?.name || "Anonymous")}</b>${r.participant?.email ? `<div class="mono muted">${esc(r.participant.email)}</div>` : ""}</td><td class="mono muted">${DPI.fmtDate(r.startedAt)}</td><td><span class="pill ${r.status === "completed" ? "live" : "closed"}">${r.status}</span></td><td class="mono muted">${DPI.fmtDur(r.durationSec)}<br>${(r.transcript || []).filter(m => m.role === "user").length} answers</td><td>${r.summary ? `<span class="pill ${r.summary.sentiment === "positive" ? "pos" : r.summary.sentiment === "negative" ? "neg" : r.summary.sentiment === "mixed" ? "gold" : "closed"}">${r.summary.sentiment}</span>` : `<span class="muted">—</span>`}</td><td class="small">${esc(r.summary?.headline || firstAnswer(r))}</td></tr>`).join("")}
+      </tbody></table></div>` : `<div class="empty"><div class="big">💬</div>No conversations yet.</div>`}`;
+  }
+
+  async function openResponse(studyId, rid) {
+    const s = getStudy(studyId); const r = (state.responses[studyId] || []).find(x => x.id === rid); if (!r) return;
+    const sm = r.summary;
+    $("modalHost").innerHTML = `<div class="modal" onclick="if(event.target===this)closeModal()"><div class="card">
+      <div class="row between"><div><div class="eyebrow">// Conversation</div><h2 style="margin:0">${esc(r.participant?.name || "Anonymous")}</h2><div class="mono muted">${DPI.fmtDate(r.startedAt)} · ${DPI.fmtDur(r.durationSec)} · ${r.status}${r.participant?.email ? " · " + esc(r.participant.email) : ""}</div></div>
+        <div class="row"><button class="btn ghost sm" id="reSum">✦ ${sm ? "Regenerate" : "Generate"} summary</button><button class="btn danger sm" id="delR">Delete</button><button class="icon" onclick="closeModal()">✕</button></div></div>
+      <div class="banner err hidden" id="mErr"></div>
+      <div class="grid2" style="margin-top:14px">
+        <div>${sm ? `<div class="card inner"><div class="row between"><h3 style="margin:0">Summary</h3><span class="pill ${sm.sentiment === "positive" ? "pos" : sm.sentiment === "negative" ? "neg" : sm.sentiment === "mixed" ? "gold" : "closed"}">${sm.sentiment}</span></div>
+            <p style="font-weight:700;margin:8px 0 6px">${esc(sm.headline)}</p><p class="small">${nl(sm.summary)}</p>
+            <h3 style="margin-top:12px">Key points</h3><ul class="clean">${sm.key_points.map(k => `<li>${esc(k)}</li>`).join("")}</ul>
+            ${sm.quotes?.length ? `<h3 style="margin-top:12px">Quotes</h3>${sm.quotes.map(q => `<div class="quote">“${esc(q.text)}”<span class="who">${esc(q.about)}</span></div>`).join("")}` : ""}
+            ${sm.answers?.length ? `<h3 style="margin-top:12px">By question</h3>${sm.answers.map(a => `<div style="margin-bottom:8px"><div class="mono" style="color:var(--cyan)">Q${a.question_index + 1} · ${esc(s.questions[a.question_index]?.text || "")}</div><div class="small">${esc(a.answer)}</div></div>`).join("")}` : ""}
+            ${sm.tags?.length ? `<div class="tags" style="margin-top:10px">${sm.tags.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>` : ""}</div>` : `<div class="card inner muted small">No summary yet.</div>`}</div>
+        <div><div class="card inner"><h3>Transcript</h3><div class="msgs" style="max-height:60vh;padding:0">${(r.transcript || []).map(m => `<div class="msg ${m.role === "assistant" ? "ai" : "user"}"><div class="ava">${m.role === "assistant" ? "🤖" : "🔥"}</div><div class="bub">${nl(m.content)}</div></div>`).join("") || `<div class="muted small">Empty.</div>`}</div></div></div>
+      </div></div></div>`;
+    $("reSum").onclick = async () => {
+      $("reSum").disabled = true; $("reSum").textContent = "Summarizing…"; $("mErr").classList.add("hidden");
+      try {
+        const d = await DPI.ai({ op: "summarize", study: DPI.publicStudy(s), transcript: r.transcript });
+        r.summary = d.summary;
+        await DPI.store({ op: "updateResponse", studyId: s.id, ownerKey: OWNER, responseId: r.id, summary: r.summary });
+        DPI.ls.set("resp." + s.id, state.responses[s.id]); openResponse(studyId, rid);
+      } catch (e) { $("mErr").textContent = e.message; $("mErr").classList.remove("hidden"); $("reSum").disabled = false; $("reSum").textContent = "✦ Retry summary"; }
+    };
+    $("delR").onclick = async () => {
+      if (!confirm("Delete this conversation? This cannot be undone.")) return;
+      try { await DPI.store({ op: "updateResponse", studyId: s.id, ownerKey: OWNER, responseId: r.id, remove: true }); } catch (e) { if (e.status !== 404) return alert(e.message); }
+      state.responses[s.id] = state.responses[s.id].filter(x => x.id !== r.id); DPI.ls.set("resp." + s.id, state.responses[s.id]); closeModal(); route();
+    };
+  }
+  function closeModal() { $("modalHost").innerHTML = ""; }
+
+  async function summarizeMissing(id) {
+    const s = getStudy(id); const rs = (state.responses[id] || []).filter(r => !r.summary && (r.transcript || []).some(m => m.role === "user"));
+    if (!rs.length) return alert("Every conversation with answers already has a summary.");
+    for (const r of rs) {
+      try { const d = await DPI.ai({ op: "summarize", study: DPI.publicStudy(s), transcript: r.transcript }); r.summary = d.summary;
+        await DPI.store({ op: "updateResponse", studyId: id, ownerKey: OWNER, responseId: r.id, summary: r.summary }); }
+      catch (e) { alert("Stopped: " + e.message); break; }
+    }
+    DPI.ls.set("resp." + id, state.responses[id]); route();
+  }
+
+  function tabInsights(s, rs) {
+    const syn = state.synthesis[s.id];
+    const withAnswers = rs.filter(r => (r.transcript || []).some(m => m.role === "user"));
+    $("tabBody").innerHTML = `
+      <div class="card"><div class="row between"><div><h3 style="margin:0">Synthesis</h3><div class="muted small">${syn ? `Generated ${DPI.fmtDate(syn.generatedAt)} from ${syn.n} conversation${syn.n === 1 ? "" : "s"}.${withAnswers.length > syn.n ? ` <b style="color:var(--gold)">${withAnswers.length - syn.n} new since then.</b>` : ""}` : "Reads every conversation and reports the themes, with quotes and counts, plus what surprised the model and what it recommends you consider."}</div></div>
+        <div class="row"><button class="btn" id="synth" ${withAnswers.length ? "" : "disabled"}>✦ ${syn ? "Re-synthesize" : "Synthesize"} ${withAnswers.length} conversation${withAnswers.length === 1 ? "" : "s"}</button>${syn ? `<button class="btn ghost sm" onclick="exportStudy('${s.id}','md')">⇩ Report</button>` : ""}</div></div>
+        <div class="banner err hidden" id="synErr"></div></div>
+      <div id="synBody">${syn ? synthesisHtml(s, syn) : `<div class="empty"><div class="big">🧠</div>${withAnswers.length ? "Ready when you are." : "Synthesis needs at least one conversation with answers."}</div>`}</div>`;
+    $("synth").onclick = async () => {
+      $("synth").disabled = true; $("synth").textContent = "Reading every conversation… this can take a minute"; $("synErr").classList.add("hidden");
+      try {
+        const d = await DPI.ai({ op: "synthesize", study: DPI.publicStudy(s), responses: withAnswers.map(r => ({ id: r.id, participant: r.participant, summary: r.summary, transcript: r.transcript })) });
+        const synthesis = { ...d.synthesis, generatedAt: Date.now(), n: withAnswers.length };
+        state.synthesis[s.id] = synthesis; DPI.ls.set("synth." + s.id, synthesis);
+        try { await DPI.store({ op: "saveSynthesis", studyId: s.id, ownerKey: OWNER, synthesis }); } catch (e) { console.warn(e.message); }
+        tabInsights(s, rs);
+      } catch (e) { $("synErr").textContent = e.message; $("synErr").classList.remove("hidden"); $("synth").disabled = false; $("synth").textContent = "✦ Retry"; }
+    };
+  }
+  function synthesisHtml(s, syn) {
+    const n = syn.n || 1;
+    return `
+      <div class="card"><h3>Executive summary</h3><p class="small" style="line-height:1.65">${nl(syn.executive_summary)}</p></div>
+      <div class="sl" style="margin-top:18px">// Themes</div>
+      ${syn.themes.map((t, i) => `<div class="card"><div class="row between"><h3 style="margin:0">${i + 1}. ${esc(t.title)}</h3><span class="mono" style="color:var(--cyan)">${t.response_ids.length} of ${n}</span></div>
+        <div class="bar"><div style="width:${Math.min(100, Math.round((t.response_ids.length / n) * 100))}%"></div></div>
+        <p class="small" style="margin-top:8px">${nl(t.description)}</p>
+        ${t.quotes.map(q => `<div class="quote">“${esc(q.text)}”<span class="who" onclick="openResponse('${s.id}','${esc(q.response_id)}')">${esc(participantName(s.id, q.response_id))} ↗</span></div>`).join("")}</div>`).join("")}
+      <div class="grid2" style="margin-top:10px">
+        <div class="card"><h3>Sentiment</h3><p class="small">${nl(syn.sentiment_overview)}</p></div>
+        <div class="card"><h3>Surprises</h3><ul class="clean">${syn.surprises.map(x => `<li>${esc(x)}</li>`).join("") || "<li class=muted>None noted.</li>"}</ul></div>
+        <div class="card"><h3>Options to consider</h3><ul class="clean">${syn.recommendations.map(x => `<li>${esc(x)}</li>`).join("")}</ul><div class="muted small" style="margin-top:8px">These are the model's suggestions from the interviews, not decisions. Check them against what you know.</div></div>
+        <div class="card"><h3>Open questions</h3><ul class="clean">${syn.open_questions.map(x => `<li>${esc(x)}</li>`).join("") || "<li class=muted>None.</li>"}</ul></div>
+      </div>`;
+  }
+  const participantName = (sid, rid) => (state.responses[sid] || []).find(r => r.id === rid)?.participant?.name || "Participant";
+
+  function tabAsk(s, rs) {
+    const withAnswers = rs.filter(r => (r.transcript || []).some(m => m.role === "user"));
+    const hist = state.ask[s.id] || (state.ask[s.id] = []);
+    $("tabBody").innerHTML = `
+      <p class="sd">Ask anything about the ${withAnswers.length} conversation${withAnswers.length === 1 ? "" : "s"} in this study. Every answer cites the participants it comes from.</p>
+      <div class="row" style="margin-bottom:10px">${["What did people mention most often?", "Who was most negative, and why?", "What would make people switch?", "Which answers contradict each other?"].map(q => `<button class="btn ghost sm" onclick="askQ('${s.id}',this.textContent)">${q}</button>`).join("")}</div>
+      <div class="chat"><div class="chead"><div class="cicon">🧠</div><div class="ctitle">Ask your data</div><div class="csub">${withAnswers.length} interviews</div></div>
+        <div class="msgs" id="askMsgs">${hist.map(m => askMsgHtml(s.id, m)).join("") || `<div class="muted small">No questions yet.</div>`}</div>
+        <div class="err hidden" id="askErr"></div>
+        <div class="inrow"><textarea id="askIn" rows="2" placeholder="e.g. What is the single biggest reason people cancel?"></textarea><button class="send" id="askSend" ${withAnswers.length ? "" : "disabled"}>ASK</button></div></div>`;
+    $("askSend").onclick = () => askQ(s.id, $("askIn").value);
+    $("askIn").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); askQ(s.id, $("askIn").value); } });
+  }
+  function askMsgHtml(sid, m) {
+    if (m.role === "user") return `<div class="msg user"><div class="ava">🔥</div><div class="bub">${nl(m.content)}</div></div>`;
+    return `<div class="msg ai"><div class="ava">🧠</div><div><div class="bub">${nl(m.content)}${m.citations?.length ? m.citations.map(c => `<div class="quote">“${esc(c.quote)}”<span class="who" onclick="openResponse('${sid}','${esc(c.response_id)}')">${esc(participantName(sid, c.response_id))} ↗</span></div>`).join("") : ""}</div><div class="time">confidence: ${m.confidence || "—"}</div></div></div>`;
+  }
+  async function askQ(sid, q) {
+    q = (q || "").trim(); if (!q) return;
+    const s = getStudy(sid), hist = state.ask[sid], rs = (state.responses[sid] || []).filter(r => (r.transcript || []).some(m => m.role === "user"));
+    $("askIn").value = ""; $("askSend").disabled = true; $("askErr").classList.add("hidden");
+    hist.push({ role: "user", content: q });
+    $("askMsgs").innerHTML = hist.map(m => askMsgHtml(sid, m)).join("") + `<div class="msg ai" id="typing"><div class="ava">🧠</div><div class="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>`;
+    $("askMsgs").scrollTop = $("askMsgs").scrollHeight;
+    try {
+      const d = await DPI.ai({ op: "ask", study: DPI.publicStudy(s), question: q, history: hist.slice(0, -1).map(m => ({ role: m.role, content: m.content })), responses: rs.map(r => ({ id: r.id, participant: r.participant, summary: r.summary, transcript: r.transcript })) });
+      hist.push({ role: "assistant", content: d.answer, citations: d.citations, confidence: d.confidence });
+    } catch (e) { hist.pop(); $("askErr").textContent = "⚠ " + e.message; $("askErr").classList.remove("hidden"); }
+    $("askMsgs").innerHTML = hist.map(m => askMsgHtml(sid, m)).join(""); $("askMsgs").scrollTop = $("askMsgs").scrollHeight; $("askSend").disabled = false;
+  }
+
+  // ---- export ---------------------------------------------------------------------
+
+  function exportStudy(id, kind) {
+    const s = getStudy(id), rs = state.responses[id] || [], syn = state.synthesis[id];
+    const slug = (s.title || "study").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    if (kind === "json") return DPI.download(`${slug}.json`, JSON.stringify({ study: DPI.publicStudy(s), responses: rs, synthesis: syn }, null, 2), "application/json");
+    if (kind === "csv") {
+      const cell = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      const head = ["id", "name", "email", "started", "completed", "status", "duration_sec", "answers", "sentiment", "headline", "tags", ...s.questions.map((q, i) => `q${i + 1}`)];
+      const rows = rs.map(r => [r.id, r.participant?.name, r.participant?.email, r.startedAt ? new Date(r.startedAt).toISOString() : "", r.completedAt ? new Date(r.completedAt).toISOString() : "", r.status, r.durationSec, (r.transcript || []).filter(m => m.role === "user").length, r.summary?.sentiment, r.summary?.headline, (r.summary?.tags || []).join("; "), ...s.questions.map((q, i) => r.summary?.answers?.find(a => a.question_index === i)?.answer || "")]);
+      return DPI.download(`${slug}.csv`, [head, ...rows].map(r => r.map(cell).join(",")).join("\n"), "text/csv");
+    }
+    const md = [`# ${s.title}`, ``, `**Goal:** ${s.goal}`, `**Audience:** ${s.audience}`, `**Conversations:** ${rs.length}`, ``];
+    if (syn) {
+      md.push(`## Executive summary`, ``, syn.executive_summary, ``, `## Themes`, ``);
+      syn.themes.forEach((t, i) => { md.push(`### ${i + 1}. ${t.title} (${t.response_ids.length} of ${syn.n})`, ``, t.description, ``); t.quotes.forEach(q => md.push(`> “${q.text}” — ${participantName(id, q.response_id)}`)); md.push(``); });
+      md.push(`## Sentiment`, ``, syn.sentiment_overview, ``, `## Surprises`, ``, ...syn.surprises.map(x => `- ${x}`), ``, `## Options to consider`, ``, ...syn.recommendations.map(x => `- ${x}`), ``, `## Open questions`, ``, ...syn.open_questions.map(x => `- ${x}`), ``);
+    }
+    md.push(`## Conversations`, ``);
+    rs.forEach(r => { md.push(`### ${r.participant?.name || "Anonymous"} — ${DPI.fmtDate(r.startedAt)} (${r.status})`, ``); if (r.summary) md.push(`**${r.summary.headline}**`, ``, r.summary.summary, ``, ...r.summary.key_points.map(k => `- ${k}`), ``); (r.transcript || []).forEach(m => md.push(`**${m.role === "assistant" ? "Moderator" : "Participant"}:** ${m.content}`, ``)); });
+    DPI.download(`${slug}-report.md`, md.join("\n"), "text/markdown");
+  }
+
+  // ---- settings ---------------------------------------------------------------------
+
+  function viewSettings() {
+    $("main").innerHTML = `
+      <div class="eyebrow">// Settings</div><h2>Your workspace</h2>
+      <p class="sd">There are no accounts. Your studies are tied to a secret owner key kept in this browser. Keep a copy of it: it is the only way to open your studies on another device or after clearing browser data.</p>
+      ${storageBanner()}
+      <div class="card"><h3>Owner key</h3><div class="code" id="okBox">${"•".repeat(24)}</div>
+        <div class="row" style="margin-top:8px"><button class="btn ghost sm" id="reveal">Reveal</button><button class="btn sm" id="copyKey">Copy key</button></div>
+        <div class="muted small" style="margin-top:8px">Anyone with this key can read and change your studies and answers. Treat it like a password.</div></div>
+      <div class="card"><h3>Open studies from another device</h3><p class="muted small">Paste an owner key. This browser switches to that key and loads its studies from the server.</p>
+        <input id="restoreKey" placeholder="owner key (32 characters)"><div class="row" style="margin-top:8px"><button class="btn sm" id="restore">Switch to this key</button></div><div class="banner err hidden" id="restoreErr"></div></div>
+      <div class="card"><h3>Storage</h3><div class="small">Server: <b>${state.persistent === null ? "unknown" : state.persistent ? "database (durable)" : "memory (demo)"}</b> · Browser cache: <b>${state.studies.length} studies</b></div>
+        <div class="row" style="margin-top:8px"><button class="btn danger sm" id="clearLocal">Clear this browser's cache</button></div><div class="muted small" style="margin-top:6px">Removes cached studies and answers from this browser only. The server copy, if any, is untouched.</div></div>
+      <div class="card"><h3>How this works</h3><ul class="clean">
+        <li>Each study gets a link. Each person who opens it is interviewed one-on-one by an AI moderator that follows your guide and asks follow-ups.</li>
+        <li>When a conversation ends it is summarized. From the Insights tab you synthesize all conversations into themes with counts and quotes, and from Ask you query them in plain language.</li>
+        <li>The moderator never gives advice, argues or leads. Participants are told it is AI and that you read their answers.</li>
+        <li>The model is set on the server (<span class="mono">INTERVIEW_MODEL</span>, default claude-opus-5). Model choices are swappable by design.</li></ul></div>`;
+    $("reveal").onclick = () => { $("okBox").textContent = OWNER; };
+    $("copyKey").onclick = async () => { try { await navigator.clipboard.writeText(OWNER); $("copyKey").textContent = "Copied ✓"; } catch { $("okBox").textContent = OWNER; } };
+    $("restore").onclick = async () => {
+      const k = $("restoreKey").value.trim();
+      if (!/^[a-z0-9]{16,64}$/.test(k)) { $("restoreErr").textContent = "That does not look like an owner key."; $("restoreErr").classList.remove("hidden"); return; }
+      try { const d = await DPI.store({ op: "listStudies", ownerKey: k }); if (!d.studies.length && !confirm("No studies were found for that key on the server. Switch anyway?")) return;
+        DPI.ls.set("ownerKey", k); DPI.ls.set("studies", d.studies.map(s => ({ ...s, _synced: true }))); location.reload(); }
+      catch (e) { $("restoreErr").textContent = e.message; $("restoreErr").classList.remove("hidden"); }
+    };
+    $("clearLocal").onclick = () => { if (!confirm("Clear cached studies and answers from this browser? Your owner key is kept.")) return; state.studies.forEach(s => { DPI.ls.del("resp." + s.id); DPI.ls.del("synth." + s.id); }); DPI.ls.del("studies"); location.reload(); };
+  }
+
+  boot();
+</script>
+</body>
+</html>

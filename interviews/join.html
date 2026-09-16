@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interview — Dragon Phoenix</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="/interviews/style.css">
+<style>
+  .screen { padding:28px 0 40px; }
+  .welcome h1 { margin:10px 0 12px; }
+  .about { font-size:14px; line-height:1.65; color:var(--ash); margin-bottom:16px; }
+  .facts { display:flex; gap:14px; flex-wrap:wrap; margin:14px 0; }
+  .fact { font-family:var(--mono); font-size:10px; color:var(--smoke); }
+  .fact b { color:var(--gold); font-weight:400; }
+  .disclose { font-size:11px; color:var(--smoke); line-height:1.55; border-top:1px solid var(--border); padding-top:12px; margin-top:16px; }
+  .endlink { background:none; border:none; color:var(--smoke); font-family:var(--mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase; }
+  .endlink:hover { color:var(--neg); }
+  .done .big { font-size:40px; margin-bottom:12px; }
+</style>
+</head>
+<body>
+<div class="wrap narrow">
+  <div class="header">
+    <div class="brand">
+      <div class="mark">🐉</div>
+      <div><div class="bname">Dragon Phoenix</div><div class="btag">Interviews</div></div>
+    </div>
+    <div class="status"><div class="dot" id="dot"></div><span id="statusText">LOADING</span></div>
+  </div>
+
+  <div class="screen hidden" id="invalid">
+    <div class="empty"><div class="big">🔗</div><h2>This interview link is not valid</h2><p class="muted" id="invalidWhy">The study could not be found.</p></div>
+  </div>
+
+  <div class="screen welcome hidden" id="welcome">
+    <div class="eyebrow">// A short conversation</div>
+    <h1 id="wTitle"></h1>
+    <p class="about" id="wIntro"></p>
+    <div class="facts">
+      <div class="fact">⏱ About <b id="wMins"></b> minutes</div>
+      <div class="fact">💬 <b id="wCount"></b> questions</div>
+      <div class="fact">🤖 Moderator: <b id="wMod"></b></div>
+    </div>
+    <div class="banner hidden" id="previewBanner">Preview mode — nothing you type here is saved.</div>
+    <div class="banner hidden" id="notLive">This interview is not open right now.</div>
+    <div class="card" id="wForm">
+      <div id="wFields"></div>
+      <label class="switch hidden" id="voiceRow"><input type="checkbox" id="voiceOn"> 🎙 Use voice — the moderator speaks, and you can answer with the microphone</label>
+      <div class="row" style="margin-top:14px"><button class="btn lg" id="start">Start the conversation →</button></div>
+    </div>
+    <p class="disclose">An AI moderator asks the questions on behalf of the researcher who created this study. Your answers, and the name or email you enter, are shared with that researcher. There are no wrong answers. You can stop at any time.</p>
+  </div>
+
+  <div class="screen hidden" id="chatScreen">
+    <div class="chat">
+      <div class="chead">
+        <div class="cicon">🤖</div>
+        <div class="ctitle" id="cTitle"></div>
+        <div class="csub" id="cProg"></div>
+      </div>
+      <div class="progress"><div id="pbar" style="width:0%"></div></div>
+      <div class="msgs" id="msgs"></div>
+      <div class="err hidden" id="err"></div>
+      <div class="inrow">
+        <textarea id="input" rows="2" placeholder="Type your answer…"></textarea>
+        <button class="mic hidden" id="mic" title="Hold to talk">🎙</button>
+        <button class="send" id="send">SEND</button>
+      </div>
+    </div>
+    <div class="row between" style="margin-top:10px">
+      <span class="mono muted">Enter to send · Shift+Enter for a new line</span>
+      <button class="endlink" id="endEarly">End the interview</button>
+    </div>
+  </div>
+
+  <div class="screen done hidden" id="done">
+    <div class="empty">
+      <div class="big">🔥</div>
+      <h2>Thank you</h2>
+      <p class="about" id="dClosing"></p>
+      <div class="banner err hidden" id="saveFail">Your answers could not be sent automatically. Please copy them and send them to the person who invited you.<br><br><button class="btn ghost sm" id="copyTranscript">Copy my answers</button></div>
+      <p class="muted small" id="dSaved"></p>
+    </div>
+  </div>
+
+  <footer><div class="fb">Dragon Phoenix Ascension</div><div class="ft">Fire Within // Power Unleashed</div></footer>
+</div>
+
+<script src="/interviews/shared.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+  const PREVIEW = params.get("preview") === "1";
+  let study = null, fromServer = false;
+  let transcript = [];           // {role, content, q, ts}
+  let resp = null;               // the response record we save
+  let saveFailed = false, busy = false, voice = false, rec = null;
+
+  function show(id) { ["invalid","welcome","chatScreen","done"].forEach(s => $(s).classList.toggle("hidden", s !== id)); }
+  function setStatus(t, warn) { $("statusText").textContent = t; $("dot").classList.toggle("warn", !!warn); }
+
+  async function load() {
+    // /i/<id> is a Vercel rewrite to this page: the browser URL keeps the path, so read the id from it too.
+    const id = params.get("s") || (location.pathname.match(/\/i\/([a-z0-9]+)/) || [])[1] || "";
+    const hash = location.hash.slice(1);
+    if (id) {
+      try { const d = await DPI.store({ op: "getStudy", id }); study = d.study; fromServer = true; }
+      catch (e) { if (e.status !== 404) console.warn(e.message); }
+    }
+    if (!study && hash) study = DPI.decodeStudy(hash);
+    if (!study || !Array.isArray(study.questions)) { $("invalidWhy").textContent = id ? "The study could not be found on the server, and the link carries no copy of it." : "No study id in the link."; show("invalid"); setStatus("INVALID", true); return; }
+    renderWelcome();
+  }
+
+  function renderWelcome() {
+    const s = study.settings || {};
+    $("wTitle").textContent = study.title || "Interview";
+    $("wIntro").textContent = study.intro || "Thanks for taking the time. This is a short conversation, there are no wrong answers, and your honest view is what helps.";
+    $("wMins").textContent = study.estimatedMinutes || Math.max(3, Math.round(study.questions.length * 1.5));
+    $("wCount").textContent = study.questions.length;
+    $("wMod").textContent = s.interviewerName || "Alex";
+    $("cTitle").textContent = `${s.interviewerName || "Alex"} · AI moderator`;
+    let f = "";
+    if (s.collectName) f += `<label>Your name</label><input id="pName" placeholder="First name is fine">`;
+    if (s.collectEmail) f += `<label>Your email</label><input id="pEmail" type="email" placeholder="you@example.com">`;
+    $("wFields").innerHTML = f || `<p class="muted small">No sign-in needed. Your answers are anonymous unless you choose to share your name in the conversation.</p>`;
+    const live = study.status === "live";
+    $("previewBanner").classList.toggle("hidden", !PREVIEW);
+    $("notLive").classList.toggle("hidden", live || PREVIEW);
+    $("wForm").classList.toggle("hidden", !live && !PREVIEW);
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SR || "speechSynthesis" in window) $("voiceRow").classList.remove("hidden");
+    setStatus(PREVIEW ? "PREVIEW" : live ? "OPEN" : "CLOSED", !live);
+    show("welcome");
+  }
+
+  // ---- interview loop ------------------------------------------------------
+
+  function addMsg(role, text) {
+    const div = document.createElement("div");
+    div.className = "msg " + (role === "assistant" ? "ai" : "user");
+    div.innerHTML = `<div class="ava">${role === "assistant" ? "🤖" : "🔥"}</div><div><div class="bub">${DPI.nl(text)}</div><div class="time">${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div></div>`;
+    $("msgs").appendChild(div); $("msgs").scrollTop = $("msgs").scrollHeight;
+  }
+  function typing(on) {
+    $("typing")?.remove();
+    if (!on) return;
+    const d = document.createElement("div"); d.className = "msg ai"; d.id = "typing";
+    d.innerHTML = `<div class="ava">🤖</div><div class="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+    $("msgs").appendChild(d); $("msgs").scrollTop = $("msgs").scrollHeight;
+  }
+  function setBusy(b) { busy = b; $("send").disabled = b; $("input").disabled = b; }
+  function progress(q) {
+    const n = study.questions.length || 1;
+    $("cProg").textContent = `Question ${Math.min(q + 1, n)} of ${n}`;
+    $("pbar").style.width = `${Math.round(((q + 1) / n) * 100)}%`;
+  }
+  function speak(text) {
+    if (!voice || !("speechSynthesis" in window)) return;
+    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate = 1.02; speechSynthesis.speak(u); } catch { /* ignore */ }
+  }
+
+  async function save(status) {
+    if (PREVIEW || !resp) return;
+    resp.status = status;
+    resp.transcript = transcript;
+    resp.questionReached = transcript.filter(m => m.role === "assistant").reduce((m, x) => Math.max(m, x.q || 0), 0);
+    if (status !== "started") { resp.completedAt = Date.now(); resp.durationSec = Math.round((resp.completedAt - resp.startedAt) / 1000); }
+    try { await DPI.store({ op: "saveResponse", studyId: study.id, response: resp }); saveFailed = false; }
+    catch (e) { saveFailed = true; console.warn("save failed:", e.message); }
+  }
+
+  async function moderatorTurn() {
+    setBusy(true); typing(true); $("err").classList.add("hidden");
+    try {
+      const d = await DPI.ai({ op: "turn", study: DPI.publicStudy(study), transcript: transcript.map(m => ({ role: m.role, content: m.content, q: m.q })) });
+      typing(false);
+      const t = d.turn;
+      transcript.push({ role: "assistant", content: t.message, q: t.question_index, ts: Date.now() });
+      addMsg("assistant", t.message); speak(t.message); progress(t.question_index);
+      if (t.done) { await finish("completed"); return; }
+      await save("started");
+      setBusy(false); $("input").focus();
+    } catch (e) {
+      typing(false); setBusy(false);
+      $("err").textContent = "⚠ " + e.message; $("err").classList.remove("hidden");
+    }
+  }
+
+  async function sendAnswer() {
+    const text = $("input").value.trim();
+    if (!text || busy) return;
+    $("input").value = "";
+    transcript.push({ role: "user", content: text, ts: Date.now() });
+    addMsg("user", text);
+    await moderatorTurn();
+  }
+
+  async function finish(status) {
+    setBusy(true);
+    show("done");
+    $("dClosing").textContent = study.closing || "That is everything. Thank you for your time and your honesty.";
+    if (PREVIEW) { $("dSaved").textContent = "Preview — nothing was saved."; return; }
+    $("dSaved").textContent = "Sending your answers…";
+    if (transcript.some(m => m.role === "user")) {
+      try { const d = await DPI.ai({ op: "summarize", study: DPI.publicStudy(study), transcript }); resp.summary = d.summary; }
+      catch (e) { console.warn("summary failed:", e.message); }
+    }
+    await save(status);
+    $("dSaved").textContent = saveFailed ? "" : "Your answers were sent. You can close this window.";
+    $("saveFail").classList.toggle("hidden", !saveFailed);
+  }
+
+  $("start").onclick = async () => {
+    voice = $("voiceOn").checked;
+    const participant = { name: $("pName")?.value.trim() || "", email: $("pEmail")?.value.trim() || "" };
+    resp = { id: DPI.uid(12), sessionKey: DPI.uid(24), studyId: study.id, status: "started", startedAt: Date.now(), participant, transcript: [], userAgent: navigator.userAgent.slice(0, 120) };
+    show("chatScreen"); progress(0);
+    if (voice) setupVoice();
+    await save("started");
+    await moderatorTurn();
+  };
+  $("send").onclick = sendAnswer;
+  $("input").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAnswer(); } });
+  $("endEarly").onclick = async () => { if (busy) return; if (transcript.some(m => m.role === "user") && !confirm("End the interview now? Your answers so far will be sent.")) return; await finish("ended"); };
+  $("copyTranscript").onclick = async () => {
+    const text = transcript.map(m => `${m.role === "assistant" ? "Moderator" : "Me"}: ${m.content}`).join("\n\n");
+    try { await navigator.clipboard.writeText(text); $("copyTranscript").textContent = "Copied ✓"; } catch { prompt("Copy this text:", text); }
+  };
+
+  // ---- voice (Web Speech API; works in Chrome/Safari, silently absent elsewhere) ----
+  function setupVoice() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    $("mic").classList.remove("hidden");
+    rec = new SR(); rec.interimResults = true; rec.continuous = false; rec.lang = navigator.language || "en-US";
+    let base = "";
+    rec.onstart = () => { base = $("input").value; $("mic").classList.add("on"); };
+    rec.onresult = e => { let t = ""; for (const r of e.results) t += r[0].transcript; $("input").value = (base ? base + " " : "") + t; };
+    rec.onend = () => { $("mic").classList.remove("on"); };
+    rec.onerror = () => { $("mic").classList.remove("on"); };
+    $("mic").onclick = () => { if ($("mic").classList.contains("on")) rec.stop(); else { try { rec.start(); } catch { /* already running */ } } };
+  }
+
+  load();
+</script>
+</body>
+</html>
