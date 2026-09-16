@@ -35,7 +35,7 @@ Read in exactly this order. Do not skip #1 — every other document derives its 
 | 8 | `youtube/VIDEO_BACKLOG.md` + `youtube/scripts/*` | The 30-video plan and four finished scripts (study script 01 as the format exemplar). | Skim; fully before writing scripts |
 | 9 | `youtube/PRODUCTION_ASSETS.md` | Generated media, job IDs, trailer render plan and budget. | Before any media generation |
 | 10 | `index.html`, `api/chat.js`, `vercel.json` | The root web app (~350 lines). | Fully before any code work |
-| 11 | `interviews/README.md`, then `interviews/*`, `api/interviews.js`, `api/interview-ai.js` | The Interviews sub-app (vanilla, ~1,400 lines): AI-moderated research conversations. | Before any Interviews work |
+| 11 | `interviews/README.md`, then `interviews/*`, `api/interviews.js`, `api/interview-ai.js` | The Interviews sub-app (vanilla, ~1,700 lines): AI-moderated research conversations. | Before any Interviews work |
 
 **Precedence when documents conflict:** Constitution > Blueprint > Brand Bible > everything else. One known conflict already exists (two color palettes — see §6 and §8); do not resolve it yourself.
 
