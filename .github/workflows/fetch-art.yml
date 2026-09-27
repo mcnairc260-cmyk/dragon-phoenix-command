@@ -1,0 +1,27 @@
+name: fetch-art
+on:
+  push:
+    branches: [project-ascension-art]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download images
+        run: |
+          set -e
+          while read id url; do
+            [ -z "$id" ] && continue
+            if [ ! -s "art/$id.png" ]; then curl -fsSL -o "art/$id.png" "$url"; fi
+          done < art/urls.txt
+          ls -la art
+      - name: Commit
+        run: |
+          git config user.name "fetch-art"
+          git config user.email "actions@github.com"
+          git add art
+          git commit -m "Add Project Ascension art" || echo "nothing to commit"
+          git push
