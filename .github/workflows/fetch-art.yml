@@ -12,10 +12,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Download images
         run: |
-          set -e
-          while read id url; do
+                    while read id url; do
             [ -z "$id" ] && continue
-            if [ ! -s "art/$id.png" ]; then curl -fsSL -o "art/$id.png" "$url"; fi
+            if [ ! -s "art/$id.png" ]; then curl -fsSL -o "art/$id.png" "$url" || { echo "FAIL $id $url"; rm -f "art/$id.png"; }; fi
           done < art/urls.txt
           ls -la art
       - name: Commit
