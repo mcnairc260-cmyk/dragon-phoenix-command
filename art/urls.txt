@@ -8,12 +8,12 @@ c2_04b https://d8j0ntlcm91z4.cloudfront.net/user_3GfvUTqbpvWFLPJ7Fwq3ua7gmON/hf_
 c2_05 https://d8j0ntlcm91z4.cloudfront.net/user_3GfvUTqbpvWFLPJ7Fwq3ua7gmON/hf_20260927_153023_5216bbdf-a265-41e7-8b13-7c0801be3fb9.png
 c2_06a https://d8j0ntlcm91z4.cloudfront.net/user_3GfvUTqbpvWFLPJ7Fwq3ua7gmON/hf_20260927_223923_c6099530-e4a7-4b7d-b0d0-c0138952116a.png
 c2_06b https://d8j0ntlcm91z4.cloudfront.net/user_3GfvUTqbpvWFLPJ7Fwq3ua7gmON/hf_20260927_153022_70a55aa8-f26f-4155-bc16-7c287fcae48d.png
-c2_07 https://d8j0ntlcm91z4.cloudfront.net/user_3GfvUTqbpvWFLPJ7Fwq3ua7gmON/hf_20260927_153022_2bff8f9f-b8dc-49ac-89b2-5c9dc70bee25.png
-c2_08 https://d8j0ntlcm91z4.cloudfront.net/user_3GfvUTqbpvWFLPJ7Fwq3ua7gmON/hf_20260927_153022_c28a4480-544a-4821-8ae8-70941bf98443.png
+c2_07 https://d8j0ntlcm91z4.cloudfront.net/user_3GfvUTqbpvWFLPJ7Fwq3ua7gmON/hf_20260928_002929_1f621f40-1c82-4014-8838-a65d0de47c7d.png
+c2_08 https://d8j0ntlcm91z4.cloudfront.net/user_3GfvUTqbpvWFLPJ7Fwq3ua7gmON/hf_20260928_002928_884b309a-606d-4361-92eb-c04ef573492c.png
 c2_09a https://d8j0ntlcm91z4.cloudfront.net/user_3GfvUTqbpvWFLPJ7Fwq3ua7gmON/hf_20260927_223923_703ebf32-1a02-49df-b575-a715847f49b2.png
 c2_09b https://d8j0ntlcm91z4.cloudfront.net/user_3GfvUTqbpvWFLPJ7Fwq3ua7gmON/hf_20260927_153023_5df29556-0b01-4392-8025-b295f48dcb9d.png
 c2_10a https://d8j0ntlcm91z4.cloudfront.net/user_3GfvUTqbpvWFLPJ7Fwq3ua7gmON/hf_20260927_223923_cf663913-16f3-472d-9826-e2590e2e87b2.png
-c2_10b https://d8j0ntlcm91z4.cloudfront.net/user_3GfvUTqbpvWFLPJ7Fwq3ua7gmON/hf_20260927_223922_f28c7e18-6966-41ea-96c3-c689a0fb50c4.png
+c2_10b https://d8j0ntlcm91z4.cloudfront.net/user_3GfvUTqbpvWFLPJ7Fwq3ua7gmON/hf_20260928_002929_2275dee2-dcd7-48dd-9598-f11763f2d21a.png
 c3_01 https://d8j0ntlcm91z4.cloudfront.net/user_3GfvUTqbpvWFLPJ7Fwq3ua7gmON/hf_20260927_153024_20a6350b-75f9-4652-a19e-bc4476603960.png
 c3_02 https://d8j0ntlcm91z4.cloudfront.net/user_3GfvUTqbpvWFLPJ7Fwq3ua7gmON/hf_20260927_223923_213da040-fdee-4a60-a887-6ac9911948e7.png
 c3_03a https://d8j0ntlcm91z4.cloudfront.net/user_3GfvUTqbpvWFLPJ7Fwq3ua7gmON/hf_20260927_223923_719ae455-52e8-4281-ba0e-970b3bd08fb9.png
