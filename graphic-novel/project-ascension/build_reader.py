@@ -59,7 +59,7 @@ def panel(k, x, y, w, h, texts=(), baked=False):
 pages = []  # each: dict(ch, label, html)
 
 # cover
-pages.append({'ch': 0, 'label': 'Cover', 'html': '<div class="coverbg"><img src="img/cover.jpg" alt=""></div><img class="coverfg" src="img/cover.jpg" alt="Project Ascension cover">'})
+pages.append({'ch': 0, 'label': 'Cover', 'html': '<img class="coverfg" src="img/cover.jpg" alt="Project Ascension cover">'})
 
 # chapter 1 (baked captions)
 for i, pg in enumerate(CH1_PAGES):
@@ -115,9 +115,7 @@ body{{margin:0;background:var(--paper);color:var(--fg);font-family:"Barlow Semi 
 .stage{{flex:1;position:relative;display:flex;align-items:center;justify-content:center;padding:10px 16px;min-height:0}}
 .scaler{{position:relative;width:{W}px;height:{H}px;transform-origin:center;flex:none}}
 .page{{position:absolute;inset:0;background:#000;box-shadow:0 20px 60px rgba(0,0,0,.6)}}
-.coverbg{{position:absolute;inset:0;overflow:hidden}}
-.coverbg img{{width:100%;height:100%;object-fit:cover;filter:blur(28px) brightness(.45);transform:scale(1.15)}}
-.coverfg{{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);height:100%;width:auto;max-width:100%;object-fit:contain;box-shadow:0 0 60px rgba(0,0,0,.8)}}
+.coverfg{{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);height:100%;width:auto;max-width:100%;object-fit:contain}}
 .pnl{{position:absolute;overflow:hidden;background:#000;outline:3px solid #f2ede2;outline-offset:-3px}}
 .pnl img{{width:100%;height:100%;display:block;object-position:center}}
 .cap,.bal,.tt,.end{{position:absolute;max-width:62%;font-size:25px;line-height:1.22;font-weight:500;color:var(--ink);padding:9px 13px;box-shadow:2px 3px 0 rgba(0,0,0,.55)}}
