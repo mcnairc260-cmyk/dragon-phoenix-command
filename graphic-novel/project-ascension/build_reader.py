@@ -63,7 +63,7 @@ pages.append({'ch': 0, 'label': 'Cover', 'html': '<img class="coverfg" src="img/
 
 # chapter 1 (baked captions)
 for i, pg in enumerate(CH1_PAGES):
-    cells = rows_layout(pg['rows'], upmax=1.35)
+    cells = rows_layout(pg['rows'])
     pages.append({'ch': 1, 'label': f'1.{i+1}', 'html': ''.join(panel(k, x, y, w, h, baked=True) for k, x, y, w, h in cells)})
 
 def new_pages(ch, PG):

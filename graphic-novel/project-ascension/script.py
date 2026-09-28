@@ -34,8 +34,8 @@ CHAPTERS = [
 # ---------- CHAPTER 1 (existing art; captions baked in) ----------
 CH1_PAGES = [
     {"rows": [["p01"], ["p02", "p03"], ["p04", "p05"]]},
-    {"rows": [["p06", "p07"], ["p08", "p09"], ["p10", "p11", "p12"]]},
-    {"rows": [["p13"]]},
+    {"rows": [["p06", "p07"], ["p08", "p09"]]},
+    {"rows": [["p10", "p11", "p12"], ["p13"]]},
 ]
 
 # ---------- CHAPTER 2 — THE SEED ----------
