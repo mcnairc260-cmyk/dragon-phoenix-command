@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<title>Home Screen Planner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: left = your apps (input), right = phone preview + steps. One column on phones. */
+:root{
+  --void:#0A0A0F; --surface:#13131F; --surface2:#1C1C2E; --ash:#E8E4DC; --smoke:#8A8A99;
+  --ember:#FF4D00; --gold:#FFB347; --cyan:#00E5FF; --line:rgba(255,77,0,.18); --ok:#3DDC97;
+  --screen:#05050A; --glass:rgba(255,255,255,.08); --onicon:#0A0A0F;
+  --k1:#FF7A45; --k2:#FFB347; --k3:#00E5FF; --k4:#3DDC97; --k5:#B48CFF; --k6:#FF5C8A; --k7:#7FA7FF; --k8:#C9C9D6;
+  --display:'Syne',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  --void:#F6F3EE; --surface:#FFFFFF; --surface2:#EFEBE4; --ash:#1A1A24; --smoke:#5E5E6E;
+  --ember:#D63F00; --gold:#B86E00; --cyan:#007C8C; --line:rgba(214,63,0,.22); --ok:#16855A;
+  --screen:#1B1B26; --glass:rgba(255,255,255,.1); color-scheme:light}}
+:root[data-theme="light"]{
+  --void:#F6F3EE; --surface:#FFFFFF; --surface2:#EFEBE4; --ash:#1A1A24; --smoke:#5E5E6E;
+  --ember:#D63F00; --gold:#B86E00; --cyan:#007C8C; --line:rgba(214,63,0,.22); --ok:#16855A;
+  --screen:#1B1B26; --glass:rgba(255,255,255,.1); color-scheme:light}
+*{box-sizing:border-box}
+body{background:var(--void);color:var(--ash);font-family:var(--display);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{display:flex;flex-direction:column;gap:6px;padding-block:8px 20px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan)}
+h1{margin:0;font-size:clamp(28px,5vw,44px);font-weight:800;line-height:1.05;text-wrap:balance}
+h1 span{color:var(--ember)}
+.lede{margin:0;max-width:62ch;color:var(--smoke)}
+.truth{font-family:var(--mono);font-size:12px;color:var(--smoke);max-width:70ch;margin:4px 0 0}
+.truth b{color:var(--gold);font-weight:500}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:24px;align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+section{display:flex;flex-direction:column;gap:12px;min-width:0}
+h2{margin:0;font-size:18px;font-weight:700;display:flex;align-items:baseline;gap:10px}
+h2 .n{font-family:var(--mono);font-size:12px;color:var(--ember)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.note{font-family:var(--mono);font-size:12px;color:var(--smoke);margin:0}
+.banner{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:10px;padding:10px 12px;font-size:13px}
+.addrow{display:flex;gap:8px}
+input[type=text],textarea,select{font:inherit;color:var(--ash);background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;min-width:0}
+input[type=text]{flex:1}
+textarea{width:100%;min-height:96px;resize:vertical;font-family:var(--mono);font-size:13px}
+button{font:inherit;font-weight:700;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--ash);padding:9px 14px}
+button.primary{background:var(--ember);border-color:var(--ember);color:var(--onicon)}
+button.ghost{background:transparent}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+details summary{cursor:pointer;font-size:13px;color:var(--cyan)}
+details[open] summary{margin-bottom:8px}
+.list{display:flex;flex-direction:column;gap:6px;max-height:520px;overflow:auto;padding-right:2px}
+.app{display:grid;grid-template-columns:28px minmax(0,1fr) auto auto 32px;gap:8px;align-items:center;padding:6px 6px 6px 8px;border-radius:10px;background:var(--surface2)}
+.app .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.app select{padding:5px 6px;font-size:12px;max-width:130px}
+.dot{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-size:8.5px;font-weight:800;color:var(--onicon)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:5px 8px;font-size:11px;font-family:var(--mono);font-weight:500;background:transparent;color:var(--smoke)}
+.seg button[aria-pressed=true]{background:var(--ember);color:var(--onicon)}
+.del{padding:4px;width:28px;height:28px;background:transparent;border:0;color:var(--smoke);font-size:16px;line-height:1}
+@media(max-width:560px){.app{grid-template-columns:24px minmax(0,1fr) 28px;grid-template-areas:"d n x" "c c c" "u u u"}
+  .app .dot{grid-area:d}.app .nm{grid-area:n}.app select{grid-area:c;max-width:none}.app .seg{grid-area:u;justify-self:start}.app .del{grid-area:x}}
+.counts{display:flex;flex-wrap:wrap;gap:6px;font-family:var(--mono);font-size:12px}
+.chip{padding:3px 9px;border-radius:999px;background:var(--surface2);color:var(--smoke)}
+.chip b{color:var(--ash);font-weight:500}
+.styles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media(max-width:560px){.styles{grid-template-columns:minmax(0,1fr)}}
+.style{text-align:left;display:flex;flex-direction:column;gap:2px;padding:10px 12px;font-weight:400}
+.style b{font-size:14px}
+.style span{font-family:var(--mono);font-size:11px;color:var(--smoke)}
+.style[aria-pressed=true]{border-color:var(--ember);background:color-mix(in srgb,var(--ember) 14%,var(--surface2))}
+.toggle{display:flex;gap:8px;align-items:center;font-size:13px}
+/* phone */
+.phone{align-self:center;width:100%;max-width:340px;aspect-ratio:9/19;background:var(--screen);border-radius:44px;border:6px solid var(--surface2);padding:46px 14px 12px;display:flex;flex-direction:column;position:relative;box-shadow:0 0 0 1px var(--line),0 24px 60px -30px var(--ember)}
+.phone::before{content:"";position:absolute;top:12px;left:50%;transform:translateX(-50%);width:84px;height:24px;border-radius:14px;background:#000}
+.tabs{display:flex;gap:6px;justify-content:center}
+.tabs button{padding:5px 10px;font-size:12px;font-family:var(--mono);font-weight:500}
+.tabs button[aria-pressed=true]{border-color:var(--cyan);color:var(--cyan)}
+.page{flex:1;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(6,1fr);gap:6px 8px}
+.slot{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+.ic{width:100%;max-width:52px;aspect-ratio:1;border-radius:24%;display:grid;place-items:center;font-size:15px;font-weight:800;color:var(--onicon)}
+.lbl{font-size:9.5px;color:#EDEDF2;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:system-ui,sans-serif}
+.fold{background:var(--glass);display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:6px;place-items:stretch}
+.fold i{border-radius:3px;aspect-ratio:1}
+.space{grid-column:span 4;border:1.5px dashed rgba(255,255,255,.22);border-radius:18px;display:grid;place-items:center;text-align:center;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.55);padding:6px}
+.dock{margin-top:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:9px;border-radius:24px;background:var(--glass)}
+.dock .lbl{display:none}
+.pdots{display:flex;gap:5px;justify-content:center;padding:6px 0 0}
+.pdots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.3)}
+.pdots i.on{background:#fff}
+.thumb{position:absolute;inset:auto 0 0 0;height:46%;border-radius:0 0 38px 38px;background:radial-gradient(120% 90% at 85% 110%,color-mix(in srgb,var(--cyan) 22%,transparent),transparent 60%);pointer-events:none}
+.legend{font-family:var(--mono);font-size:11px;color:var(--smoke);text-align:center;margin:0}
+.lib{display:flex;flex-wrap:wrap;gap:6px}
+.lib span{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--surface2)}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:s}
+ol.steps li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;align-items:start;padding:10px 12px;border-radius:10px;background:var(--surface2);counter-increment:s}
+ol.steps li.done{opacity:.55}
+ol.steps li.done .t{text-decoration:line-through}
+ol.steps input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--ember)}
+.t{font-size:14px}
+.t small{display:block;font-family:var(--mono);font-size:11.5px;color:var(--smoke);margin-top:2px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+#copyOut{display:none}
+#copyOut.show{display:block;min-height:160px}
+.toast{font-family:var(--mono);font-size:12px;color:var(--ok)}
+@media (prefers-reduced-motion:no-preference){.slot{animation:rise .35s ease both}@keyframes rise{from{transform:translateY(4px)}to{transform:none}}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">iPhone · Home Screen</div>
+    <h1>Home Screen <span>Planner</span></h1>
+    <p class="lede">Make a list of your apps. Say how often you use each one. The planner makes a clean layout and gives you easy steps to set it up on your iPhone.</p>
+    <p class="truth"><b>Note:</b> Apple does not let any app move icons on your Home Screen. You move them with your finger. This planner tells you where each one goes.</p>
+  </header>
+
+  <div class="grid">
+    <section aria-labelledby="h-apps">
+      <h2 id="h-apps"><span class="n">STEP 1</span>Your apps</h2>
+      <div class="panel">
+        <div class="banner" id="sampleBanner" hidden>
+          <span>These are <b>example apps</b>. Change them to your apps.</span>
+          <button class="ghost" id="clearAll" type="button">Clear examples</button>
+        </div>
+        <form class="addrow" id="addForm">
+          <input type="text" id="addName" placeholder="App name, for example Spotify" autocomplete="off" aria-label="App name">
+          <button class="primary" type="submit">Add</button>
+        </form>
+        <details>
+          <summary>Add many apps at one time</summary>
+          <textarea id="bulk" placeholder="Type one app name on each line"></textarea>
+          <div class="actions" style="margin-top:8px"><button type="button" id="bulkAdd">Add all</button></div>
+        </details>
+        <p class="note">Not sure how often you use an app? Open Settings &gt; Screen Time &gt; See All App &amp; Website Activity.</p>
+        <div class="counts" id="counts"></div>
+        <div class="list" id="list"></div>
+      </div>
+
+      <h2><span class="n">STEP 2</span>Pick a layout</h2>
+      <div class="panel">
+        <div class="styles" id="styles">
+          <button class="style" type="button" data-s="thumb"><b>Thumb first</b><span>Most-used apps low on the screen, where your thumb is.</span></button>
+          <button class="style" type="button" data-s="folders"><b>Folders</b><span>One folder for each type of app. Few pages.</span></button>
+          <button class="style" type="button" data-s="minimal"><b>Minimal</b><span>Only daily apps. All other apps go to the App Library.</span></button>
+        </div>
+        <label class="toggle"><input type="checkbox" id="keepRare"> Keep "Rarely" apps on the Home Screen (in folders on the last page)</label>
+      </div>
+    </section>
+
+    <section aria-labelledby="h-plan">
+      <h2 id="h-plan"><span class="n">STEP 3</span>Your new Home Screen</h2>
+      <div class="tabs" id="tabs"></div>
+      <div class="phone" id="phone" aria-label="Preview of your Home Screen"></div>
+      <p class="legend">Blue glow = easy reach for your thumb</p>
+      <div class="panel" id="libPanel">
+        <b style="font-size:14px">App Library only</b>
+        <p class="note">These apps stay on your iPhone. You find them in the App Library (swipe left past your last page) or with Search.</p>
+        <div class="lib" id="lib"></div>
+      </div>
+    </section>
+  </div>
+
+  <section aria-labelledby="h-steps" style="margin-top:28px">
+    <h2 id="h-steps"><span class="n">STEP 4</span>Do it on your iPhone</h2>
+    <div class="panel">
+      <p class="note">Tick each step when you finish it. Your list stays saved in this browser.</p>
+      <ol class="steps" id="steps"></ol>
+      <div class="actions">
+        <button type="button" id="copyBtn">Copy plan as text</button>
+        <button type="button" class="ghost" id="resetChecks">Clear ticks</button>
+        <span class="toast" id="toast" aria-live="polite"></span>
+      </div>
+      <textarea id="copyOut" readonly aria-label="Plan as text"></textarea>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+var CATS=['Social','Messages','Work','Money','Health','Photos & Video','Music & Audio','Travel & Maps','Shopping & Food','Entertainment','Reading & Learning','Games','Tools','Other'];
+var CAT_COLOR={'Social':'--k6','Messages':'--k4','Work':'--k7','Money':'--k4','Health':'--k6','Photos & Video':'--k2','Music & Audio':'--k5','Travel & Maps':'--k3','Shopping & Food':'--k1','Entertainment':'--k1','Reading & Learning':'--k2','Games':'--k5','Tools':'--k8','Other':'--k8'};
+var DICT={
+ 'Social':'instagram facebook tiktok x twitter threads snapchat reddit pinterest linkedin bereal tumblr bluesky mastodon nextdoor discord',
+ 'Messages':'messages whatsapp telegram signal messenger phone facetime mail gmail outlook wechat line viber skype',
+ 'Work':'slack teams zoom notion trello asana calendar google calendar notes reminders docs google docs sheets google sheets drive google drive dropbox onedrive word excel powerpoint keynote pages numbers files todoist evernote jira chatgpt claude gemini copilot linear figma miro 1password authenticator',
+ 'Money':'wallet chase venmo cash app paypal zelle robinhood coinbase bank of america wells fargo capital one amex american express mint ynab fidelity schwab vanguard revolut wise monzo klarna stocks',
+ 'Health':'health fitness strava myfitnesspal headspace calm peloton nike run club oura whoop sleep cycle medisafe flo bible',
+ 'Photos & Video':'photos camera lightroom vsco snapseed capcut picsart canva imovie google photos clips facetune',
+ 'Music & Audio':'spotify apple music music podcasts audible soundcloud pandora shazam youtube music overcast pocket casts tidal',
+ 'Travel & Maps':'maps google maps waze uber lyft airbnb booking expedia delta united american airlines southwest tripadvisor citymapper transit hopper weather',
+ 'Shopping & Food':'amazon target walmart ebay etsy shein temu doordash uber eats instacart grubhub starbucks mcdonalds chipotle costco nike shop',
+ 'Entertainment':'youtube netflix hulu disney+ disney plus max hbo max prime video tv apple tv twitch paramount+ peacock crunchyroll plex',
+ 'Reading & Learning':'books kindle news apple news medium duolingo khan academy coursera nyt new york times substack goodreads wikipedia libby',
+ 'Games':'game center roblox minecraft candy crush wordle chess clash royale pokemon go among us genshin impact',
+ 'Tools':'settings app store safari chrome clock calculator find my shortcuts translate measure compass voice memos home contacts magnifier tips watch passwords freeform journal'
+};
+var LOOK={};
+Object.keys(DICT).forEach(function(c){
+  // multi-word names first, then single words
+  var s=' '+DICT[c]+' ';
+  var multi=['google calendar','google docs','google sheets','google drive','cash app','bank of america','wells fargo','capital one','american express','nike run club','sleep cycle','google photos','apple music','youtube music','pocket casts','google maps','american airlines','uber eats','apple tv','prime video','hbo max','disney plus','apple news','khan academy','new york times','game center','candy crush','clash royale','pokemon go','among us','genshin impact','find my','app store','voice memos'];
+  multi.forEach(function(m){if(s.indexOf(' '+m+' ')>-1){LOOK[m]=c;s=s.replace(' '+m+' ',' ')}});
+  s.trim().split(/\s+/).forEach(function(w){if(w&&!LOOK[w])LOOK[w]=c});
+});
+function guess(name){var k=name.trim().toLowerCase();return LOOK[k]||'Other'}
+
+var SAMPLE=[['Messages','d'],['Safari','d'],['Camera','d'],['Phone','d'],['Mail','d'],['Instagram','d'],['Spotify','d'],['Maps','d'],['Photos','d'],['WhatsApp','d'],['Calendar','d'],['Slack','d'],['YouTube','w'],['Notes','d'],['Chase','w'],['Venmo','w'],['Amazon','w'],['Uber','w'],['DoorDash','w'],['Netflix','w'],['Health','w'],['Strava','w'],['Settings','w'],['Gmail','w'],['Zoom','w'],['Weather','d'],['Duolingo','w'],['Reddit','w'],['Kindle','r'],['Airbnb','r'],['Calculator','w'],['Clock','w'],['Clash Royale','r'],['Delta','r'],['Lightroom','r'],['Shazam','r'],['Wallet','w'],['Find My','r'],['Translate','r'],['Podcasts','w']];
+
+var KEY='hsp.v1';
+var state=load()||{apps:SAMPLE.map(function(a){return{n:a[0],c:guess(a[0]),u:a[1]}}),style:'thumb',keepRare:false,done:{},sample:true};
+var view=0;
+function load(){try{var s=localStorage.getItem(KEY);return s?JSON.parse(s):null}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function col(c){return 'var('+(CAT_COLOR[c]||'--k8')+')'}
+function initials(n){var w=n.trim().split(/\s+/);return (w.length>1?w[0][0]+w[1][0]:n.slice(0,2)).toUpperCase()}
+var W={d:3,w:2,r:1};
+
+function addApp(name){
+  name=name.trim(); if(!name)return false;
+  if(state.apps.some(function(a){return a.n.toLowerCase()===name.toLowerCase()}))return false;
+  state.apps.push({n:name,c:guess(name),u:'w'}); return true;
+}
+
+/* ---------- planning ---------- */
+// iPhone page = 4 columns x 6 rows = 24 spots. Dock = 4.
+function plan(){
+  var apps=state.apps.slice();
+  var idx={}; apps.forEach(function(a,i){idx[a.n]=i});
+  function byUse(a,b){return W[b.u]-W[a.u]||idx[a.n]-idx[b.n]}
+  var daily=apps.filter(function(a){return a.u==='d'}).sort(byUse);
+  var weekly=apps.filter(function(a){return a.u==='w'});
+  var rare=apps.filter(function(a){return a.u==='r'});
+  var dock=daily.slice(0,4), restDaily=daily.slice(4), pages=[], lib=[];
+  var s=state.style;
+
+  function folderize(list){
+    var g={}; list.forEach(function(a){(g[a.c]=g[a.c]||[]).push(a)});
+    var out=[];
+    Object.keys(g).forEach(function(c){
+      var l=g[c].sort(byUse);
+      if(l.length===1)out.push({t:'app',a:l[0]});
+      else out.push({t:'folder',name:c,apps:l,w:l.reduce(function(s,a){return s+W[a.u]},0)});
+    });
+    return out.sort(function(a,b){return (b.w||W[b.a?b.a.u:'w'])-(a.w||W[a.a?a.a.u:'w'])});
+  }
+  // Items fill from the top. Put a space at the top so the most-used items sit low, near the thumb.
+  function pageFrom(items){
+    var rows=Math.ceil(items.length/4), free=6-rows, space=free>=2?(free>=4?4:2):0;
+    var ordered=items.slice().reverse(); // least used first, most used last (bottom)
+    return {space:space,items:ordered};
+  }
+  function chunk(items,size){var o=[];for(var i=0;i<items.length;i+=size)o.push(items.slice(i,i+size));return o}
+
+  if(s==='thumb'){
+    var p1=restDaily.map(function(a){return{t:'app',a:a}});
+    var f=folderize(weekly);
+    var first=p1.concat(f);
+    if(first.length<=16){pages.push(pageFrom(first))}
+    else{pages.push(pageFrom(p1.slice(0,16)));chunk(p1.slice(16).concat(f),24).forEach(function(c){pages.push({space:0,items:c})})}
+  }else if(s==='folders'){
+    var all=folderize(restDaily.concat(weekly));
+    if(all.length<=16)pages.push(pageFrom(all)); else chunk(all,24).forEach(function(c){pages.push({space:0,items:c})});
+  }else{
+    var m=restDaily.slice(0,12).map(function(a){return{t:'app',a:a}});
+    pages.push(pageFrom(m));
+    lib=lib.concat(restDaily.slice(12),weekly);
+  }
+  if(state.keepRare&&rare.length){
+    var rf=folderize(rare);
+    chunk(rf,24).forEach(function(c){pages.push({space:0,items:c,rare:true})});
+  }else lib=lib.concat(rare);
+  if(!pages.length)pages.push({space:0,items:[]});
+  return {dock:dock,pages:pages,lib:lib};
+}
+
+/* ---------- render ---------- */
+function renderList(){
+  var c={d:0,w:0,r:0}; state.apps.forEach(function(a){c[a.u]++});
+  $('counts').innerHTML='<span class="chip"><b>'+state.apps.length+'</b> apps</span><span class="chip"><b>'+c.d+'</b> daily</span><span class="chip"><b>'+c.w+'</b> weekly</span><span class="chip"><b>'+c.r+'</b> rarely</span>';
+  $('sampleBanner').hidden=!state.sample;
+  var opts=CATS.map(function(k){return '<option>'+esc(k)+'</option>'}).join('');
+  $('list').innerHTML=state.apps.length?state.apps.map(function(a,i){
+    return '<div class="app" data-i="'+i+'"><span class="dot" style="background:'+col(a.c)+'">'+esc(initials(a.n))+'</span>'+
+      '<span class="nm" title="'+esc(a.n)+'">'+esc(a.n)+'</span>'+
+      '<select id="cat'+i+'" aria-label="Type of app for '+esc(a.n)+'">'+opts.replace('<option>'+esc(a.c)+'</option>','<option selected>'+esc(a.c)+'</option>')+'</select>'+
+      '<span class="seg" role="group" aria-label="How often">'+[['d','Daily'],['w','Weekly'],['r','Rarely']].map(function(u){return '<button type="button" data-u="'+u[0]+'" aria-pressed="'+(a.u===u[0])+'">'+u[1]+'</button>'}).join('')+'</span>'+
+      '<button type="button" class="del" aria-label="Remove '+esc(a.n)+'">×</button></div>';
+  }).join(''):'<p class="note">No apps yet. Add your first app above.</p>';
+}
+function iconHTML(it,inDock){
+  if(it.t==='folder'){
+    return '<div class="slot"><div class="ic fold">'+it.apps.slice(0,9).map(function(a){return '<i style="background:'+col(a.c)+'"></i>'}).join('')+'</div><span class="lbl">'+esc(it.name)+'</span></div>';
+  }
+  var a=it.a||it;
+  return '<div class="slot"><div class="ic" style="background:'+col(a.c)+'">'+esc(initials(a.n))+'</div><span class="lbl">'+esc(a.n)+'</span></div>';
+}
+function renderPhone(P){
+  if(view>=P.pages.length)view=0;
+  $('tabs').innerHTML=P.pages.map(function(p,i){return '<button type="button" data-p="'+i+'" aria-pressed="'+(i===view)+'">Page '+(i+1)+'</button>'}).join('');
+  var pg=P.pages[view], h='';
+  if(pg.space)h+='<div class="space" style="grid-row:span '+pg.space+'">Open space<br>leave empty or add a widget</div>';
+  h+=pg.items.map(function(it){return iconHTML(it)}).join('');
+  var dots=P.pages.map(function(_,i){return '<i class="'+(i===view?'on':'')+'"></i>'}).join('');
+  $('phone').innerHTML='<div class="thumb"></div><div class="page">'+h+'</div><div class="pdots">'+dots+'</div><div class="dock">'+P.dock.map(function(a){return iconHTML(a,true)}).join('')+'</div>';
+  $('lib').innerHTML=P.lib.length?P.lib.map(function(a){return '<span>'+esc(a.n)+'</span>'}).join(''):'<span class="note">None</span>';
+  $('libPanel').hidden=!P.lib.length;
+}
+function buildSteps(P){
+  var st=[];
+  st.push(['Start edit mode','Touch and hold an empty area of the Home Screen until the apps jiggle. If a menu shows, tap Edit, then Edit Home Screen.']);
+  if(P.dock.length)st.push(['Set your Dock (bottom row)','Drag these apps into the Dock: '+P.dock.map(function(a){return a.n}).join(', ')+'. Drag other apps out of the Dock.']);
+  P.pages.forEach(function(pg,i){
+    var folders=pg.items.filter(function(x){return x.t==='folder'});
+    folders.forEach(function(f){st.push(['Make the "'+f.name+'" folder (Page '+(i+1)+')','Drag '+f.apps[1].n+' onto '+f.apps[0].n+' to make a folder. Tap the folder name and type "'+f.name+'".'+(f.apps.length>2?' Then drag in: '+f.apps.slice(2).map(function(a){return a.n}).join(', ')+'.':'')])});
+    var order=pg.items.map(function(x){return x.t==='folder'?x.name+' (folder)':x.a.n});
+    var tip=pg.space?' Keep the top '+pg.space+' rows open. On iOS 18 or later you can leave them empty. On older iOS, put a widget there (for example Weather or Calendar) to push the apps down.':'';
+    if(order.length)st.push(['Arrange Page '+(i+1),'Put items in this order, from top-left to bottom-right: '+order.join(', ')+'.'+tip]);
+  });
+  if(P.lib.length)st.push(['Remove apps from the Home Screen','For each of these apps: touch and hold the app, tap Remove App, then tap Remove from Home Screen. The app stays on your iPhone in the App Library. Apps: '+P.lib.map(function(a){return a.n}).join(', ')+'.']);
+  st.push(['Hide empty pages','In edit mode, tap the dots above the Dock. Untick the pages you do not want. Tap Done.']);
+  st.push(['Stop new apps from making a mess','Open Settings > Home Screen & App Library. Under Newly Downloaded Apps, pick App Library Only.']);
+  st.push(['Finish','Tap Done (top right), or swipe up. Check again in one month and move apps if your habits change.']);
+  return st;
+}
+function sig(t){var h=0;for(var i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;return 's'+h}
+function renderSteps(P){
+  var st=buildSteps(P);
+  $('steps').innerHTML=st.map(function(s,i){var k=sig(s[0]+s[1]),d=!!state.done[k];
+    return '<li class="'+(d?'done':'')+'"><input type="checkbox" id="st'+i+'" data-k="'+k+'"'+(d?' checked':'')+'><label class="t" for="st'+i+'">'+esc(s[0])+'<small>'+esc(s[1])+'</small></label></li>'}).join('');
+  return st;
+}
+var lastSteps=[];
+function render(){
+  renderList();
+  [].forEach.call(document.querySelectorAll('#styles .style'),function(b){b.setAttribute('aria-pressed',b.dataset.s===state.style)});
+  $('keepRare').checked=!!state.keepRare;
+  var P=plan(); renderPhone(P); lastSteps=renderSteps(P); save();
+}
+
+/* ---------- events ---------- */
+$('addForm').addEventListener('submit',function(e){e.preventDefault();if(addApp($('addName').value)){$('addName').value='';render()}else $('addName').select()});
+$('bulkAdd').addEventListener('click',function(){$('bulk').value.split(/\n|,/).forEach(addApp);$('bulk').value='';render()});
+$('clearAll').addEventListener('click',function(){state.apps=[];state.sample=false;state.done={};render();$('addName').focus()});
+$('list').addEventListener('click',function(e){
+  var row=e.target.closest('.app');if(!row)return;var a=state.apps[+row.dataset.i];
+  if(e.target.dataset.u){a.u=e.target.dataset.u;render()}
+  else if(e.target.classList.contains('del')){state.apps.splice(+row.dataset.i,1);render()}
+});
+$('list').addEventListener('change',function(e){var row=e.target.closest('.app');if(row&&e.target.tagName==='SELECT'){state.apps[+row.dataset.i].c=e.target.value;render()}});
+$('styles').addEventListener('click',function(e){var b=e.target.closest('.style');if(b){state.style=b.dataset.s;view=0;render()}});
+$('keepRare').addEventListener('change',function(e){state.keepRare=e.target.checked;render()});
+$('tabs').addEventListener('click',function(e){if(e.target.dataset.p){view=+e.target.dataset.p;renderPhone(plan());}});
+$('steps').addEventListener('change',function(e){var k=e.target.dataset.k;if(!k)return;if(e.target.checked)state.done[k]=1;else delete state.done[k];e.target.closest('li').classList.toggle('done',e.target.checked);save()});
+$('resetChecks').addEventListener('click',function(){state.done={};render()});
+$('copyBtn').addEventListener('click',function(){
+  var P=plan(), t='MY HOME SCREEN PLAN\n\nDock: '+P.dock.map(function(a){return a.n}).join(', ')+'\n';
+  P.pages.forEach(function(pg,i){t+='\nPage '+(i+1)+':\n'+pg.items.map(function(x){return x.t==='folder'?'  [Folder] '+x.name+': '+x.apps.map(function(a){return a.n}).join(', '):'  '+x.a.n}).join('\n')+'\n'});
+  if(P.lib.length)t+='\nApp Library only: '+P.lib.map(function(a){return a.n}).join(', ')+'\n';
+  t+='\nSTEPS\n'+lastSteps.map(function(s,i){return (i+1)+'. '+s[0]+' - '+s[1]}).join('\n');
+  var out=$('copyOut');out.value=t;
+  function fallback(){out.classList.add('show');out.focus();out.select();$('toast').textContent='Select all and copy the text below.'}
+  try{navigator.clipboard.writeText(t).then(function(){out.classList.remove('show');$('toast').textContent='Copied. Paste it into Notes.'},fallback)}catch(e){fallback()}
+});
+render();
+// Any edit means the list is now the user's own, not the example.
+document.addEventListener('change',function(e){if(e.target.closest('#list'))state.sample=false},true);
+$('addForm').addEventListener('submit',function(){state.sample=false;$('sampleBanner').hidden=true});
+})();
+</script>
+</body>
+</html>

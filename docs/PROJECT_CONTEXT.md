@@ -292,3 +292,11 @@ A founder-directed session built **BREAKPOINT**, a physics-first 3D pool game, a
 **Assumption added to the register:** that the task prompt's commissioning of a "premium-feeling playable 3D" game constitutes founder approval for the three.js toolchain, on the same basis as §16 and §18. If that reading is wrong, the sub-app is self-contained and can be removed without touching anything else.
 
 **Explicitly not started:** Phase 2. The directive said to stop after the verified Phase 1 slice, and nothing beyond it was begun — no rules engine, no AI, no replay UI, no multiplayer, no progression.
+
+## 20. Home Screen Planner — personal utility (2026-10-15)
+
+The founder asked for "an app that organizes my Home Screen on iPhone." Built as `tools/home-screen-planner/index.html`: one vanilla HTML file, no dependencies, no build step, live-site palette (ember/gold/cyan, Syne + JetBrains Mono), dark-first with a light theme.
+
+**Key constraint (verified platform fact):** iOS gives third-party apps no API to move Home Screen icons. So the tool is a *planner*: the user lists apps and marks each Daily/Weekly/Rarely; it proposes a layout (Dock, pages, folders, App Library) in one of three styles (Thumb first / Folders / Minimal), shows an iPhone preview, and generates a tick-off checklist of manual iOS steps. The user decides; nothing is automatic (AI-as-amplifier rule).
+
+**Decisions / assumptions:** app→category guesses come from a small built-in name list (unknown → "Other", user can change); data stays in the browser's localStorage only (no server, no personal data leaves the device); iOS 18+ allows empty grid spaces, older iOS needs a widget to push icons down — the steps say both. Not linked from the root site and not externally published; a private claude.ai artifact copy exists for the founder's own phone use.
