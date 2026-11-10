@@ -2,7 +2,7 @@
 
 Research date: 2026-11-10. Read-only web research. Nobody was contacted.
 
-**How to read the tags.** [VERIFIED] = I saw it in a search-result excerpt from the cited source. Direct page fetches were blocked in this session (network policy), so no page was opened in full. Re-check any number on the live page before quoting it publicly. [VENDOR CLAIM] = said by a seller with an interest. [ANECDOTAL] = forum post, unverifiable. [ESTIMATE] = my inference. Source numbers like (S3) point to the list at the end.
+**Tags.** [VERIFIED] = seen in a search-result excerpt from the cited source. Page fetches were blocked in this session, so no page was opened in full. Re-check numbers on the live page before reuse. [VENDOR CLAIM] = seller with an interest. [ANECDOTAL] = forum post. [ESTIMATE] = my inference. (S3) = source number in the list at the end.
 
 ## Summary verdict
 
@@ -23,9 +23,9 @@ Research date: 2026-11-10. Read-only web research. Nobody was contacted.
 - Clutch 2025: top answer was "not relevant to my industry" (34%). 84% gave reasons other than cost. Of those with no site, 39% rely on referrals and 10% on social media. [VERIFIED] (S2)
 - Small Business Majority 2023: 41% said a social media presence instead was a major reason. 23% said not relevant. [VERIFIED] (S4)
 - Same survey: 66% of no-website businesses earn $100,000 or less a year. [VERIFIED] (S4)
-- Top Design Firms / Zippia 2024 (seen only through an aggregator): 27% not relevant, 26% cost, 21% use social media, 15% lack skills. [VERIFIED, third party] (S3)
+- Top Design Firms / Zippia 2024, via an aggregator: 27% not relevant, 26% cost, 21% social media. [VERIFIED, third party] (S3)
 
-**What this means.** The no-website owner is often small, low-revenue, and unconvinced. A better target is the owner with an old or broken site, or one paying Hibu or Thryv prices. [ESTIMATE]
+**Meaning.** The no-website owner is often small and unconvinced. Owners with an old site, or paying Hibu or Thryv prices, are better targets. [ESTIMATE]
 
 ## What owners pay today
 
@@ -58,14 +58,14 @@ Most figures are third-party listings, not vendor pages.
 
 - **Hibu.** BBB shows 126 complaints in 3 years. One customer: Hibu "made my website inaccessible to new and existing clients when i missed a payment". Another reports "continuous charges for 6 months after contract over". Reviewers say cancelling means losing the site they paid for. [VERIFIED] (S10)
 - **Thryv.** BBB shows about 354 complaints in 3 years. One: "we were on an automatic 2 year renewal contract, and it just renewed". Trustpilot about 2.6 of 5. Thryv still holds a BBB A+ rating. [VERIFIED] (S13)
-- **YP / DexYP.** ConsumerAffairs reviews describe a contract extended after a cancellation request. [VERIFIED] (S13)
-- **Web.com / Network Solutions.** BBB complaints of charges with auto-renew set to "Off". [VERIFIED] (S24)
+- **YP / DexYP.** Reviews describe a contract extended after a cancellation request. [VERIFIED] (S13)
+- **Web.com / Network Solutions.** BBB complaints of charges with auto-renew "Off". [VERIFIED] (S24)
 - **Popmenu.** Trustpilot reviewers say they were told to pay out the rest of a 24-month term. [VERIFIED] (S14)
-- **Owner.com.** No BBB or Trustpilot complaints found. Rated 4.6 on Capterra and 4.8 on G2. Month-to-month. [VERIFIED] (S9)
+- **Owner.com.** Complaints not found. Rated 4.6 on Capterra, 4.8 on G2. Month-to-month. [VERIFIED] (S9)
 - **BentoBox.** Complaints not found.
 - Some pay-monthly agencies say the "website stays with us if you cancel". [VERIFIED] (S21)
 
-**The gap.** "You own the domain and the files, cancel any time, one flat low price" answers the loudest complaints about Hibu, Thryv and Popmenu. The founder must then truly register the domain in the client's name. [ESTIMATE]
+**The gap.** "You own the domain and files, cancel any time" answers the loudest complaints. The domain must then really be in the client's name. [ESTIMATE]
 
 ## Practitioner reality
 
@@ -73,17 +73,16 @@ Most figures are third-party listings, not vendor pages.
 
 - One poster says a demo-site approach lifted replies from about 2% to 15–20%, and suggests $500–$800 one-time. [ANECDOTAL] (S28)
 - One says short, specific audit emails lifted replies from 2% to 18%. [ANECDOTAL] (S28)
-- One claims $23k closed from cold-calling 340 businesses with no website. Unverified. [ANECDOTAL] (S28)
+- One claims $23k closed from cold-calling 340 businesses with no website. [ANECDOTAL] (S28)
 - Several say first clients came from in-person visits or people they already knew. "A warm intro beats cold outreach." [ANECDOTAL] (S28)
-- Dev.to authors describe the "ugly site" method and say roofing, dental and HVAC are the sweet spot. They give no measured numbers. [ANECDOTAL] (S29)
+- Dev.to authors of the "ugly site" method name roofing, dental and HVAC as the sweet spot. No measured numbers. [ANECDOTAL] (S29)
 
 **Negative**
 
 - One poster spent $1,100, contacted 10,000 leads with a free-upfront offer, and made 0 sales. [ANECDOTAL] (S28)
 - Another got "about a 1% interested reply rate if I was lucky". Another "closed almost nothing". [ANECDOTAL] (S28)
-- A seller of AI sites admits of the demo-link email: "most ignore it". [ANECDOTAL] (S28)
-- The tactic is now a product. PitchSites sells "live demo sites for your cold outreach". Owners will see more of these pitches. [VERIFIED] (S30)
-- Industry writers say AI builders have squeezed the bottom of the market. Durable says a site costs $15–$30 a month. [VENDOR CLAIM] (S31)
+- The tactic is now a product: PitchSites sells "live demo sites for your cold outreach". [VERIFIED] (S30)
+- Writers say AI builders squeezed the bottom of the market. Durable quotes $15–$30 a month. [VENDOR CLAIM] (S31)
 - Measured reply or close rates for demo-first: not found. Indie Hackers data: not found.
 
 ## Legal basics (not legal advice)
@@ -91,9 +90,9 @@ Most figures are third-party listings, not vendor pages.
 - **Cold email.** CAN-SPAM "makes no exception for business-to-business email". Each violating email can cost up to $53,088. Use honest headers and subject lines, include a physical postal address, give a working opt-out, and honor it within 10 business days. [VERIFIED] (S32)
 - **Texts and auto-dialed calls.** Autodialed or prerecorded calls and texts to cell phones need prior express consent, written for marketing. Secondary sources say this covers business cell phones too. Do not send bulk cold texts. [VERIFIED, secondary] (S33)
 - **Do Not Call list.** The FTC says the registry is for personal numbers and business-to-business calls are not covered. [VERIFIED] (S34)
-- **Manual calls and walk-ins.** I found no federal rule against a hand-dialed call to a listed business line or an in-person visit. Local solicitation rules for Birmingham-area cities: not found. [ESTIMATE]
-- **Alabama.** The state Do Not Call register covers residential subscribers. The Telemarketing Act centers on consumer goods and services. A clear business-to-business exemption in the statute text: not found. The caller carries the burden of proving an exemption. [VERIFIED, secondary] (S35)
-- **Demo risk.** A public demo using a real business's name, logo or photos could confuse customers. Mark it as a draft, keep it out of search engines, and remove it on request. [ESTIMATE]
+- **Manual calls and walk-ins.** No federal rule found against a hand-dialed call to a listed business line or a visit. Birmingham-area solicitation rules: not found. [ESTIMATE]
+- **Alabama.** The state Do Not Call register covers residential subscribers. The Telemarketing Act centers on consumer goods and services. An explicit business-to-business exemption: not found. The caller must prove any exemption. [VERIFIED, secondary] (S35)
+- **Demo risk.** A public demo with a real business's name, logo or photos could confuse customers. Label it a draft, block search engines, remove on request. [ESTIMATE]
 
 ## Delivery stack and cost
 
