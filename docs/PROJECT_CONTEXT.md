@@ -292,3 +292,7 @@ A founder-directed session built **BREAKPOINT**, a physics-first 3D pool game, a
 **Assumption added to the register:** that the task prompt's commissioning of a "premium-feeling playable 3D" game constitutes founder approval for the three.js toolchain, on the same basis as §16 and §18. If that reading is wrong, the sub-app is self-contained and can be removed without touching anything else.
 
 **Explicitly not started:** Phase 2. The directive said to stop after the verified Phase 1 slice, and nothing beyond it was begun — no rules engine, no AI, no replay UI, no multiplayer, no progression.
+
+## 20. "First Dollar" revenue experiment (2026-11-10)
+
+A founder-directed session started a separate business experiment in `ventures/first-dollar/` (not a DPA product; the Gauntlet's mission gate does not apply, the capacity gate does). Goal: first $500–$1,000 from real customers. State and file list: `ventures/first-dollar/README.md`. **Research is incomplete (usage limits stopped four of five research agents) and no opportunity has been chosen.** Decisions made: (1) real prospect names stay out of git because this repo is public; (2) `.vercelignore` added so `ventures/` is never served by the Vercel site — root site files unchanged; (3) tools are zero-dependency Node scripts. Nothing was published, sent, or spent. Observation for the founder: this is at least the eighth project in the record with no customer contact yet; the next step should be customer conversations, not more building.

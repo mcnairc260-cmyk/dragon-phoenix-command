@@ -16,3 +16,4 @@ One line per material change, newest first. Format: `date · scope · what` (PR 
 - 2026-07-05 · media · Brand key art + 5s cinematic ident generated (Higgsfield); PRODUCTION_ASSETS log added.
 - 2026-07-05 · brand+youtube · Brand bible, story, lore; channel strategy, 30-video backlog, 4 production scripts; README expanded (#1).
 - (pre-2026-07-05) · product · Initial web app: index.html mentor UI + api/chat.js Anthropic proxy on Vercel.
+- 2026-11-10 · venture · Started `ventures/first-dollar/` revenue experiment: one research file, website-check tool (9 tests), page builder. Research incomplete; no opportunity chosen; nothing external. PROJECT_CONTEXT §20.
