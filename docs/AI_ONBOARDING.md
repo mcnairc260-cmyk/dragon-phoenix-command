@@ -71,6 +71,14 @@ dragon-phoenix-command/
                             # physics + the full shot loop, no rules or multiplayer. Built,
                             # tested and browser-verified, NOT deployed. See
                             # games/breakpoint/README.md and PROJECT_CONTEXT §19.)
+└── lifeline/               # LIFELINE — a SEPARATE commercial product (not a DPA brand surface):
+                            # scheduled check-ins + trusted-contact alerts + VaultLock. Self-contained
+                            # Next.js/TS/Postgres app (founder-directed 2026-11-11; the directive names
+                            # the stack — the fourth sub-app exception). Demo-ready, NOT deployed, NOT
+                            # production-ready, nothing live. Safety-sensitive: read lifeline/README.md,
+                            # lifeline/docs/PROGRESS.md and PROJECT_CONTEXT §20 before touching it.
+                            # DPA brand rules (palette, lore, voice) do not apply inside it; the
+                            # Constitution's integrity rules (no fear marketing, no false claims) do.
 ```
 
 **The sub-app rule** (established by the two exceptions above): a sub-app in its own folder may carry its own toolchain *when the founder has approved it for that app*; the root site (`index.html`, `api/`, `vercel.json`, root `package.json`) stays vanilla and zero-dependency regardless. Adding a build step to the **root** Vercel deployment is still a founder-level decision, not a consequence of a sub-app existing.

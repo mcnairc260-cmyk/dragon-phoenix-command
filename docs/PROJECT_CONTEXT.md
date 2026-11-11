@@ -292,3 +292,30 @@ A founder-directed session built **BREAKPOINT**, a physics-first 3D pool game, a
 **Assumption added to the register:** that the task prompt's commissioning of a "premium-feeling playable 3D" game constitutes founder approval for the three.js toolchain, on the same basis as §16 and §18. If that reading is wrong, the sub-app is self-contained and can be removed without touching anything else.
 
 **Explicitly not started:** Phase 2. The directive said to stop after the verified Phase 1 slice, and nothing beyond it was begun — no rules engine, no AI, no replay UI, no multiplayer, no progression.
+
+## 20. LIFELINE — personal-safety check-in product, MVP (2026-11-11)
+
+A founder-directed session built **Lifeline** as a self-contained application in `lifeline/` — branch `claude/modest-maxwell-4smhvz`. Full engineering record: `lifeline/README.md` and `lifeline/docs/` (start with `PROGRESS.md`).
+
+**What it is.** A subscription check-in service: a member confirms "I'm OK" on a schedule (passkey + a separate passphrase); if a check-in is missed, consenting trusted contacts ("Lifelines") are notified by a server-side scheduler. **VaultLock** seals the plan so that a signed-in session, a password reset or a stolen phone cannot change it; release needs a recovery key and a 72-hour delay.
+
+**This is not a DPA brand surface.** The directive calls it a "new commercial software startup". It shares a repository with DPA only because this was the one repository in the session's scope.
+
+**Decisions made (flag-worthy):**
+
+1. **Fourth framework exception — this time explicit.** The directive names the stack (Next.js, React, TypeScript, Tailwind, PostgreSQL, Vitest, Playwright). Scoped to `lifeline/` only. `index.html`, `api/`, `vercel.json` and the root `package.json` are untouched.
+2. **Palette and voice are Lifeline's own** (navy, charcoal, white, teal — specified in the directive). The DPA palette question (§6, onboarding §8.1) is not touched and not relevant here. Still dark-first; all colours are CSS variables in `lifeline/src/app/globals.css`.
+3. **Not deployed. Nothing live. Nothing spent.** No Vercel project, no Supabase project, no Resend/Twilio/Stripe account was created or called. Demo mode is the default and forces every message to a simulated provider. Deployment, live providers and live billing are each Tier 3.
+4. **Own authentication rather than Supabase Auth**, because VaultLock's authorization rules cannot be expressed in a hosted auth product. The database can still be Supabase Postgres.
+5. **No fake Emergency Evidence Capture demo** — specification only (`lifeline/docs/EVIDENCE_CAPTURE.md`), because a simulated "evidence preserved" screen could mislead. ShadowMode is also specification only.
+
+**Gauntlet note (Protocol §6) — recorded, not resolved.** Lifeline does not serve the DPA mission (Gate 1) and is the fifth product started in this repository while the active-priority list (§13: archive media, launch the YouTube channel shell, produce video 01) is still open (Gate 6). The founder directed the build explicitly, so it was built; the capacity question was raised to the founder in the session report and is his to decide. **A successor should not start further Lifeline feature work before the demand test in `lifeline/docs/ROADMAP.md` (milestone 2) has a result.**
+
+**Verification performed** (Protocol §7.1 — exercised, not eyeballed): 84 Vitest tests pass on embedded Postgres and on PostgreSQL 16; 6 Playwright tests drive the full founder demonstration against the production build on phone and desktop viewports with a virtual WebAuthn authenticator; typecheck, lint and production build are clean. Running on real PostgreSQL exposed a real seal-versus-edit race that the embedded database could not show; it is fixed and the test stays. Not tested: Safari/iOS, any physical device, any live provider, load, accessibility audit, any independent security review.
+
+**Known limitations (honest list):** see `lifeline/docs/PRODUCTION_READINESS.md`. The largest: an insider with database owner rights plus the server secret is not stopped or detected; a silent scheduler failure means silent non-delivery; coercion of the member is not solved; a member with VaultLock off who loses every passkey has no self-service way back in.
+
+**Risks added to the register:** (a) the name "Lifeline" is heavily used in medical-alert and safety services — no trademark search was done (onboarding §8.8); (b) a safety product carries liability that DPA's other projects do not — legal review and an independent security assessment are required before any real user, and they cost far more than hosting (`lifeline/docs/FINANCIAL_MODEL.md`).
+
+**Recommendation recorded:** move `lifeline/` to its own repository before any deployment (separate product, separate access control and security scope). The folder is self-contained, so this is a copy.
+
