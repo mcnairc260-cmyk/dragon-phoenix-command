@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { dueEvent, stagesOf, transition } from '@/server/statemachine';
-import { DAY, HOUR, alerts, armed, call, checkIn, db, events, one, rows, runTick, settle, state, travel, useDb } from './helpers';
+import { DAY, HOUR, alerts, armed, call, checkIn, db, events, one, rows, runTick, settle, state, travel, testDb } from './helpers';
 
-useDb();
+testDb();
 const S = { intervalSeconds: DAY, graceSeconds: HOUR, reminderOffsets: [4 * HOUR, HOUR] };
 /** Signs in again: test time-travel outlives the 30-minute idle session. */
 const relogin = async (u: { email: string; password: string }) => ({ ...u, cookie: (await call('POST', '/auth/login', { email: u.email, password: u.password })).cookie! });

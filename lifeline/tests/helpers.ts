@@ -14,7 +14,7 @@ export const travel = (seconds: number) => { offsetMs += seconds * 1000; };
 export const HOUR = 3600, DAY = 86400;
 
 /** Each test file gets its own database: embedded Postgres by default, or a fresh database on a real server when TEST_DATABASE_URL is set. */
-export function useDb() {
+export function testDb() {
   let admin: any, name = '';
   beforeAll(async () => {
     process.env.LIFELINE_DEMO_MODE = '1';

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { setProviders, type OutMessage } from '@/server/notify/providers';
-import { DAY, HOUR, addLifeline, alerts, armed, call, checkIn, consentToken, events, newUser, one, rows, runTick, settle, state, stepUp, travel, useDb } from './helpers';
+import { DAY, HOUR, addLifeline, alerts, armed, call, checkIn, consentToken, events, newUser, one, rows, runTick, settle, state, stepUp, travel, testDb } from './helpers';
 
-useDb();
+testDb();
 const S = { intervalSeconds: DAY, graceSeconds: HOUR, reminderOffsets: [], stageWaitSeconds: 1800 };
 const MISS = DAY + HOUR + 60;
 const relogin = async (u: { email: string; password: string }) => ({ cookie: (await call('POST', '/auth/login', { email: u.email, password: u.password })).cookie! });

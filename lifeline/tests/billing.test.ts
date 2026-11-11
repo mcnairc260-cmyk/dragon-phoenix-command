@@ -1,9 +1,9 @@
 import { createHmac } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { config } from '@/server/config';
-import { DAY, HOUR, addLifeline, alerts, armed, call, newUser, one, sealVault, settle, state, travel, useDb } from './helpers';
+import { DAY, HOUR, addLifeline, alerts, armed, call, newUser, one, sealVault, settle, state, travel, testDb } from './helpers';
 
-useDb();
+testDb();
 
 describe('plan entitlements', () => {
   it('Basic: 2 Lifelines, email only, no custom escalation', async () => {

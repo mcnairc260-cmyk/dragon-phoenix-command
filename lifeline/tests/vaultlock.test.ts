@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { verifyChain } from '@/server/audit';
 import { verifySealed } from '@/server/vaultlock';
-import { DAY, HOUR, addLifeline, alerts, armed, call, checkIn, db, enrollPasskey, events, makeAuthenticator, newUser, one, rows, sealVault, settle, state, stepUp, travel, useDb } from './helpers';
+import { DAY, HOUR, addLifeline, alerts, armed, call, checkIn, db, enrollPasskey, events, makeAuthenticator, newUser, one, rows, sealVault, settle, state, stepUp, travel, testDb } from './helpers';
 
-useDb();
+testDb();
 const S = { intervalSeconds: DAY, graceSeconds: HOUR, reminderOffsets: [], stageWaitSeconds: 1800 };
 const MISS = DAY + HOUR + 60;
 const login = async (u: { email: string; password: string }) => (await call('POST', '/auth/login', { email: u.email, password: u.password })).cookie!;

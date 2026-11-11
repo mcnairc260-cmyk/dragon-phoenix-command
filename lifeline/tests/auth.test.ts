@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { addLifeline, armed, call, checkIn, enrollPasskey, events, makeAuthenticator, newUser, one, rows, state, stepUp, travel, useDb } from './helpers';
+import { addLifeline, armed, call, checkIn, enrollPasskey, events, makeAuthenticator, newUser, one, rows, state, stepUp, travel, testDb } from './helpers';
 
-useDb();
+testDb();
 
 describe('sign-in', () => {
   it('rejects a wrong password and an unknown email with the same answer', async () => {

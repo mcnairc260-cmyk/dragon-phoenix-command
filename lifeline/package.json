@@ -11,8 +11,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:pg": "vitest run --no-file-parallelism",
-    "e2e": "playwright test",
-    "tick": "node scripts/tick.mjs"
+    "e2e": "playwright test"
   },
   "engines": {
     "node": ">=20.9"
