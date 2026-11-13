@@ -1,0 +1,20 @@
+{
+  "name": "ignition",
+  "version": "0.1.0",
+  "private": true,
+  "description": "IGNITION - a 3-minute start ritual you control with your breath. Built with the Presage SmartSpectra SDK.",
+  "main": "main.js",
+  "scripts": {
+    "build": "esbuild src/renderer.js --bundle --outfile=dist/renderer.bundle.js --platform=browser --format=iife --log-level=warning && esbuild preload.js --bundle --outfile=dist/preload.bundle.js --platform=node --format=cjs --external:electron --log-level=warning",
+    "start": "npm run build && electron .",
+    "sim": "npm run build && IGNITION_SIM=1 electron .",
+    "test": "node --test test/engine.test.js"
+  },
+  "dependencies": {
+    "@smartspectra/node-sdk": "3.5.0"
+  },
+  "devDependencies": {
+    "electron": "43.8.1",
+    "esbuild": "^0.25.0"
+  }
+}

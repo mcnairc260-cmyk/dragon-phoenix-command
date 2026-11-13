@@ -292,3 +292,33 @@ A founder-directed session built **BREAKPOINT**, a physics-first 3D pool game, a
 **Assumption added to the register:** that the task prompt's commissioning of a "premium-feeling playable 3D" game constitutes founder approval for the three.js toolchain, on the same basis as §16 and §18. If that reading is wrong, the sub-app is self-contained and can be removed without touching anything else.
 
 **Explicitly not started:** Phase 2. The directive said to stop after the verified Phase 1 slice, and nothing beyond it was begun — no rules engine, no AI, no replay UI, no multiplayer, no progression.
+
+## 20. IGNITION — Presage SmartSpectra SDK Challenge entry (2026-11-13)
+
+A founder-directed session built **IGNITION**, an Electron desktop app, as a self-contained sub-application in `apps/ignition/` — branch `claude/kind-clarke-rsesbc`. Full record: `apps/ignition/README.md`. DEV post draft, video shot list and pre-publish checklist: `apps/ignition/SUBMISSION.md`.
+
+**Why it exists.** The founder asked for an entry to the DEV "Presage SmartSpectra SDK Challenge" (runs 2026-11-04 to 2026-11-22, 11:59 PM PST; winners 2026-12-10). **Prize fact, corrected from the brief:** the pool is $3,000 across ten winners; one entry can win once, so the maximum for the founder is **$300** plus a DEV++ membership and badge. One entry per person, no teams, 18+.
+
+**What it is.** A 3-minute start ritual. The camera reads breathing and pulse through `@smartspectra/node-sdk` 3.5.0. A pacer ring shows 4 s in / 6 s out; a live ring shows the person's chest trace; a fire grows only while the measured breath follows the pacer. Then the camera turns off, start/end readings show, and a 10-minute timer starts on one named first action. It is the product form of the "Ignition Protocol" and "10-Minute Contract" from scripts 01–02.
+
+**Decisions made (flag-worthy):**
+
+1. **Fourth framework exception.** Electron + esbuild + the SmartSpectra SDK, in `apps/ignition/` only. The challenge requires this SDK, and its official desktop starting point is Electron with an esbuild bundle. Root site untouched. Assumption: the founder's request to build the entry is the approval, on the same basis as §16, §18, §19.
+2. **Palette follows the live site** (`#FF4D00` / `#FFB347` / `#00E5FF`), because this is software in the Command line, not YouTube packaging. System font fallbacks are used; no font is loaded from the network, so the page makes zero network requests. §8.1 stays open.
+3. **Privacy position:** consent gate on each launch; camera-only permission; SDK telemetry set to OFF by default (SDK default is ON) with an opt-in; nothing saved without a Save press; local-only storage with delete; no LLM Insights; CSP `connect-src 'none'`.
+4. **No health claims in any copy.** The app shows readings and never interprets them. No research claim is made, so nothing was added to the unverified-content register (§9).
+5. **Name "IGNITION" and tagline "Breathe to light the forge"** are v1 proposals. No new lore terms were used.
+6. **Not published, not deployed, no money spent.** The DEV post, the demo video and the Presage account are the founder's actions (Tier 3).
+
+**Verification performed:**
+- `npm test`: 8 unit tests of the signal engine pass.
+- Playwright, headless Chromium, simulated signal: full flow consent → settle → kindle → result → save → ledger → delete, zero console errors.
+- Real Electron 43.8.1 + real SDK on Linux x64 under Xvfb with Chromium's test-pattern camera and an invalid key: preload bridge present, native runtime loaded, camera opened at 1280x720, SDK started and tried to reach Presage, the network error (sandbox blocks Presage hosts) surfaced as a clear message and the camera was released.
+
+**NOT verified — the open risk.** No live reading from a real person with a valid key. The session had no camera and no route to Presage. Unknown until the founder runs it: (a) whether the free-trial key is enabled for cardio metrics (the app falls back to breathing only), (b) the real delay and shape of `breathing.upperTrace` (the sync score searches ±3 s of lag and ignores sign, and the threshold `SYNC_THRESHOLD = 0.55` in `src/engine.js` may need tuning), (c) the founder's hardware — the SDK supports macOS on Apple Silicon, Windows x64 and Linux; **not Intel Macs**.
+
+**SDK intelligence (hard-won):** the renderer entry must be bundled (CommonJS); a sandboxed preload cannot `require` the SDK preload, so `preload.js` is bundled too. On first start the SDK logs calls to Presage for usage verification, metric authorization, `POST /device/pair` and model download — this is disclosed in the README. `docs.physiology.presagetech.com` and `dev.to` are not reachable from cloud sessions; the SDK docs are readable on GitHub (`Presage-Security/SmartSpectra`, `nodejs/docs/`). The official DEV submission template was therefore never seen — `SUBMISSION.md` follows the headings named in the challenge article.
+
+**Focus note (Protocol §6, Gate 6).** This is the fifth side build while the active priorities in §13 (channel launch, video 01) are still open. It was built because the founder asked for it with a fixed deadline. The remaining founder work is small (about 2–3 hours) and time-boxed; it should not grow past 2026-11-22.
+
+**Founder next actions:** get a Presage key → run the app → tune if needed → record the video → paste `SUBMISSION.md` into the DEV template → publish before 2026-11-22.

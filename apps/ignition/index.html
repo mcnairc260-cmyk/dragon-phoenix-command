@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- The page itself can load nothing from the network. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; worker-src 'self' blob:; media-src blob:; connect-src 'none';">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IGNITION</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<header class="bar">
+  <div class="brand"><span class="mark" aria-hidden="true"></span><div><div class="bname">IGNITION</div><div class="btag">Breathe to light the forge</div></div></div>
+  <div class="barright">
+    <span id="sim-badge" class="badge warn" hidden>SIMULATED SIGNAL - NOT PRESAGE DATA</span>
+    <span id="cam-badge" class="badge off"><i class="dot"></i><span id="cam-text">CAMERA OFF</span></span>
+    <button id="btn-stop" class="btn ghost" hidden>Stop and turn camera off</button>
+  </div>
+</header>
+
+<main>
+<!-- 1. Consent -->
+<section id="screen-consent" class="screen">
+  <div class="col">
+    <div class="eyebrow">A 3-minute start ritual</div>
+    <h1>Light the fire <span class="fire">before you start the work.</span></h1>
+    <p class="lede">Your breath is the controller. The camera reads your breathing and your pulse. No wearable. No buttons to press during the session. When your real breath follows the slow pace, the fire grows.</p>
+
+    <div class="card">
+      <div class="sl">Before the camera turns on</div>
+      <ul class="facts">
+        <li><b>Camera.</b> It is on only while a session runs. The light at the top of this window shows its state at all times. One button stops it.</li>
+        <li><b>Video.</b> Camera frames go to the Presage SmartSpectra SDK on this computer. Presage states that the SDK computes the readings on the device. This app does not record, save or send video.</li>
+        <li><b>Readings.</b> Breathing rate, pulse and heart rate variability (HRV) show live on screen. They are saved only if you choose to save them at the end, only on this computer, and you can delete them.</li>
+        <li><b>Presage servers.</b> The SDK connects to Presage to check the API key, register this device, check account usage and download its models. SDK telemetry is a separate report about the device and the session. It is OFF unless you turn it on below.</li>
+        <li><b>Not medical.</b> For general wellness and information only. Not cleared by the FDA. Not for diagnosis or treatment. This app gives no health advice.</li>
+        <li><b>Only you.</b> Use it on yourself. Do not point it at another person without their clear consent.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="sl">Your choices</div>
+      <label class="row" id="key-row">
+        <span class="lab">Presage API key</span>
+        <input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your key from physiology.presagetech.com">
+      </label>
+      <label class="check" id="remember-row"><input id="remember-key" type="checkbox"> Remember the key on this computer (stored as plain text in this app's local storage)</label>
+      <label class="check"><input id="opt-telemetry" type="checkbox"> Send SDK telemetry to Presage (device model, OS, performance counts, error codes, readiness reports; no video, no readings; linked to the API key account; Presage sets the retention)</label>
+      <div class="row">
+        <span class="lab">Session length</span>
+        <span class="seg"><label><input type="radio" name="len" value="180" checked> 3 minutes</label><label><input type="radio" name="len" value="60"> 1 minute</label></span>
+      </div>
+      <label class="check strong"><input id="opt-consent" type="checkbox"> I have read this. Turn on my camera for this session.</label>
+      <div class="actions">
+        <button id="btn-begin" class="btn primary" disabled>Begin</button>
+        <button id="btn-ledger" class="btn ghost">My saved sessions</button>
+      </div>
+      <p id="consent-note" class="note"></p>
+    </div>
+  </div>
+</section>
+
+<!-- 2. Session: settle, then kindle -->
+<section id="screen-session" class="screen" hidden>
+  <div class="stagewrap">
+    <canvas id="stage"></canvas>
+    <div class="cue"><div id="cue-main" class="cuemain">Sit still. Breathe as you usually do.</div><div id="cue-sub" class="cuesub"></div></div>
+    <div class="legend"><span><i class="key pace"></i>The pace</span><span><i class="key breath"></i>Your breath (live)</span></div>
+    <video id="preview" autoplay muted playsinline></video>
+  </div>
+  <aside class="hud">
+    <div class="phase"><span id="phase-name">SETTLE</span><span id="phase-time">0:30</span></div>
+    <div class="meter"><div class="mlab">Fire</div><div class="track"><div id="heat-bar" class="fill heat"></div></div></div>
+    <div class="meter"><div class="mlab">Breath sync <span id="sync-val">-</span></div><div class="track"><div id="sync-bar" class="fill sync"></div></div></div>
+    <div class="tiles">
+      <div class="tile"><div id="v-br" class="tn">-</div><div class="tl">Breaths / min</div></div>
+      <div class="tile"><div id="v-pulse" class="tn">-</div><div class="tl">Pulse / min</div></div>
+      <div class="tile"><div id="v-hrv" class="tn">-</div><div class="tl">HRV RMSSD ms</div></div>
+    </div>
+    <div id="hint" class="hint">Starting the camera...</div>
+    <div id="cardio-note" class="note" hidden>Pulse and HRV are not enabled for this API key. The session runs on breathing only.</div>
+    <button id="btn-skip" class="btn ghost small">Skip to the next step</button>
+    <p class="note">Live readings from the Presage SmartSpectra SDK. Information only. Not a medical device.</p>
+  </aside>
+</section>
+
+<!-- 3. Result -->
+<section id="screen-result" class="screen" hidden>
+  <div class="col">
+    <div class="eyebrow">The camera is off</div>
+    <h1 id="result-title">The fire is lit.</h1>
+    <p class="lede" id="result-lede"></p>
+    <div class="tiles wide">
+      <div class="tile"><div class="tn"><span id="r-br-a">-</span> <span class="arrow">to</span> <span id="r-br-b">-</span></div><div class="tl">Breaths / min, start to end</div></div>
+      <div class="tile"><div class="tn"><span id="r-pulse-a">-</span> <span class="arrow">to</span> <span id="r-pulse-b">-</span></div><div class="tl">Pulse / min, start to end</div></div>
+      <div class="tile"><div class="tn"><span id="r-hrv-a">-</span> <span class="arrow">to</span> <span id="r-hrv-b">-</span></div><div class="tl">HRV RMSSD ms, start to end</div></div>
+      <div class="tile"><div class="tn" id="r-sync">-</div><div class="tl">Time in sync with the pace</div></div>
+    </div>
+    <p class="note">These are your readings from this one session. A dash means the SDK did not give a reading. They are information, not a health assessment.</p>
+
+    <div class="card">
+      <div class="sl">Now use it</div>
+      <label class="row"><span class="lab">The one small first action</span><input id="action" type="text" maxlength="120" placeholder="Example: open the file and write the first line"></label>
+      <div class="actions">
+        <button id="btn-contract" class="btn primary">Start a 10-minute contract</button>
+        <span id="contract-clock" class="clock" hidden>10:00</span>
+      </div>
+      <p id="contract-note" class="note">Ten minutes on that one action. The camera stays off. When the time ends, you decide to continue or to stop.</p>
+    </div>
+
+    <div class="card">
+      <div class="sl">Keep or discard</div>
+      <div class="actions">
+        <button id="btn-save" class="btn">Save this session on this computer</button>
+        <button id="btn-done" class="btn ghost">Discard and finish</button>
+      </div>
+      <p id="save-note" class="note">Nothing from this session is saved until you press Save.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4. Ledger -->
+<section id="screen-ledger" class="screen" hidden>
+  <div class="col">
+    <div class="eyebrow">Stored on this computer only</div>
+    <h1>My saved sessions</h1>
+    <p class="lede">This list is in this app's local storage on this computer. It is not sent to any place. Delete one row or all rows at any time.</p>
+    <div id="ledger-list" class="ledger"></div>
+    <div class="actions">
+      <button id="btn-back" class="btn">Back</button>
+      <button id="btn-wipe" class="btn danger">Delete all saved sessions</button>
+      <button id="btn-forget" class="btn danger">Forget the saved API key</button>
+    </div>
+  </div>
+</section>
+</main>
+
+<div id="error" class="error" hidden><div class="ebox"><div class="sl">Something stopped the session</div><p id="error-text"></p><p id="error-detail" class="note"></p><button id="btn-error-ok" class="btn primary">OK</button></div></div>
+<script src="./dist/renderer.bundle.js"></script>
+</body>
+</html>

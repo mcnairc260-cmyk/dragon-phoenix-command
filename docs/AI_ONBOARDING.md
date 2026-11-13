@@ -65,6 +65,10 @@ dragon-phoenix-command/
 │                           # such sub-app. Built and tested, NOT deployed; deploying it is
 │                           # Tier 3. See games/emberloop/README.md + GAME_DESIGN.md and
 │                           # PROJECT_CONTEXT §18.)
+├── apps/ignition/          # IGNITION — self-contained Electron desktop app (Presage SmartSpectra
+│                           # SDK Challenge entry, 2026-11-13; fourth sub-app toolchain exception).
+│                           # Built and tested, NOT published. See apps/ignition/README.md,
+│                           # SUBMISSION.md and PROJECT_CONTEXT §20.
 └── games/breakpoint/       # BREAKPOINT — self-contained Vite/TS/three.js 3D pool game
                             # (founder-approved framework exception, 2026-08-29 — the third
                             # such sub-app. Phase 1 vertical slice: deterministic 120 Hz
