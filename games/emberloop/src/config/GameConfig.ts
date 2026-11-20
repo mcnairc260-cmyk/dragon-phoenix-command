@@ -23,6 +23,25 @@ export const ARENA = {
   cullRadius: 1.9,
 } as const;
 
+/**
+ * Graze shots (founder decision 2026-11-20, "option B"): every near-miss also
+ * fires a real ember from the phoenix. Grazing an enemy shoots that enemy;
+ * grazing a bullet shoots the nearest enemy. Close flying is now an attack as
+ * well as the Heat/Burst engine. Damage is deliberately small: the Burst stays
+ * the big hit.
+ */
+export const GRAZE_SHOT = {
+  /** Damage when you grazed the enemy itself. */
+  damageEnemyGraze: 1,
+  /** Damage when you grazed a bullet (shot goes to the nearest enemy). */
+  damageBulletGraze: 0.5,
+  speed: 560,
+  radius: 5,
+  life: 1.2,
+  /** Bullet grazes only fire if an enemy is this close (px). */
+  bulletGrazeRange: 260,
+} as const;
+
 export const PLAYER = {
   maxHealth: 3,
   radius: 13,

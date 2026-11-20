@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ARENA, BOSS, BURST, CONTROL, DIFFICULTY, ELITE, ENEMY, HAZARD, PICKUP, PLAYER, SCORING } from '../config/GameConfig';
+import { ARENA, BOSS, BURST, CONTROL, DIFFICULTY, ELITE, ENEMY, GRAZE_SHOT, HAZARD, PICKUP, PLAYER, SCORING } from '../config/GameConfig';
 import { ObjectPool } from '../core/ObjectPool';
 import { weightedIndex } from '../core/Rng';
 import { session } from '../core/Session';
@@ -37,6 +37,7 @@ import { Hud } from '../ui/Hud';
 import { computeStats, UPGRADES_BY_ID, type PlayerStats, type UpgradeLevels } from '../upgrades/UpgradeDefs';
 import { draftUpgrades, takeUpgrade } from '../upgrades/UpgradeDraft';
 import { gameOverPanel, pausePanel, progressionPanel, upgradePanel } from '../ui/panels';
+import { FACTIONS, KIND_ROLE, pickSpecies, type FactionId } from '../config/factions';
 
 const DEPTH = {
   arena: 0,
@@ -201,6 +202,7 @@ export class GameScene extends Phaser.Scene {
     this.score = createScoreState();
     this.levels = createLevelState();
     this.elapsed = 0;
+    this.announcedFactions.clear();
     this.spawnTimer = 0.6;
     this.collapseTimer = 12;
     this.ambientTimer = 0.4;
@@ -371,6 +373,7 @@ export class GameScene extends Phaser.Scene {
     const dt = rawDt * this.timeScale;
 
     this.elapsed += dt;
+    this.announceFactions();
     const difficulty = difficultyAt(this.elapsed);
 
     this.arena.update(dt);
@@ -437,6 +440,17 @@ export class GameScene extends Phaser.Scene {
     this.spawnEnemy(kind, spawn.x, spawn.y, hpMultiplier, speedMultiplier);
   }
 
+  private readonly announcedFactions = new Set<FactionId>();
+
+  /** Name each faction as it first enters the run (the first one is the opening). */
+  private announceFactions(): void {
+    for (const faction of FACTIONS) {
+      if (this.elapsed < faction.unlockAt || this.announcedFactions.has(faction.id)) continue;
+      this.announcedFactions.add(faction.id);
+      if (faction.unlockAt > 0) session.ui.toast(`${faction.name} approaches`, 2400);
+    }
+  }
+
   private spawnEnemy(
     kind: EnemyKind,
     x: number,
@@ -446,7 +460,10 @@ export class GameScene extends Phaser.Scene {
     options: { elite?: boolean; child?: boolean } = {},
   ): Enemy {
     const enemy = this.enemyPool.acquire();
-    enemy.spawn({ kind, x, y, hpMultiplier, speedMultiplier, ...options });
+    // Chasers, chargers and shooters wear a species from an unlocked faction.
+    const role = options.child ? undefined : KIND_ROLE[kind];
+    const species = role ? pickSpecies(role, this.elapsed) : null;
+    enemy.spawn({ kind, x, y, hpMultiplier, speedMultiplier, species, ...options });
     this.enemies.push(enemy);
     if (options.elite) {
       this.fx.shockwave(x, y, enemy.glowColor, 180, 520);
@@ -706,7 +723,7 @@ export class GameScene extends Phaser.Scene {
         enemy.y += Math.sin(angle) * 26;
       } else if (dist <= nearR + enemy.radius && enemy.nearMissTimer <= 0) {
         enemy.nearMissTimer = PLAYER.nearMissCooldown;
-        this.registerNearMiss(enemy.x, enemy.y);
+        this.registerNearMiss(enemy.x, enemy.y, enemy);
       }
 
       if (blades.length > 0) {
@@ -738,7 +755,7 @@ export class GameScene extends Phaser.Scene {
         }
         if (dist <= nearR + projectile.radius && projectile.nearMissTimer <= 0) {
           projectile.nearMissTimer = PLAYER.nearMissCooldown;
-          this.registerNearMiss(projectile.x, projectile.y);
+          this.registerNearMiss(projectile.x, projectile.y, null);
         }
       } else {
         let consumed = false;
@@ -793,17 +810,47 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ── Rewards & damage ──────────────────────────────────────────────────────
-  private registerNearMiss(x: number, y: number): void {
+  private registerNearMiss(x: number, y: number, grazedEnemy: Enemy | null): void {
     const gained = scoreNearMiss(this.score, this.stats.nearMissMul);
     this.player.addBurstEnergy(BURST.energyPerNearMiss * this.stats.nearMissMul);
     audio.nearMiss(this.score.combo);
-    this.fx.burstSparks(x, y, this.player.colors.accent, 4, 120);
+    this.fireGrazeShot(grazedEnemy);
     if (this.score.combo % 5 === 0) {
       this.fx.floatText(this.player.x, this.player.y - 34, `${this.score.combo} HEAT`, BRAND_CSS.rebirthGold, 15);
       haptics.play('pickup');
     } else if (gained > 0 && this.score.multiplier > 1) {
       this.fx.floatText(x, y, `+${gained}`, BRAND_CSS.rebirthGold, 13);
     }
+  }
+
+  /** Option B: a near-miss fires a real ember from the phoenix (see GRAZE_SHOT). */
+  private fireGrazeShot(grazedEnemy: Enemy | null): void {
+    const px = this.player.x;
+    const py = this.player.y;
+    let target: { x: number; y: number } | null = grazedEnemy;
+    let damage: number = GRAZE_SHOT.damageEnemyGraze;
+    if (!target) {
+      const nearest = this.nearestEnemy(px, py);
+      if (!nearest || Math.hypot(nearest.x - px, nearest.y - py) > GRAZE_SHOT.bulletGrazeRange) return;
+      target = nearest;
+      damage = GRAZE_SHOT.damageBulletGraze;
+    }
+    const angle = Math.atan2(target.y - py, target.x - px);
+    const projectile = this.projectilePool.acquire();
+    projectile.spawn({
+      x: px,
+      y: py,
+      angle,
+      speed: GRAZE_SHOT.speed,
+      color: this.player.colors.accent,
+      hostile: false,
+      homing: true,
+      damage,
+      radius: GRAZE_SHOT.radius,
+      life: GRAZE_SHOT.life,
+    });
+    this.projectiles.push(projectile);
+    this.fx.burstSparks(px, py, this.player.colors.accent, 3, 90);
   }
 
   private collectPickup(pickup: Pickup): void {

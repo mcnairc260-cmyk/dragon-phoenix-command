@@ -4,6 +4,7 @@ import { TAU } from '../core/math';
 import { BRAND, SIGNAL } from '../config/brand';
 import { TEX } from '../effects/Textures';
 import type { EnemyKind } from '../systems/Difficulty';
+import { FACTION_BY_ID, speciesTextureKey, type Species } from '../config/factions';
 
 /**
  * Palette per archetype: [glow, body]. Three sit exactly on the Brand Bible
@@ -61,6 +62,9 @@ export class Enemy {
   splitCount = 0;
   /** Set true for the smaller shards a splitter leaves behind. */
   isChild = false;
+  /** Faction species drawn with founder art; null for the procedural archetypes. */
+  species: Species | null = null;
+  private facing = 1;
 
   phase: EnemyPhase = 'rest';
   phaseTimer = 0;
@@ -73,6 +77,8 @@ export class Enemy {
 
   private readonly glow: Phaser.GameObjects.Image;
   private readonly body: Phaser.GameObjects.Image;
+  /** Faction-coloured silhouette behind species art: keeps dark creatures readable on the dark floor. */
+  private readonly rim: Phaser.GameObjects.Image;
   private readonly crown: Phaser.GameObjects.Image;
   private readonly telegraph: Phaser.GameObjects.Rectangle;
   private readonly hpBar: Phaser.GameObjects.Rectangle;
@@ -86,6 +92,7 @@ export class Enemy {
       .setDepth(depth - 1)
       .setVisible(false);
     this.glow = scene.add.image(0, 0, TEX.glow).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth).setVisible(false);
+    this.rim = scene.add.image(0, 0, TEX.cinder).setDepth(depth + 0.5).setVisible(false);
     this.body = scene.add.image(0, 0, TEX.cinder).setDepth(depth + 1).setVisible(false);
     this.crown = scene.add
       .image(0, 0, TEX.crown)
@@ -107,12 +114,15 @@ export class Enemy {
     speedMultiplier: number;
     elite?: boolean;
     child?: boolean;
+    species?: Species | null;
   }): void {
     const base = ENEMY[options.kind];
     this.active = true;
     this.kind = options.kind;
     this.isElite = options.elite === true;
     this.isChild = options.child === true;
+    this.species = options.species ?? null;
+    const sp = this.species;
     this.x = options.x;
     this.y = options.y;
     this.vx = 0;
@@ -123,10 +133,10 @@ export class Enemy {
     const childScale = this.isChild ? 0.6 : 1;
     const eliteScale = this.isElite ? ELITE.radiusMultiplier : 1;
 
-    this.maxHp = Math.max(1, Math.round(base.hp * options.hpMultiplier * (this.isElite ? ELITE.hpMultiplier : 1) * (this.isChild ? 0.5 : 1)));
+    this.maxHp = Math.max(1, Math.round(base.hp * (sp ? sp.hpMul : 1) * options.hpMultiplier * (this.isElite ? ELITE.hpMultiplier : 1) * (this.isChild ? 0.5 : 1)));
     this.hp = this.maxHp;
-    this.radius = base.radius * childScale * eliteScale;
-    this.speed = base.speed * options.speedMultiplier * (this.isElite ? ELITE.speedMultiplier : 1) * (this.isChild ? 1.25 : 1);
+    this.radius = base.radius * childScale * eliteScale * (sp ? sp.sizeMul : 1);
+    this.speed = base.speed * (sp ? sp.speedMul : 1) * options.speedMultiplier * (this.isElite ? ELITE.speedMultiplier : 1) * (this.isChild ? 1.25 : 1);
     this.score = base.score * (this.isElite ? 8 : 1) * (this.isChild ? 0.5 : 1);
     this.xp = base.xp * (this.isElite ? 6 : 1);
     this.splitCount = options.kind === 'splitter' && !this.isChild ? ENEMY.splitter.children : 0;
@@ -136,14 +146,30 @@ export class Enemy {
     this.phase = this.initialPhase();
     this.phaseTimer = this.initialPhaseTime();
 
-    const [glowColor, bodyColor] = ENEMY_COLORS[options.kind];
+    const [kindGlow, bodyColor] = ENEMY_COLORS[options.kind];
+    const glowColor = sp ? FACTION_BY_ID[sp.faction].color : kindGlow;
     this.glow.setVisible(true).setTint(glowColor).setScale((this.radius / 64) * 2.6).setAlpha(0.7);
-    this.body
-      .setVisible(true)
-      .setTexture(TEXTURE_FOR[options.kind])
-      .setTint(this.isElite ? 0xffffff : bodyColor)
-      .setDisplaySize(this.radius * 2.3, this.radius * 2.3)
-      .setRotation(0);
+    this.body.setVisible(true).setRotation(0).setFlipX(false);
+    if (sp) {
+      // Founder art keeps its own colours; size by the longest side so wide and
+      // tall creatures read at the same weight.
+      const frame = this.body.setTexture(speciesTextureKey(sp)).clearTint().frame;
+      const fit = (this.radius * 2.9) / Math.max(frame.width, frame.height);
+      this.body.setDisplaySize(frame.width * fit, frame.height * fit);
+      this.rim
+        .setTexture(speciesTextureKey(sp))
+        .setTintFill(glowColor)
+        .setDisplaySize(frame.width * fit * 1.12, frame.height * fit * 1.12)
+        .setAlpha(0.55)
+        .setVisible(true);
+      this.facing = 1;
+    } else {
+      this.rim.setVisible(false);
+      this.body
+        .setTexture(TEXTURE_FOR[options.kind])
+        .setTint(this.isElite ? 0xffffff : bodyColor)
+        .setDisplaySize(this.radius * 2.3, this.radius * 2.3);
+    }
     this.crown.setVisible(this.isElite).setTint(glowColor);
     this.hpBar.setVisible(this.isElite);
     this.telegraph.setVisible(false).setFillStyle(glowColor, 0.55);
@@ -181,13 +207,14 @@ export class Enemy {
     this.active = false;
     this.glow.setVisible(false);
     this.body.setVisible(false);
+    this.rim.setVisible(false);
     this.crown.setVisible(false);
     this.hpBar.setVisible(false);
     this.telegraph.setVisible(false);
   }
 
   get glowColor(): number {
-    return ENEMY_COLORS[this.kind][0];
+    return this.species ? FACTION_BY_ID[this.species.faction].color : ENEMY_COLORS[this.kind][0];
   }
 
   /** Returns true when the enemy died from this damage. */
@@ -369,6 +396,43 @@ export class Enemy {
     this.glow.setPosition(this.x, this.y);
     this.body.setPosition(this.x, this.y);
 
+    if (this.species) this.renderSpecies();
+    else this.renderArchetype();
+
+    if (this.isElite) {
+      this.crown.setPosition(this.x, this.y - this.radius - 14).setAlpha(0.9);
+      this.hpBar.setPosition(this.x, this.y - this.radius - 26);
+      this.hpBar.setSize(Math.max(2, 46 * (this.hp / this.maxHp)), 4);
+    }
+  }
+
+  /**
+   * Creatures stay upright (the art is not top-down): they mirror to face the
+   * way they move, lean into motion, and breathe. Chargers shudder while their
+   * line is telegraphed; shooters pulse while aiming.
+   */
+  private renderSpecies(): void {
+    const sp = this.species as Species;
+    if (sp.faces !== 0) {
+      if (this.vx > 8) this.facing = 1;
+      else if (this.vx < -8) this.facing = -1;
+      this.body.setFlipX(this.facing !== sp.faces);
+    }
+    const lean = Math.max(-0.22, Math.min(0.22, this.vx / 900));
+    let wobble = Math.sin(this.pulse * 5) * 0.035;
+    let glow = 0.6;
+    if (this.phase === 'telegraph') {
+      wobble = Math.sin(this.pulse * 60) * 0.08;
+      glow = 0.6 + 0.4 * Math.sin(this.pulse * 18);
+    } else if (this.phase === 'charge') {
+      glow = 0.9;
+    }
+    this.body.setRotation(lean + wobble);
+    this.rim.setPosition(this.x, this.y).setRotation(lean + wobble).setFlipX(this.body.flipX);
+    this.glow.setAlpha(glow);
+  }
+
+  private renderArchetype(): void {
     switch (this.kind) {
       case 'dart':
         this.body.setRotation(this.phase === 'charge' ? Math.atan2(this.vy, this.vx) : this.lockedAngle);
@@ -399,17 +463,12 @@ export class Enemy {
         this.body.setRotation(this.pulse * 1.2);
         break;
     }
-
-    if (this.isElite) {
-      this.crown.setPosition(this.x, this.y - this.radius - 14).setAlpha(0.9);
-      this.hpBar.setPosition(this.x, this.y - this.radius - 26);
-      this.hpBar.setSize(Math.max(2, 46 * (this.hp / this.maxHp)), 4);
-    }
   }
 
   destroy(): void {
     this.glow.destroy();
     this.body.destroy();
+    this.rim.destroy();
     this.crown.destroy();
     this.hpBar.destroy();
     this.telegraph.destroy();
