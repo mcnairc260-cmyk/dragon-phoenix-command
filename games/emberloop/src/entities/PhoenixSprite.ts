@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { PLAYER } from '../config/GameConfig';
 import { clamp, damp } from '../core/math';
 import bodyUrl from '../assets/phoenix-body.png';
 import wingLeftUrl from '../assets/phoenix-wing-left.png';
@@ -23,8 +24,8 @@ const ANCHOR = { x: 168.6, y: 119.5 }; // torso centre = gameplay position
 const LEFT_PIVOT = { x: 147.3, y: 106.7 };
 const RIGHT_PIVOT = { x: 202.7, y: 102.4 };
 
-/** On-screen size: ~95 CSS px wingspan. */
-const BASE_SCALE = 0.34;
+/** The art spans the full texture width, so this maps it to PLAYER.wingspan. */
+const BASE_SCALE = PLAYER.wingspan / TEX_W;
 
 export function loadPhoenixTextures(scene: Phaser.Scene): void {
   scene.load.image(PHOENIX_TEX.body, bodyUrl);

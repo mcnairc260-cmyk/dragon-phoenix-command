@@ -35,6 +35,12 @@ export const ARENA = {
 export const PLAYER = {
   maxHealth: 3,
   radius: 13,
+  /**
+   * On-screen wingspan of the phoenix art in CSS px. Kept small so the bird reads
+   * close to its hitbox, fits through gaps between enemies, and never hides the
+   * Emberblades orbiting at 44 px or shots leaving the body.
+   */
+  wingspan: 56,
   /** Hit radius is smaller than the visual — forgiving hitbox feels better on touch. */
   hitRadius: 9,
   /** Peak speed in px/sec at pointer-far distance. */
