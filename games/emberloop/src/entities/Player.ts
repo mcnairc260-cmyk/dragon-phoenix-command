@@ -3,6 +3,7 @@ import { BURST, PLAYER } from '../config/GameConfig';
 import { clamp, damp } from '../core/math';
 import { TEX } from '../effects/Textures';
 import type { Arena } from '../effects/Arena';
+import { PhoenixSprite } from './PhoenixSprite';
 import type { Palette } from '../systems/Cosmetics';
 import type { PlayerStats } from '../upgrades/UpgradeDefs';
 
@@ -41,7 +42,7 @@ export class Player {
   private readonly scene: Phaser.Scene;
   private readonly glow: Phaser.GameObjects.Image;
   private readonly innerGlow: Phaser.GameObjects.Image;
-  private readonly body: Phaser.GameObjects.Image;
+  private readonly body: PhoenixSprite;
   private readonly shieldRing: Phaser.GameObjects.Image;
   private readonly trail: Phaser.GameObjects.Particles.ParticleEmitter;
   private readonly blades: Phaser.GameObjects.Image[] = [];
@@ -50,7 +51,13 @@ export class Player {
   private pulse = 0;
   private palette!: Palette;
 
-  reducedMotion = false;
+  get reducedMotion(): boolean {
+    return this.body.reducedMotion;
+  }
+
+  set reducedMotion(on: boolean) {
+    this.body.reducedMotion = on;
+  }
 
   constructor(scene: Phaser.Scene, depth: number, palette: Palette, stats: PlayerStats) {
     this.scene = scene;
@@ -77,7 +84,7 @@ export class Player {
       .setDepth(depth + 2)
       .setScale(0.32)
       .setVisible(false);
-    this.body = scene.add.image(0, 0, TEX.phoenix).setDepth(depth + 3).setScale(1.0);
+    this.body = new PhoenixSprite(scene, depth + 3);
 
     this.setPalette(palette);
     this.applyStats(stats);
@@ -87,7 +94,6 @@ export class Player {
     this.palette = palette;
     this.glow.setTint(palette.glow);
     this.innerGlow.setTint(palette.accent);
-    this.body.setTint(palette.core);
     this.shieldRing.setTint(palette.accent);
     this.trail.setParticleTint(palette.glow);
     for (const blade of this.blades) blade.setTint(palette.accent);
@@ -106,7 +112,7 @@ export class Player {
       const blade = this.scene.add
         .image(0, 0, TEX.blade)
         .setBlendMode(Phaser.BlendModes.ADD)
-        .setDepth(this.body.depth + 1)
+        .setDepth(this.body.container.depth + 1)
         .setTint(this.palette.accent)
         .setScale(0.9);
       this.blades.push(blade);
@@ -224,9 +230,6 @@ export class Player {
       const target = Math.atan2(this.vy, this.vx);
       this.facing = Phaser.Math.Angle.RotateTo(this.facing, target, 12 * dt);
     }
-    this.body.setRotation(this.facing);
-    this.body.setPosition(this.x, this.y);
-    this.body.setTexture(this.ascended ? TEX.phoenixAscended : TEX.phoenix);
 
     // Brand Bible motion rule: "subtle, purposeful ... never bouncy, never
     // busy." A slow breath only — the fast wing-beat read as bounce.
@@ -240,8 +243,9 @@ export class Player {
     this.innerGlow.setPosition(this.x, this.y).setRotation(this.facing);
     this.innerGlow.setScale(0.62 * breathe * ascendBoost);
     this.innerGlow.setAlpha(this.invulnerable ? 0.4 : 0.85);
-    const bodyScale = this.ascended ? 1.16 : 1.0;
-    this.body.setScale(bodyScale * breathe);
+    const maxSpeed = PLAYER.baseSpeed * this.stats.speedMul;
+    this.body.setSize(this.ascended ? 1.16 : 1.0);
+    this.body.update(dt, this.x, this.y, this.vx, this.vy, this.speed / maxSpeed);
     this.body.setAlpha(this.invulnerable ? 0.5 + 0.4 * Math.sin(this.pulse * 30) : 1);
 
     // Emit behind the bird so its nose and wings remain crisp at full speed.

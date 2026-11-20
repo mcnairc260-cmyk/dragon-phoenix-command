@@ -9,6 +9,7 @@ import { audio } from '../systems/AudioEngine';
 import { haptics } from '../systems/Haptics';
 import { FONT_DISPLAY, FONT_MONO } from '../ui/fonts';
 import { howToPanel, progressionPanel } from '../ui/panels';
+import { PhoenixSprite } from '../entities/PhoenixSprite';
 
 /**
  * Animated title screen. A demo phoenix loops around the live caldera behind
@@ -17,7 +18,9 @@ import { howToPanel, progressionPanel } from '../ui/panels';
  */
 export class TitleScene extends Phaser.Scene {
   private arena!: Arena;
-  private demo!: Phaser.GameObjects.Image;
+  private demo!: PhoenixSprite;
+  private demoX = 0;
+  private demoY = 0;
   private demoGlow!: Phaser.GameObjects.Image;
   private demoTrail!: Phaser.GameObjects.Particles.ParticleEmitter;
   private title!: Phaser.GameObjects.Text;
@@ -56,7 +59,8 @@ export class TitleScene extends Phaser.Scene {
       })
       .setDepth(9);
     this.demoGlow = this.add.image(0, 0, TEX.glow).setBlendMode(Phaser.BlendModes.ADD).setTint(palette.glow).setDepth(10);
-    this.demo = this.add.image(0, 0, TEX.phoenix).setTint(palette.core).setDepth(11).setScale(0.95);
+    this.demo = new PhoenixSprite(this, 11).setSize(1.15);
+    this.demo.reducedMotion = session.settings.reducedMotion;
 
     this.titleGlow = this.add
       .image(width / 2, 0, TEX.glow)
@@ -181,7 +185,6 @@ export class TitleScene extends Phaser.Scene {
 
   private refreshPalette(): void {
     const palette = session.palette;
-    this.demo.setTint(palette.core);
     this.demoGlow.setTint(palette.glow);
     this.demoTrail.setParticleTint(palette.glow);
   }
@@ -232,8 +235,12 @@ export class TitleScene extends Phaser.Scene {
     // Demo phoenix loops a lazy lissajous path around the caldera.
     const x = this.arena.cx + Math.cos(this.t * 0.7) * this.arena.rx * 0.62;
     const y = this.arena.cy + Math.sin(this.t * 1.1) * this.arena.ry * 0.5;
-    const angle = Math.atan2(y - this.demo.y, x - this.demo.x);
-    this.demo.setPosition(x, y).setRotation(angle);
+    const vx = (x - this.demoX) / dt;
+    const vy = (y - this.demoY) / dt;
+    this.demoX = x;
+    this.demoY = y;
+    this.demo.reducedMotion = session.settings.reducedMotion;
+    this.demo.update(dt, x, y, vx, vy, 0.35);
     this.demoGlow.setPosition(x, y).setScale(1.1 + Math.sin(this.t * 5) * 0.08);
     this.demoTrail.setPosition(x, y);
 

@@ -138,14 +138,18 @@ Phaser only appears in `entities/`, `effects/`, `scenes/`, `ui/Hud.ts` and
   told apart at a glance with three colours and readable telegraphs are a hard
   gameplay requirement. The root site is unchanged, so the wider two-palette
   question in `docs/AI_ONBOARDING.md` §8.1 stays open.
-- **The phoenix is elemental energy, not a creature.** The Bible's imagery
-  direction asks for the Phoenix "rendered as elemental energy (fire, light,
-  smoke) rather than cartoon creatures", so the player sprite is a bundle of
-  tapered flame strokes with a single hot core, not a bird silhouette.
-- **Everything is procedural.** Textures are drawn with Phaser `Graphics` and
-  canvas gradients at boot (`effects/Textures.ts`); audio is synthesised from
-  oscillators and a noise buffer (`systems/AudioEngine.ts`). No third-party art
-  or sound ships with the game, so there are no licences to track.
+- **The phoenix is founder-supplied art (2026-11-20).** The founder chose an
+  illustrated phoenix creature (`art/phoenix-source.png`, made by the founder
+  with ChatGPT) over the earlier flame-stroke sprite. This overrides the Brand
+  Bible's "elemental energy, not cartoon creatures" imagery direction for this
+  game only. `scripts/make-phoenix-layers.py` (needs Pillow) cuts it into body +
+  two wing layers in `src/assets/`; `entities/PhoenixSprite.ts` beats the wings
+  around the shoulders, mirrors to face the direction of travel and banks into
+  turns. The art is a three-quarter view, so it never spins upside down.
+  Palettes recolour the glow and trail, not the bird.
+- **Everything else is procedural.** Other textures are drawn with Phaser
+  `Graphics` and canvas gradients at boot (`effects/Textures.ts`); audio is
+  synthesised from oscillators and a noise buffer (`systems/AudioEngine.ts`).
 - **The arena is a circle rendered as an ellipse.** Gameplay maths uses a
   normalised radius where `1.0` is the wall, so angular wedges, orbits and radial
   spawns behave circularly while the caldera fills a tall portrait screen.
