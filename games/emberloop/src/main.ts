@@ -9,6 +9,7 @@ import { GameScene } from './scenes/GameScene';
 import { TitleScene } from './scenes/TitleScene';
 import { audio } from './systems/AudioEngine';
 import { Ui } from './ui/Ui';
+import { Capacitor } from '@capacitor/core';
 
 const ui = new Ui();
 session.init(ui);
@@ -121,7 +122,8 @@ if (session.debug) {
   requestAnimationFrame(sampleFps);
 }
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+// Skipped in the native iPhone app: the game ships inside the app, so it is already offline.
+if ('serviceWorker' in navigator && import.meta.env.PROD && !Capacitor.isNativePlatform()) {
   window.addEventListener('load', () => {
     // sw.js is copied verbatim from public/ and sits next to index.html.
     const swUrl = new URL('sw.js', window.location.href).href;

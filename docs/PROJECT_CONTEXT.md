@@ -262,6 +262,8 @@ Also applied from the Bible in the same pass: the player sprite was rebuilt as *
 
 ---
 
+**Native iPhone app (added 2026-11-20, founder-requested in-session: "Turn this into an iPhone app").** The game is wrapped with **Capacitor 8** (`@capacitor/core`, `@capacitor/ios`, `@capacitor/haptics`, `@capacitor/cli`) — dependencies scoped to `games/emberloop/` only; the root site stays zero-build. The Xcode project is committed in `games/emberloop/ios/` (Swift Package Manager, no CocoaPods). Choices made: bundle ID `com.dragonphoenixascension.emberloop` (placeholder, changeable before first App Store upload); iPhone-only, portrait-locked, status bar hidden; native Taptic haptics replace the `navigator.vibrate` no-op on iOS; service worker skipped inside the app. `npm run icons` now also writes the 1024 px RGB (no alpha) app icon and a branded launch image. **Not verified in this session:** an actual Xcode build or a device run — the session runs on Linux with no Xcode. Web build, typecheck, 86 unit tests and a Playwright iPhone-14 smoke load (zero console errors) pass. **App Store submission ($99/yr Apple Developer Program, listing, privacy URL) is a founder decision and was not started.** Build steps: `games/emberloop/IOS.md`.
+
 ## 19. BREAKPOINT — 3D pool game, Phase 1 vertical slice (2026-08-29)
 
 A founder-directed session built **BREAKPOINT**, a physics-first 3D pool game, as a self-contained sub-application in `games/breakpoint/` — branch `claude/breakpoint-phase-1-pool-1sjmmi`. Full engineering record: `games/breakpoint/README.md`.

@@ -6,7 +6,7 @@
  * with a bright ember riding it, over an obsidian field.
  */
 import { deflateSync } from 'node:zlib';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -38,20 +38,31 @@ function chunk(type, data) {
   return Buffer.concat([length, typeBuf, data, crc]);
 }
 
-function encodePng(width, height, rgba) {
+function encodePng(width, height, rgba, { rgb = false } = {}) {
   const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(width, 0);
   ihdr.writeUInt32BE(height, 4);
   ihdr[8] = 8; // bit depth
-  ihdr[9] = 6; // colour type: RGBA
+  ihdr[9] = rgb ? 2 : 6; // colour type: RGB or RGBA
   // 10..12 stay zero: deflate compression, adaptive filtering, no interlace.
 
-  const stride = width * 4;
+  const channels = rgb ? 3 : 4;
+  const stride = width * channels;
   const raw = Buffer.alloc((stride + 1) * height);
   for (let y = 0; y < height; y++) {
     raw[y * (stride + 1)] = 0; // filter type 0 (none)
-    rgba.copy(raw, y * (stride + 1) + 1, y * stride, (y + 1) * stride);
+    if (!rgb) {
+      rgba.copy(raw, y * (stride + 1) + 1, y * width * 4, (y + 1) * width * 4);
+      continue;
+    }
+    for (let x = 0; x < width; x++) {
+      const src = (y * width + x) * 4;
+      const dst = y * (stride + 1) + 1 + x * 3;
+      raw[dst] = rgba[src];
+      raw[dst + 1] = rgba[src + 1];
+      raw[dst + 2] = rgba[src + 2];
+    }
   }
 
   return Buffer.concat([
@@ -91,11 +102,11 @@ function ringColor(angle) {
   ];
 }
 
-function drawIcon(size, { maskable = false } = {}) {
+function drawIcon(size, { maskable = false, markScale } = {}) {
   const rgba = Buffer.alloc(size * size * 4);
   const c = size / 2;
   // Maskable icons must keep the mark inside the inner 80% safe zone.
-  const scale = maskable ? 0.62 : 0.8;
+  const scale = markScale ?? (maskable ? 0.62 : 0.8);
   const ringRadius = (size / 2) * scale * 0.62;
   const ringWidth = size * scale * 0.075;
   const emberAngle = -Math.PI / 3;
@@ -180,3 +191,16 @@ for (const size of [180, 192, 512]) {
 writeFileSync(join(OUT_DIR, 'icon-maskable-512.png'), encodePng(512, 512, drawIcon(512, { maskable: true })));
 
 console.log(`Wrote icons to ${OUT_DIR}`);
+
+// ── Native iPhone app (Capacitor) ───────────────────────────────────────────
+// Apple rejects app icons with an alpha channel, so these are written as RGB.
+const IOS_ASSETS = join(dirname(fileURLToPath(import.meta.url)), '..', 'ios', 'App', 'App', 'Assets.xcassets');
+if (existsSync(IOS_ASSETS)) {
+  writeFileSync(join(IOS_ASSETS, 'AppIcon.appiconset', 'AppIcon-512@2x.png'), encodePng(1024, 1024, drawIcon(1024), { rgb: true }));
+  // Launch screen: the mark small and centred on the obsidian field (aspect-fill crops the edges).
+  const splash = encodePng(2732, 2732, drawIcon(2732, { markScale: 0.22 }), { rgb: true });
+  for (const name of ['splash-2732x2732.png', 'splash-2732x2732-1.png', 'splash-2732x2732-2.png']) {
+    writeFileSync(join(IOS_ASSETS, 'Splash.imageset', name), splash);
+  }
+  console.log(`Wrote iOS app icon and launch image to ${IOS_ASSETS}`);
+}

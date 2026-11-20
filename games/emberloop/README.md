@@ -93,6 +93,11 @@ converts the root deploy from "no build" to "build" for the whole site, which
 
 The game needs no environment variables, secrets, or serverless functions.
 
+## iPhone app
+
+A native iPhone build (Capacitor) lives in `ios/`. See [`IOS.md`](./IOS.md) for how to
+build it in Xcode and put it on a phone.
+
 ## Project structure
 
 ```
