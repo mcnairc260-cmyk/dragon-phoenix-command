@@ -105,7 +105,7 @@ games/emberloop/
 ├── index.html                  # Shell: canvas mount + DOM overlay layer
 ├── public/
 │   ├── manifest.webmanifest    # PWA manifest (portrait, standalone)
-│   ├── sw.js                   # Offline cache: precache shell, cache-first runtime
+│   ├── sw.js                   # Offline cache: pages network-first, hashed assets cache-first
 │   └── icons/                  # Generated PNG/SVG icon set
 ├── scripts/make-icons.mjs      # Procedural icon generator (pure Node, no deps)
 └── src/
