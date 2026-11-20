@@ -2,6 +2,7 @@
 
 One line per material change, newest first. Format: `date · scope · what` (PR # where applicable).
 
+- 2026-11-20 · product · EMBERLOOP board background: founder's board art sliced to fit any phone height, rounded-rectangle wall on its frame (was an ellipse), dark scrim for readability; procedural caldera floor/cracks/rim removed. Docs: PROJECT_CONTEXT §18, games/emberloop/README.md.
 - 2026-11-20 · product · EMBERLOOP phoenix shrunk 95 → 56 px wingspan (founder playtest: couldn't fit between enemies, bird hid its own attacks); now tunable as `PLAYER.wingspan`. Docs: PROJECT_CONTEXT §18.
 - 2026-11-20 · product+brand · EMBERLOOP main character is now the founder's illustrated phoenix (founder override of the Bible's "not a creature" direction, game only): cut into body + wing layers with a wing-beat, travel-facing mirror and banking; palettes tint glow/trail only; old flame-stroke sprite removed. Docs: PROJECT_CONTEXT §18, games/emberloop/README.md.
 - 2026-11-20 · product · EMBERLOOP native iPhone app: Capacitor 8 wrap (Xcode project in `games/emberloop/ios/`), iPhone-only portrait, hidden status bar, real Taptic haptics, branded RGB app icon + launch image, no service worker in-app. Not yet built in Xcode (no Mac in session); App Store submission not started (founder call). Docs: PROJECT_CONTEXT §18, games/emberloop/IOS.md.

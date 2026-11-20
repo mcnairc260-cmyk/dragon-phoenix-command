@@ -1,20 +1,13 @@
 import Phaser from 'phaser';
 import { ARENA, HAZARD } from '../config/GameConfig';
-import { BRAND, fireGradient } from '../config/brand';
+import { BRAND } from '../config/brand';
 import { TAU } from '../core/math';
 import { TEX } from './Textures';
+import boardUrl from '../assets/board.jpg';
 
 export interface ArenaPoint {
   x: number;
   y: number;
-}
-
-interface Crack {
-  /** Polyline in unit space (radius = ARENA.drawRadius). */
-  points: { x: number; y: number }[];
-  width: number;
-  phase: number;
-  speed: number;
 }
 
 export type SectorState = 'telegraph' | 'active' | 'fading';
@@ -27,12 +20,51 @@ export interface CollapsingSector {
   timer: number;
 }
 
+export const BOARD_TEX = 'arena-board';
+
+export function loadArenaTextures(scene: Phaser.Scene): void {
+  scene.load.image(BOARD_TEX, boardUrl);
+}
+
 /**
- * The volcanic caldera.
+ * Founder-supplied board art (art/board-source.png, 941 x 1672), measured in
+ * source pixels. The board is stretched to any phone height without distorting
+ * it: the top scenery, the emblem band and the bottom scenery are drawn as is,
+ * and plain tile rows are repeated between them.
+ */
+const BOARD = {
+  width: 941,
+  top: { y: 0, h: 336 },
+  row: { y: 419, h: 84 }, // one clean tile row, line to line
+  centre: { y: 588, h: 419 }, // the phoenix emblem and the side diamonds
+  bottom: { y: 1343, h: 329 },
+  // Inner edge of the glowing frame = the gameplay wall.
+  inner: { left: 23, right: 917, top: 163, bottomInBottomSlice: 1533 - 1343 },
+  minRows: 2,
+} as const;
+
+/** Superellipse exponent: 2 is an ellipse, higher is a rounded rectangle like the board frame. */
+const WALL_POWER = 8;
+/**
+ * Darkening over the board so enemies, shots and HUD text stay readable (and
+ * the screen stays dark-first): an even dim, plus deeper scrims at the top and
+ * bottom where the HUD and menus sit.
+ */
+const BOARD_DIM = 0.38;
+const EDGE_SCRIM = 0.62;
+/** Keep the phoenix's centre this far inside the frame line (CSS px). */
+const WALL_INSET = 10;
+
+/** Superellipse length of a direction: 1 for unit vectors on the wall shape. */
+function shapeLength(dx: number, dy: number): number {
+  return Math.pow(Math.pow(Math.abs(dx), WALL_POWER) + Math.pow(Math.abs(dy), WALL_POWER), 1 / WALL_POWER);
+}
+
+/**
+ * The arena: the founder's board, with a rounded-rectangle wall on its frame.
  *
- * Gameplay maths treats the arena as a unit circle; rendering stretches it into
- * an ellipse so it fills a portrait phone screen. `norm()` returns 1.0 exactly
- * at the wall regardless of the screen's aspect ratio.
+ * Gameplay maths uses a normalised radius (`norm()` is 1.0 exactly on the wall),
+ * so spawns, wedges and orbits do not care about the shape or screen size.
  */
 export class Arena {
   cx = 0;
@@ -40,23 +72,25 @@ export class Arena {
   rx = 100;
   ry = 100;
 
+  private readonly scene: Phaser.Scene;
+  private readonly baseDepth: number;
   private readonly bg: Phaser.GameObjects.Graphics;
-  private readonly crackLayer: Phaser.GameObjects.Graphics;
+  private readonly boardParts: Phaser.GameObjects.Image[] = [];
+  private readonly scrim: Phaser.GameObjects.Graphics;
   private readonly hazardLayer: Phaser.GameObjects.Graphics;
-  private readonly rimLayer: Phaser.GameObjects.Graphics;
   private readonly haze: Phaser.GameObjects.Image[] = [];
-  private readonly cracks: Crack[] = [];
-  private spin = 0;
   private time = 0;
 
   readonly sectors: CollapsingSector[] = [];
   reducedMotion = false;
 
   constructor(scene: Phaser.Scene, baseDepth: number) {
+    this.scene = scene;
+    this.baseDepth = baseDepth;
     this.bg = scene.add.graphics().setDepth(baseDepth);
-    this.crackLayer = scene.add.graphics().setDepth(baseDepth + 1).setBlendMode(Phaser.BlendModes.ADD);
+    this.scrim = scene.add.graphics().setDepth(baseDepth + 1);
     this.hazardLayer = scene.add.graphics().setDepth(baseDepth + 2).setBlendMode(Phaser.BlendModes.ADD);
-    this.rimLayer = scene.add.graphics().setDepth(baseDepth + 3).setBlendMode(Phaser.BlendModes.ADD);
+    this.defineBoardFrames();
 
     // Three slow-drifting additive blobs stand in for real heat distortion at a
     // fraction of the cost of a shader.
@@ -69,24 +103,97 @@ export class Arena {
         .setDepth(baseDepth + 2);
       this.haze.push(img);
     }
+  }
 
-    this.generateCracks();
+  private defineBoardFrames(): void {
+    const tex = this.scene.textures.get(BOARD_TEX);
+    if (tex.has('top')) return;
+    for (const name of ['top', 'row', 'centre', 'bottom'] as const) {
+      const part = BOARD[name];
+      tex.add(name, 0, 0, part.y, BOARD.width, part.h);
+    }
   }
 
   /** Recompute geometry for the current viewport. */
   layout(width: number, height: number): void {
-    this.cx = width / 2;
-    this.cy = height * ARENA.centerYFactor;
-    this.rx = (width / 2) * ARENA.radiusXFactor;
-    this.ry = (height / 2) * ARENA.radiusYFactor;
-    this.drawBackground(width, height);
+    const fixed = BOARD.top.h + BOARD.centre.h + BOARD.bottom.h;
+    // Fit the board's width to the screen; if the screen is too short for the
+    // minimum rows, shrink it instead and centre it.
+    let scale = width / BOARD.width;
+    let rows = Math.round((height - fixed * scale) / (BOARD.row.h * scale));
+    if (rows < BOARD.minRows) {
+      rows = BOARD.minRows;
+      scale = height / (fixed + rows * BOARD.row.h);
+    }
+    const boardW = BOARD.width * scale;
+    const left = (width - boardW) / 2;
+    // Rows absorb any leftover height (a few percent at most).
+    const rowH = (height - fixed * scale) / rows;
+    const above = Math.floor(rows / 2);
+
+    for (const part of this.boardParts) part.destroy();
+    this.boardParts.length = 0;
+    let y = 0;
+    const place = (frame: string, h: number) => {
+      const img = this.scene.add
+        .image(left, y, BOARD_TEX, frame)
+        .setOrigin(0, 0)
+        .setDisplaySize(boardW, h)
+        .setDepth(this.baseDepth + 0.5);
+      this.boardParts.push(img);
+      y += h;
+    };
+    place('top', BOARD.top.h * scale);
+    for (let i = 0; i < above; i++) place('row', rowH);
+    place('centre', BOARD.centre.h * scale);
+    for (let i = above; i < rows; i++) place('row', rowH);
+    const bottomY = y;
+    place('bottom', BOARD.bottom.h * scale);
+
+    const wallLeft = left + BOARD.inner.left * scale + WALL_INSET;
+    const wallRight = left + BOARD.inner.right * scale - WALL_INSET;
+    const wallTop = BOARD.inner.top * scale + WALL_INSET;
+    const wallBottom = bottomY + BOARD.inner.bottomInBottomSlice * scale - WALL_INSET;
+    this.cx = (wallLeft + wallRight) / 2;
+    this.cy = (wallTop + wallBottom) / 2;
+    this.rx = (wallRight - wallLeft) / 2;
+    this.ry = (wallBottom - wallTop) / 2;
+
+    this.bg.clear();
+    this.bg.fillStyle(BRAND.voidBlack, 1);
+    this.bg.fillRect(0, 0, width, height);
+
+    const s = this.scrim;
+    const k = BRAND.voidBlack;
+    s.clear();
+    s.fillStyle(k, BOARD_DIM);
+    s.fillRect(0, 0, width, height);
+    const topBand = wallTop + 70;
+    s.fillGradientStyle(k, k, k, k, EDGE_SCRIM, EDGE_SCRIM, 0, 0);
+    s.fillRect(0, 0, width, topBand);
+    const bottomBand = height - (wallBottom - 50);
+    s.fillGradientStyle(k, k, k, k, 0, 0, EDGE_SCRIM, EDGE_SCRIM);
+    s.fillRect(0, height - bottomBand, width, bottomBand);
   }
 
   /** Normalised radius: 1.0 sits exactly on the arena wall. */
   norm(x: number, y: number): number {
+    return shapeLength((x - this.cx) / this.rx, (y - this.cy) / this.ry);
+  }
+
+  /** Outward unit normal of the wall at the point's direction (for bounces). */
+  wallNormal(x: number, y: number): ArenaPoint {
     const dx = (x - this.cx) / this.rx;
     const dy = (y - this.cy) / this.ry;
-    return Math.hypot(dx, dy);
+    const gx = (Math.sign(dx) * Math.pow(Math.abs(dx), WALL_POWER - 1)) / this.rx;
+    const gy = (Math.sign(dy) * Math.pow(Math.abs(dy), WALL_POWER - 1)) / this.ry;
+    const len = Math.hypot(gx, gy) || 1;
+    return { x: gx / len, y: gy / len };
+  }
+
+  /** Distance to the wall along a normalised-space angle, as a unit-circle multiplier. */
+  private edge(angle: number): number {
+    return 1 / shapeLength(Math.cos(angle), Math.sin(angle));
   }
 
   angleOf(x: number, y: number): number {
@@ -96,9 +203,10 @@ export class Arena {
 
   /** Convert (angle, normalised radius) into screen coordinates. */
   pointAt(angle: number, radius: number): ArenaPoint {
+    const r = radius * this.edge(angle);
     return {
-      x: this.cx + Math.cos(angle) * this.rx * radius,
-      y: this.cy + Math.sin(angle) * this.ry * radius,
+      x: this.cx + Math.cos(angle) * this.rx * r,
+      y: this.cy + Math.sin(angle) * this.ry * r,
     };
   }
 
@@ -150,7 +258,6 @@ export class Arena {
 
   update(dt: number): void {
     this.time += dt;
-    if (!this.reducedMotion) this.spin += Phaser.Math.DegToRad(ARENA.spinDegPerSec) * dt;
 
     for (let i = this.sectors.length - 1; i >= 0; i--) {
       const sector = this.sectors[i];
@@ -167,88 +274,11 @@ export class Arena {
       }
     }
 
-    this.drawCracks();
     this.drawHazards();
-    this.drawRim();
     this.updateHaze();
   }
 
   // ── Rendering ─────────────────────────────────────────────────────────────
-  private generateCracks(): void {
-    const R = ARENA.drawRadius;
-    const count = 16;
-    for (let i = 0; i < count; i++) {
-      const baseAngle = (i / count) * TAU + Math.random() * 0.2;
-      const points: { x: number; y: number }[] = [];
-      let angle = baseAngle;
-      const steps = 5 + Math.floor(Math.random() * 4);
-      const start = 0.16 + Math.random() * 0.2;
-      for (let s = 0; s <= steps; s++) {
-        const t = start + (1 - start) * (s / steps);
-        angle += (Math.random() - 0.5) * 0.28;
-        points.push({ x: Math.cos(angle) * R * t, y: Math.sin(angle) * R * t });
-      }
-      this.cracks.push({
-        points,
-        width: 2 + Math.random() * 4,
-        phase: Math.random() * TAU,
-        speed: 0.5 + Math.random() * 1.1,
-      });
-    }
-  }
-
-  private drawBackground(width: number, height: number): void {
-    const g = this.bg;
-    g.clear();
-    // Void backdrop beyond the caldera.
-    g.fillStyle(BRAND.voidBlack, 1);
-    g.fillRect(0, 0, width, height);
-
-    // The caldera floor: concentric obsidian bands, warmest at the rim.
-    // Channels are blended by hand — Phaser's Color constructor takes separate
-    // r/g/b arguments, so passing a packed hex to it silently blows out to red.
-    // Void Black at the centre easing out to a warm Carbon at the rim.
-    const inner = { r: 0x0a, g: 0x0a, b: 0x0f };
-    const outer = { r: 0x24, g: 0x14, b: 0x18 };
-    const bands = 14;
-    for (let i = bands; i >= 0; i--) {
-      const t = i / bands;
-      const color = Phaser.Display.Color.GetColor(
-        Math.round(inner.r + (outer.r - inner.r) * t),
-        Math.round(inner.g + (outer.g - inner.g) * t),
-        Math.round(inner.b + (outer.b - inner.b) * t),
-      );
-      g.fillStyle(color, 1);
-      g.fillEllipse(this.cx, this.cy, this.rx * 2 * t, this.ry * 2 * t);
-    }
-  }
-
-  private drawCracks(): void {
-    const g = this.crackLayer;
-    g.clear();
-    g.setPosition(this.cx, this.cy);
-    g.setScale(this.rx / ARENA.drawRadius, this.ry / ARENA.drawRadius);
-    g.setRotation(this.spin);
-
-    for (const crack of this.cracks) {
-      // Each crack breathes on its own phase so the floor never looks static.
-      const pulse = 0.35 + 0.35 * Math.sin(this.time * crack.speed + crack.phase);
-      g.lineStyle(crack.width * 3.4, BRAND.emberOrange, pulse * 0.18);
-      this.strokePolyline(g, crack.points);
-      g.lineStyle(crack.width, fireGradient(0.45), pulse * 0.9);
-      this.strokePolyline(g, crack.points);
-      g.lineStyle(crack.width * 0.4, BRAND.rebirthGold, pulse * 0.95);
-      this.strokePolyline(g, crack.points);
-    }
-  }
-
-  private strokePolyline(g: Phaser.GameObjects.Graphics, points: { x: number; y: number }[]): void {
-    g.beginPath();
-    g.moveTo(points[0].x, points[0].y);
-    for (let i = 1; i < points.length; i++) g.lineTo(points[i].x, points[i].y);
-    g.strokePath();
-  }
-
   private drawHazards(): void {
     const g = this.hazardLayer;
     g.clear();
@@ -275,15 +305,17 @@ export class Arena {
 
       g.fillStyle(color, alpha);
       g.beginPath();
-      g.moveTo(Math.cos(from) * R * HAZARD.innerRadius, Math.sin(from) * R * HAZARD.innerRadius);
-      const steps = 14;
+      // Follow the wall shape so the wedge reaches into the board's corners.
+      const inner = R * HAZARD.innerRadius;
+      g.moveTo(Math.cos(from) * inner * this.edge(from), Math.sin(from) * inner * this.edge(from));
+      const steps = 18;
       for (let i = 0; i <= steps; i++) {
         const a = from + ((to - from) * i) / steps;
-        g.lineTo(Math.cos(a) * R, Math.sin(a) * R);
+        g.lineTo(Math.cos(a) * R * this.edge(a), Math.sin(a) * R * this.edge(a));
       }
       for (let i = steps; i >= 0; i--) {
         const a = from + ((to - from) * i) / steps;
-        g.lineTo(Math.cos(a) * R * HAZARD.innerRadius, Math.sin(a) * R * HAZARD.innerRadius);
+        g.lineTo(Math.cos(a) * inner * this.edge(a), Math.sin(a) * inner * this.edge(a));
       }
       g.closePath();
       g.fillPath();
@@ -293,18 +325,6 @@ export class Arena {
         g.strokePath();
       }
     }
-  }
-
-  private drawRim(): void {
-    const g = this.rimLayer;
-    g.clear();
-    const pulse = 0.55 + 0.2 * Math.sin(this.time * 1.5);
-    g.lineStyle(10, BRAND.emberOrange, 0.1 * pulse);
-    g.strokeEllipse(this.cx, this.cy, this.rx * 2, this.ry * 2);
-    g.lineStyle(3, BRAND.emberOrange, 0.55 * pulse);
-    g.strokeEllipse(this.cx, this.cy, this.rx * 2, this.ry * 2);
-    g.lineStyle(1, BRAND.rebirthGold, 0.7 * pulse);
-    g.strokeEllipse(this.cx, this.cy, this.rx * 2 - 3, this.ry * 2 - 3);
   }
 
   private updateHaze(): void {
@@ -332,9 +352,9 @@ export class Arena {
 
   destroy(): void {
     this.bg.destroy();
-    this.crackLayer.destroy();
+    for (const part of this.boardParts) part.destroy();
+    this.scrim.destroy();
     this.hazardLayer.destroy();
-    this.rimLayer.destroy();
     for (const h of this.haze) h.destroy();
   }
 }

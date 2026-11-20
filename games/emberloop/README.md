@@ -150,9 +150,13 @@ Phaser only appears in `entities/`, `effects/`, `scenes/`, `ui/Hud.ts` and
 - **Everything else is procedural.** Other textures are drawn with Phaser
   `Graphics` and canvas gradients at boot (`effects/Textures.ts`); audio is
   synthesised from oscillators and a noise buffer (`systems/AudioEngine.ts`).
-- **The arena is a circle rendered as an ellipse.** Gameplay maths uses a
-  normalised radius where `1.0` is the wall, so angular wedges, orbits and radial
-  spawns behave circularly while the caldera fills a tall portrait screen.
+- **The board is founder-supplied art (2026-11-20).** `art/board-source.png`
+  is sliced at runtime (`effects/Arena.ts`): top scenery, centre emblem band and
+  bottom scenery are drawn as is, and plain tile rows repeat between them, so
+  it fits any phone height without distortion. A dark scrim keeps enemies and
+  HUD text readable. The wall is a rounded rectangle (superellipse, power 8) on
+  the frame's inner edge; gameplay maths still uses a normalised radius where
+  `1.0` is the wall, so wedges, orbits and radial spawns work unchanged.
 - **Retina rendering.** The canvas backing store runs at `min(devicePixelRatio, 2)`
   and the camera is zoomed to match, so gameplay code stays in CSS-pixel space
   (`core/viewport.ts`). Use `viewSize(scene)` and `pointer.worldX/worldY`, never

@@ -200,13 +200,11 @@ export class Player {
     if (arena.clamp(point, 1)) {
       this.x = point.x;
       this.y = point.y;
-      const nx = (this.x - arena.cx) / arena.rx;
-      const ny = (this.y - arena.cy) / arena.ry;
-      const len = Math.hypot(nx, ny) || 1;
-      const dot = (this.vx * nx + this.vy * ny) / len;
+      const n = arena.wallNormal(this.x, this.y);
+      const dot = this.vx * n.x + this.vy * n.y;
       if (dot > 0) {
-        this.vx -= (nx / len) * dot * 1.3;
-        this.vy -= (ny / len) * dot * 1.3;
+        this.vx -= n.x * dot * 1.3;
+        this.vy -= n.y * dot * 1.3;
       }
     }
 
