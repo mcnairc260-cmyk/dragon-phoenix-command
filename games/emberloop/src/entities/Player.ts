@@ -157,7 +157,7 @@ export class Player {
   }
 
   get nearMissRadius(): number {
-    return PLAYER.nearMissRadius;
+    return PLAYER.nearMissRadius * this.stats.rangeMul;
   }
 
   get invulnerable(): boolean {
@@ -304,11 +304,11 @@ export class Player {
 
   consumeBurst(): void {
     this.burstCharges = Math.max(0, this.burstCharges - 1);
-    this.burstCooldown = BURST.cooldown;
+    this.burstCooldown = BURST.cooldown * this.stats.cooldownMul;
   }
 
   get burstRadius(): number {
-    return BURST.radius * this.stats.burstRadiusMul;
+    return BURST.radius * this.stats.burstRadiusMul * this.stats.rangeMul;
   }
 
   get burstDamage(): number {

@@ -2,6 +2,7 @@
 
 One line per material change, newest first. Format: `date · scope · what` (PR # where applicable).
 
+- 2026-11-20 · product · EMBERLOOP expansion Stage 4: the 12 Power Shards (founder art) replace the 21 upgrades — damage, slow (cap 48%), range, heart heal/regrow, speed, seeking bolts, armour, cooldowns (floor 72%), crit, shield, XP; Ascension held back until ultimates. Fixed panel top-clipping and tip-over-menu. Docs: games/emberloop/EXPANSION.md, GAME_DESIGN.md §8.
 - 2026-11-20 · fix · EMBERLOOP service worker v2: pages network-first (v1 cached index.html forever, so installed players never saw new deploys), update check on resume, safe auto-reload outside runs. Docs: PROJECT_CONTEXT §18.
 - 2026-11-20 · product · EMBERLOOP expansion Stage 2 + option B: 18 faction enemies from the founder's roster art (6 factions arriving over time, faction outlines, reusing chaser/charger/shooter AIs); grazes now fire real shots. Audit + open decisions in games/emberloop/EXPANSION.md. Docs: PROJECT_CONTEXT §18.
 - 2026-11-20 · product · EMBERLOOP board background: founder's board art sliced to fit any phone height, rounded-rectangle wall on its frame (was an ellipse), dark scrim for readability; procedural caldera floor/cracks/rim removed. Docs: PROJECT_CONTEXT §18, games/emberloop/README.md.

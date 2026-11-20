@@ -5,7 +5,7 @@ import { weightedIndex } from '../core/Rng';
 import { session } from '../core/Session';
 import { clamp, TAU } from '../core/math';
 import { applyCamera } from '../core/viewport';
-import { BRAND, BRAND_CSS } from '../config/brand';
+import { BRAND, BRAND_CSS, SIGNAL } from '../config/brand';
 import { Boss } from '../entities/Boss';
 import { Enemy } from '../entities/Enemy';
 import { Pickup } from '../entities/Pickup';
@@ -89,6 +89,8 @@ export class GameScene extends Phaser.Scene {
   private trailTimer = 0;
   private trailDamageTimer = 0;
   private hazardHitTimer = 0;
+  /** Nature Shard regrowth progress, seconds. */
+  private regenTimer = 0;
   private timeScale = 1;
   private slowMoHandle = 0;
 
@@ -210,6 +212,7 @@ export class GameScene extends Phaser.Scene {
     this.trailTimer = 0;
     this.trailDamageTimer = 0;
     this.hazardHitTimer = 0;
+    this.regenTimer = 0;
     this.timeScale = 1;
     this.eliteTimer = DIFFICULTY.eliteIntervalStart;
     this.emberChain = 0;
@@ -410,6 +413,17 @@ export class GameScene extends Phaser.Scene {
     this.player.update(dt, this.pointer, this.arena);
     this.distanceMoved += Math.hypot(this.player.x - before.x, this.player.y - before.y);
 
+    // Nature Shard: regrow a heart on a timer (never above max, only while hurt).
+    if (this.stats.regenInterval > 0 && this.player.health < PLAYER.maxHealth) {
+      this.regenTimer += dt;
+      if (this.regenTimer >= this.stats.regenInterval) {
+        this.regenTimer = 0;
+        this.healPlayer(1);
+      }
+    } else {
+      this.regenTimer = 0;
+    }
+
     // Arena collapse damage, rate-limited so standing in lava is a slow burn.
     this.hazardHitTimer -= dt;
     if (this.hazardHitTimer <= 0 && this.arena.sectorDamageAt(this.player.x, this.player.y)) {
@@ -510,10 +524,12 @@ export class GameScene extends Phaser.Scene {
 
   // ── Entity updates ────────────────────────────────────────────────────────
   private updateEnemies(dt: number): void {
+    // Frost Shard: enemies run on slowed time (movement and wind-ups); bosses resist half.
+    const enemyDt = dt * (1 - this.stats.enemySlow);
     const ctx = {
       playerX: this.player.x,
       playerY: this.player.y,
-      dt,
+      dt: enemyDt,
       fire: (x: number, y: number, angle: number, speed: number, color: number) => this.fireEnemyShot(x, y, angle, speed, color),
       detonate: (enemy: Enemy) => this.detonateMine(enemy),
     };
@@ -534,7 +550,7 @@ export class GameScene extends Phaser.Scene {
 
     if (this.bossActive && this.boss.active) {
       this.boss.update({
-        dt,
+        dt: dt * (1 - this.stats.enemySlow * 0.5),
         playerX: this.player.x,
         playerY: this.player.y,
         arena: this.arena,
@@ -831,7 +847,7 @@ export class GameScene extends Phaser.Scene {
     let damage: number = GRAZE_SHOT.damageEnemyGraze;
     if (!target) {
       const nearest = this.nearestEnemy(px, py);
-      if (!nearest || Math.hypot(nearest.x - px, nearest.y - py) > GRAZE_SHOT.bulletGrazeRange) return;
+      if (!nearest || Math.hypot(nearest.x - px, nearest.y - py) > GRAZE_SHOT.bulletGrazeRange * this.stats.rangeMul) return;
       target = nearest;
       damage = GRAZE_SHOT.damageBulletGraze;
     }
@@ -914,7 +930,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private damageEnemy(enemy: Enemy, amount: number, canCrit: boolean): void {
-    let damage = amount;
+    let damage = amount * this.stats.damageMul;
     let crit = false;
     if (canCrit && this.stats.critChance > 0 && Math.random() < this.stats.critChance) {
       crit = true;
@@ -1141,7 +1157,7 @@ export class GameScene extends Phaser.Scene {
 
   // ── Boss ──────────────────────────────────────────────────────────────────
   private damageBoss(amount: number): void {
-    const result = this.boss.damage(amount, { onStageChange: (stage) => this.onBossStage(stage) });
+    const result = this.boss.damage(amount * this.stats.damageMul, { onStageChange: (stage) => this.onBossStage(stage) });
     audio.hitEnemy();
     if (result === 'dead') this.killBoss();
   }
@@ -1194,6 +1210,14 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /** Restore hearts, capped at max (Nature Shard). */
+  private healPlayer(hearts: number): void {
+    if (this.player.health >= PLAYER.maxHealth) return;
+    this.player.health = Math.min(PLAYER.maxHealth, this.player.health + hearts);
+    this.fx.floatText(this.player.x, this.player.y - 30, '+1 ♥', BRAND_CSS.rebirthGold, 15);
+    this.fx.shockwave(this.player.x, this.player.y, SIGNAL.toxic, 90, 420);
+  }
+
   // ── Upgrades ──────────────────────────────────────────────────────────────
   private openDraft(): void {
     if (this.paused || this.dead || this.pendingLevelUps <= 0) return;
@@ -1209,6 +1233,7 @@ export class GameScene extends Phaser.Scene {
         this.player.applyStats(this.stats);
         this.score.comboDuration = SCORING.baseComboDuration * this.stats.comboDurationMul;
         if (UPGRADES_BY_ID.get(id)?.rarity === 'legendary') this.legendaryTaken = true;
+        if (id === 'nature') this.healPlayer(1);
         audio.upgradeSelect();
         haptics.play('levelUp');
         this.fx.shockwave(this.player.x, this.player.y, this.player.colors.accent, 300, 600);

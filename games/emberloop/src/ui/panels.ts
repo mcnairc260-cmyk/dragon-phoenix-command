@@ -11,14 +11,14 @@ export function upgradePanel(cards: DraftedUpgrade[], level: number): string {
     .map(
       (card) => `
       <button class="card card--${card.def.rarity}" data-action="pick" data-id="${esc(card.def.id)}">
-        <span class="card__icon">${esc(card.def.icon)}</span>
+        <img class="card__art" src="${esc(card.def.art)}" alt="" draggable="false" />
         <span>
           <span class="card__name">${esc(card.def.name)}</span>
           <span class="card__desc">${esc(card.def.describe(card.nextLevel))}</span>
           <span class="card__meta">
             <span class="tag tag--${card.def.rarity}">${card.def.rarity}</span>
             <span class="tag tag--${card.def.family}">${card.def.family}</span>
-            <span class="tag tag--level">${card.isNew ? 'NEW' : `LV ${card.nextLevel}`}</span>
+            <span class="tag tag--level">${card.isNew ? 'NEW' : `LV ${card.nextLevel} / ${card.def.maxLevel}`}</span>
           </span>
         </span>
       </button>`,
@@ -28,7 +28,7 @@ export function upgradePanel(cards: DraftedUpgrade[], level: number): string {
   return `
     <div class="scrim"></div>
     <div class="panel">
-      <div class="eyebrow">Level ${level} — choose your rising</div>
+      <div class="eyebrow">Level ${level} — choose a Power Shard</div>
       <div class="cards">${cardHtml || '<p>Every path is fully forged. Keep burning.</p>'}</div>
       ${cards.length === 0 ? '<button class="btn btn--primary" data-action="skip">Continue</button>' : ''}
     </div>`;
@@ -212,7 +212,7 @@ function buildChips(build: UpgradeLevels): string {
     .map(([id, level]) => {
       const def = UPGRADES_BY_ID.get(id);
       if (!def) return '';
-      return `<span class="build-chip">${esc(def.icon)} ${esc(def.name)}${level > 1 ? ` ×${level}` : ''}</span>`;
+      return `<span class="build-chip"><img class="build-chip__art" src="${esc(def.art)}" alt="" />${esc(def.name)}${level > 1 ? ` ×${level}` : ''}</span>`;
     })
     .filter(Boolean)
     .join('');

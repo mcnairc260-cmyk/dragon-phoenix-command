@@ -38,7 +38,7 @@ export function draftUpgrades(
   const playerLevel = options.playerLevel ?? 1;
   const luck = 1 + Math.min(playerLevel, 30) / 25;
 
-  const pool = UPGRADES.filter((def) => (owned[def.id] ?? 0) < def.maxLevel);
+  const pool = UPGRADES.filter((def) => def.available && (owned[def.id] ?? 0) < def.maxLevel);
   const weights = pool.map((def) => {
     const base = RARITY_WEIGHT[def.rarity];
     return def.rarity === 'common' ? base : base * luck;

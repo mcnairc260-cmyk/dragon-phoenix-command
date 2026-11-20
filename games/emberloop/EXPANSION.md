@@ -51,26 +51,40 @@ whole time (so the Burst never fires) a test run fired 92 graze shots and
 killed 14 enemies. **Needs real play to judge balance**; enemies may need to
 be tougher.
 
-## Waiting on founder decisions (before Stages 3–7)
+## Founder decisions (2026-11-20)
 
-1. **What powers ultimates.** The brief prefers the Ascension bar, but that bar
-   *is* the XP bar: it empties at every level-up, so it cannot also store an
-   ultimate charge. Recommendation: a separate small ultimate ring, charged by
-   kills and grazes, activated by tapping a button with a second finger, so it
-   never triggers the release-to-Burst.
-2. **Power Shards vs the 21 existing upgrades.** They are the same mechanic
-   (pause, pick 1 of 3). Recommendation: the 12 shards *become* the upgrade
-   pool, and the best existing effects become shard or synergy effects
-   (Emberblades → Firestorm ring, Chain Lightning → Thunder Tempest, Cinder
-   Shield → Ward, Homing Embers → Arcane extra shots). Keeping both pools would
-   bury the shards.
-3. **Bosses vs THE ASHBORN.** Recommendation: the six faction bosses replace
-   the Ashborn and rotate by faction; boss art must be cut from busy poster
-   backgrounds, which may need clean single-boss images.
-4. **Healing.** The phoenix has 3 hearts, not an HP number. Recommendation:
-   "heal 15%" becomes "restore 1 heart" with a cooldown.
+| # | Question | Decision |
+|---|---|---|
+| 1 | What powers ultimates | **b — something else; founder to specify.** Open. Facts that constrain it: the ASCENSION bar is the XP bar (empties at every level-up), and release-to-Burst means any ultimate input must not need a finger lift. |
+| 2 | Shards vs the 21 upgrades | **a — shards replace them**; old effects return as synergies. Done (Stage 4). |
+| 3 | Bosses vs THE ASHBORN | **a — six faction bosses replace the Ashborn**, rotating by faction. Stage 3. |
+| 4 | Healing with 3 hearts | **a — "heal" = restore 1 heart**, with a cooldown. Done (Nature Shard). |
+
+## Stage 4 — Power Shards (done)
+
+- 12 crystals cut from `art/power-shards.png` (`scripts/extract-shards.py`) →
+  `src/assets/shards/` (128 px PNGs, 308 KB).
+- `src/upgrades/UpgradeDefs.ts` now holds the 12 shards; table in
+  `GAME_DESIGN.md` §8. New stats: `damageMul`, `enemySlow`, `rangeMul`,
+  `regenInterval`, `cooldownMul`; hard limits `FROST_CAP` (48%) and
+  `COOLDOWN_FLOOR` (72%).
+- XP collection, levels and the 3-card draft are the existing systems (no
+  second level counter). Cards show crystal art, effect now → next, LV n/max.
+- Ascension is in the catalogue but **kept out of the draft** until ultimates
+  exist, so it is never a dead pick.
+- Upgrades reset every run (as before).
+- Tests: 21 shard unit tests (limits, caps, no negative cooldowns, Ascension
+  excluded, draft rules). Playwright, picking through the real level-up
+  screen: Ember +12% damage dealt; Frost 4 → enemies moved 12.6 px vs 24.3 px
+  in the same game time (48%); Void graze 46 → 55 px, Burst 190 → 228 px;
+  Nature heal 1 → 2 hearts, regrowth 2 → 3, capped at 3; Time Burst cooldown
+  1.1 → 0.79 s; Arcane L3 fired 15 bolts in 5 s of game time; Ward shield on;
+  zero console errors.
+- Fixed on the way: pause/level-up panels taller than the screen clipped their
+  top (now auto-margin centred), and the tutorial tip no longer sits on top of
+  menus.
 
 ## Not started
 
-Stage 3 bosses, Stage 4 shards, Stage 5 synergies, Stage 6 ultimates, Stage 7
+Stage 3 bosses, Stage 5 synergies, Stage 6 ultimates, Stage 7
 evolution stages, Stage 8 full QA. Not tested on a real device.
