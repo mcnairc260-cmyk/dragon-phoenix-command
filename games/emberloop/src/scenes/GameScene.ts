@@ -68,6 +68,8 @@ export class GameScene extends Phaser.Scene {
   private player!: Player;
   private boss!: Boss;
   private ultimates!: UltimateController;
+  /** > 0 while damage from an ultimate is being applied (its kills do not charge the meter). */
+  private ultimateDamageDepth = 0;
 
   private enemyPool!: ObjectPool<Enemy>;
   private projectilePool!: ObjectPool<Projectile>;
@@ -154,13 +156,14 @@ export class GameScene extends Phaser.Scene {
       stats: () => this.stats,
       enemies: () => this.enemies,
       boss: () => (this.bossActive && this.boss.active ? { x: this.boss.x, y: this.boss.y, radius: this.boss.radius } : null),
-      damageEnemy: (enemy, amount) => this.damageEnemy(enemy, amount, false),
-      damageBoss: (amount) => this.damageBoss(amount),
+      damageEnemy: (enemy, amount) => this.asUltimate(() => this.damageEnemy(enemy, amount, false)),
+      damageBoss: (amount) => this.asUltimate(() => this.damageBoss(amount)),
       clearHostileBullets: (x, y, radius) => this.clearHostileBullets(x, y, radius),
       healPlayer: (hearts) => this.healPlayer(hearts),
       fireFriendly: (o) => {
         const projectile = this.projectilePool.acquire();
         projectile.spawn({ ...o, hostile: false, homing: false, radius: 5 });
+        projectile.fromUltimate = true;
         this.projectiles.push(projectile);
       },
       slowMo: (scale, duration) => this.slowMo(scale, duration),
@@ -805,7 +808,8 @@ export class GameScene extends Phaser.Scene {
         for (const enemy of this.enemies) {
           if (!enemy.active || enemy === projectile.lastHit) continue;
           if (Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y) <= projectile.radius + enemy.radius) {
-            this.damageEnemy(enemy, projectile.damage, true);
+            if (projectile.fromUltimate) this.asUltimate(() => this.damageEnemy(enemy, projectile.damage, true));
+            else this.damageEnemy(enemy, projectile.damage, true);
             // Celestial bolts pass through a limited number of enemies.
             if (projectile.pierce > 0) {
               projectile.pierce -= 1;
@@ -862,7 +866,6 @@ export class GameScene extends Phaser.Scene {
   // ── Rewards & damage ──────────────────────────────────────────────────────
   private registerNearMiss(x: number, y: number, grazedEnemy: Enemy | null): void {
     const gained = scoreNearMiss(this.score, this.stats.nearMissMul);
-    this.player.addBurstEnergy(BURST.energyPerNearMiss * this.stats.nearMissMul);
     audio.nearMiss(this.score.combo);
     this.fireGrazeShot(grazedEnemy);
     if (this.score.combo % 5 === 0) {
@@ -1035,7 +1038,8 @@ export class GameScene extends Phaser.Scene {
 
     scoreKill(this.score, wasElite ? SCORING.eliteKillScore : enemy.score);
     this.grantXp(enemy.xp);
-    this.player.addBurstEnergy(BURST.energyPerKill);
+    // Kills charge the ultimate, except kills made by the ultimate itself.
+    if (this.ultimateDamageDepth === 0) this.chargeUltimate(wasElite ? BURST.energyPerEliteKill : BURST.energyPerKill);
 
     enemy.deactivate();
     this.removeEnemyAt(index);
@@ -1169,17 +1173,36 @@ export class GameScene extends Phaser.Scene {
     this.fx.shake(BURST.shake, 320);
     this.slowMo(BURST.slowMoScale, BURST.slowMoDuration);
 
-    for (const enemy of [...this.enemies]) {
-      if (!enemy.active) continue;
-      if (Math.hypot(enemy.x - x, enemy.y - y) <= radius + enemy.radius) {
-        this.damageEnemy(enemy, damage, false);
+    // The Burst is the starting ultimate: its kills do not recharge it either.
+    this.asUltimate(() => {
+      for (const enemy of [...this.enemies]) {
+        if (!enemy.active) continue;
+        if (Math.hypot(enemy.x - x, enemy.y - y) <= radius + enemy.radius) {
+          this.damageEnemy(enemy, damage, false);
+        }
       }
-    }
+    });
 
     this.clearHostileBullets(x, y, radius);
 
     if (this.bossActive && this.boss.active && Math.hypot(this.boss.x - x, this.boss.y - y) <= radius + this.boss.radius) {
-      this.damageBoss(damage);
+      this.asUltimate(() => this.damageBoss(damage));
+    }
+  }
+
+  /** Run damage that came from an ultimate, so its kills do not recharge the meter. */
+  private asUltimate(apply: () => void): void {
+    this.ultimateDamageDepth += 1;
+    try {
+      apply();
+    } finally {
+      this.ultimateDamageDepth -= 1;
+    }
+  }
+
+  private chargeUltimate(amount: number): void {
+    if (this.player.addBurstEnergy(amount)) {
+      session.ui.toast(`${this.ultimates.def.name} ready — release`, 1600);
     }
   }
 
@@ -1218,6 +1241,7 @@ export class GameScene extends Phaser.Scene {
     this.fx.chromaticFlash(10, 220);
     this.fx.shake(0.012, 400);
     session.ui.toast(`Stage ${stage + 1}`);
+    this.chargeUltimate(BURST.energyPerBossStage);
     audio.bossWarning();
     haptics.play('boss');
     // Clear the screen of bullets so a stage change is a breath, not a wall.
@@ -1237,6 +1261,7 @@ export class GameScene extends Phaser.Scene {
     this.runBosses += 1;
 
     scoreKill(this.score, SCORING.bossKillScore);
+    this.chargeUltimate(BURST.maxEnergy);
     // Felling a boss restores health and pays a large XP lump. Without a reward
     // this size there is no reason to fight one rather than kite it forever.
     if (this.player.health < PLAYER.maxHealth) {

@@ -82,12 +82,16 @@ export const CONTROL = {
 
 export const BURST = {
   maxEnergy: 100,
-  /** Energy per second at full speed while the pointer is held. */
-  energyPerSecondMoving: 14,
-  /** Trickle even while idle so a stuck player still recovers. */
-  energyPerSecondIdle: 3.5,
-  energyPerNearMiss: 7,
-  energyPerKill: 2.2,
+  /**
+   * The ultimate meter charges from KILLS ONLY (founder decision 2026-11-21).
+   * Holding, flying and grazing no longer charge it. Kills made by an ultimate
+   * itself never charge it, so an ultimate cannot refill itself.
+   * ~7 ordinary kills per charge.
+   */
+  energyPerKill: 14,
+  energyPerEliteKill: 50,
+  /** Breaking a boss stage, and felling the boss (which fills the meter). */
+  energyPerBossStage: 50,
   radius: 190,
   damage: 4,
   cooldown: 1.1,

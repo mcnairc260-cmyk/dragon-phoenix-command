@@ -203,12 +203,7 @@ export class Player {
         this.vx = damp(this.vx, targetVx, PLAYER.accel, dt);
         this.vy = damp(this.vy, targetVy, PLAYER.accel, dt);
       }
-      // Charging happens while held; movement charges faster than hovering.
-      const speedFraction = clamp(this.speed / maxSpeed, 0, 1);
-      const gain = PLAYER.baseSpeed > 0
-        ? BURST.energyPerSecondIdle + (BURST.energyPerSecondMoving - BURST.energyPerSecondIdle) * speedFraction
-        : BURST.energyPerSecondIdle;
-      this.addBurstEnergy(gain * dt);
+      // The ultimate meter charges from kills only (GameScene.killEnemy).
     } else {
       // Released: glide out with momentum rather than stopping dead.
       const decay = Math.pow(PLAYER.dragPerSecond, dt);

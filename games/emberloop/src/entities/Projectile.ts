@@ -28,6 +28,8 @@ export class Projectile {
   pierce = 0;
   /** Last enemy hit, so a piercing shot cannot hit the same one twice in a row. */
   lastHit: unknown = null;
+  /** Fired by an ultimate: its kills do not charge the ultimate meter. */
+  fromUltimate = false;
 
   private readonly glow: Phaser.GameObjects.Image;
   private readonly body: Phaser.GameObjects.Image;
@@ -63,6 +65,7 @@ export class Projectile {
     this.nearMissTimer = 0;
     this.pierce = options.pierce ?? 0;
     this.lastHit = null;
+    this.fromUltimate = false;
 
     this.glow.setVisible(true).setTint(options.color).setScale((this.radius / 32) * 2.4).setAlpha(0.85);
     this.body.setVisible(true).setTint(0xffffff).setDisplaySize(this.radius * 2.6, this.radius * 2.6);

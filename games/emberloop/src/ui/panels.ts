@@ -201,7 +201,7 @@ export function howToPanel(): string {
         ${howRow('👆', 'Drag anywhere', 'The phoenix mirrors your finger from wherever it already is — rest your thumb low, away from the action, so you can always see it. Other control styles are in the pause menu.')}
         ${howRow('💎', 'Collect embers, fast', 'Shards are score, currency and experience. Gather them in quick succession to build an Ember Chain for bonus XP — levelling never makes the enemies harder.')}
         ${howRow('🔥', 'Graze danger', 'Near-misses build Heat. Heat multiplies everything — but it cools fast.')}
-        ${howRow('☄', 'Release to unleash', 'Holding charges your ultimate. Let go when the bar is full. You start with the Phoenix Burst; an Ascension Shard turns it into an elemental ultimate.')}
+        ${howRow('☄', 'Release to unleash', 'Kills charge your ultimate. When the bar is full, let go to unleash it. You start with the Phoenix Burst; an Ascension Shard turns it into an elemental ultimate.')}
         ${howRow('❤', 'Three lives', 'Every hit costs one and breaks your combo. The Ashborn wakes at 80 seconds — felling it restores a life.')}
       </div>
       <button class="btn btn--primary" data-action="close">Got it</button>

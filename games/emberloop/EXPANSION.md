@@ -56,6 +56,7 @@ be tougher.
 | # | Question | Decision |
 |---|---|---|
 | 1 | What powers ultimates | **Founder (2026-11-21): "Ultimates should replace burst so the release is the control."** This overrides the brief's "keep Phoenix Burst separate". Implemented: the Burst meter and release now fire the equipped ultimate; the Phoenix Burst is the innate ultimate every run starts with. Do not re-add a separate Burst. |
+| 1b | What charges the ultimate | **Founder (2026-11-21): kills only.** Holding, flying and grazing no longer charge it. 14 per kill (~7 kills), 50 per elite, 50 per boss stage, full on a boss kill. Kills made by an ultimate (including the starting Burst, its burn, bolts and lightning) never charge it, so an ultimate cannot refill itself. Verified: 3 s of flying = 0, a graze = 0, a kill = +14, an elite = +50, Burst/Supernova killing 6 enemies = 0. |
 | 2 | Shards vs the 21 upgrades | **a — shards replace them**; old effects return as synergies. Done (Stage 4). |
 | 3 | Bosses vs THE ASHBORN | **a — six faction bosses replace the Ashborn**, rotating by faction. Stage 3. |
 | 4 | Healing with 3 hearts | **a — "heal" = restore 1 heart**, with a cooldown. Done (Nature Shard). |

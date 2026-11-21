@@ -40,7 +40,7 @@ only where the target comes from differs.
 | Input | Effect |
 |---|---|
 | Press and drag anywhere | Steer per the mode above. Speed ramps with distance to the target, hitting full speed ~90 px out, so small nudges give fine control. |
-| Hold | Charge the ultimate meter (faster while moving; near-misses and kills add extra). |
+| Kills | Charge the ultimate meter (founder decision 2026-11-21: kills only; ~7 kills per charge). |
 | Release | **Fire your ultimate** if a charge is stored: the Phoenix Burst until the Ascension Shard swaps it for an elemental ultimate (see `EXPANSION.md`, Stage 6). |
 | Pause button (top-right) | Pause + settings. |
 | Desktop extras | Space = burst, Esc/P = pause. |
@@ -209,8 +209,10 @@ expensive.
   larger than the space that kills you.
 - **Near-miss cooldown** of 0.5 s per object, so one enemy cannot be farmed by
   hovering next to it.
-- **Burst energy** from movement (14/s at speed), idling (3.5/s), near-misses (7)
-  and kills (2.2).
+- **Ultimate energy** from kills only (founder decision 2026-11-21): 14 per kill
+  (~7 kills per charge), 50 per elite, 50 per boss stage broken, full on a boss
+  kill. Holding, flying and grazing do not charge it, and kills made by the
+  ultimate itself (including the starting Burst) never do.
 
 ## 8. Power Shards (upgrades)
 
