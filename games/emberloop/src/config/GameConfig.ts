@@ -131,15 +131,10 @@ export const XP = {
 
 export const DIFFICULTY = {
   /**
-   * Threat rises with **elapsed time only**.
-   *
-   * It deliberately does NOT rise with player level. Levelling is driven by
-   * collecting shards, and tying enemy pressure to it punished the exact
-   * behaviour the game is built around: collect faster, get shot at more. Now
-   * the clock sets the pressure and levelling is pure upside — collecting fast
-   * means more upgrades against the same wave, which is the incentive we want.
+   * Pressure ("threat") comes from where the player is in the board sequence
+   * (see BOARD), never from player level: levelling is driven by collecting
+   * shards, and tying enemy pressure to it would punish the core verb.
    */
-  threatPerMinute: 1,
   spawnIntervalStart: 1.45,
   spawnIntervalDecay: 0.87,
   spawnIntervalMin: 0.32,
@@ -149,34 +144,42 @@ export const DIFFICULTY = {
   maxEnemiesStart: 6,
   maxEnemiesPerThreat: 2.0,
   maxEnemiesCap: 28,
-  /**
-   * Elites are on the clock too, for the same reason. They are as much a reward
-   * (a big ember payout) as a threat, so they must not arrive faster just
-   * because the player is collecting well.
-   */
-  eliteIntervalStart: 46,
-  eliteIntervalMin: 26,
-  /**
-   * Boss cadence. The first boss lands early enough that a typical run actually
-   * meets one — the old 170s meant most runs ended without ever seeing the
-   * headline encounter, which is a poor reason to stop playing.
-   */
-  firstBossAt: 80,
-  bossInterval: 100,
   /** Seconds between arena sector collapses (scales down with threat). */
   collapseIntervalStart: 24,
   collapseIntervalMin: 9,
 } as const;
 
-/** Seconds of elapsed run time before each enemy archetype joins the spawn table. */
-export const ENEMY_UNLOCK: Record<string, number> = {
-  cinder: 0,
-  dart: 14,
-  spitter: 30,
-  orbiter: 50,
-  splitter: 74,
-  mine: 96,
-};
+/**
+ * Boards (founder decision 2026-11-21). Each faction is one board: its three
+ * enemies for a wave, then its boss, then a rest screen. Six boards make a
+ * loop; after board 6 the loop starts again, harder.
+ *
+ * Threat = board × boardStep + loop × loopStep + (0 → inBoardRamp across the wave).
+ * Loop 1 runs 0 → 2.75; loop 2 starts at 1.6 (about board 4 of loop 1, so the
+ * restart is not a wall) and every loop-2 board is harder than its loop-1 twin.
+ */
+export const BOARD = {
+  count: 6,
+  waveSeconds: 60,
+  /** Short intro banner before enemies start. */
+  introSeconds: 2.2,
+  boardStep: 0.45,
+  loopStep: 1.6,
+  inBoardRamp: 0.5,
+  /** Boss HP multiplier: +15% per board, +60% per loop. */
+  bossHpPerBoard: 0.15,
+  bossHpPerLoop: 0.6,
+  /** The older procedural enemies join as occasional extras from these boards of loop 1. */
+  extrasFrom: { orbiter: 1, splitter: 2, mine: 3 } as Record<string, number>,
+  extrasWeightMul: 0.5,
+  /** Elites arrive at these seconds into a wave; the second one from board 4 or loop 2. */
+  eliteAt: [25, 48],
+  secondEliteFromBoard: 3,
+  /** Hearts restored at the rest point (on top of the boss kill's +1). */
+  restHeal: 1,
+  /** Seconds of clean-up (embers fly to you) between the boss falling and the rest screen. */
+  clearSeconds: 2.2,
+} as const;
 
 export const ENEMY = {
   cinder: { hp: 1, speed: 62, radius: 14, score: 20, xp: 1, weight: 34 },

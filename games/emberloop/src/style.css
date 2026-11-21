@@ -329,6 +329,47 @@ body {
   letter-spacing: 0.04em;
 }
 
+/* Rest point: progress through the six boards of a loop. */
+.board-track {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.board-pip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 7px 2px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--ash-dim);
+  font-family: var(--font-mono);
+}
+
+.board-pip span {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.board-pip small {
+  font-size: 8.5px;
+  letter-spacing: 0.04em;
+}
+
+.board-pip--done {
+  color: var(--gold);
+  border-color: var(--gold);
+  background: rgba(255, 179, 0, 0.1);
+}
+
+.board-pip--next {
+  color: var(--white);
+  border-color: var(--ember);
+  box-shadow: 0 0 16px rgba(255, 107, 44, 0.35);
+}
+
 /* Power Shard crystal art (founder's art/power-shards.png). */
 .card__art {
   width: 60px;
@@ -336,6 +377,21 @@ body {
   object-fit: contain;
   filter: drop-shadow(0 0 12px rgba(255, 179, 0, 0.35));
   pointer-events: none;
+}
+
+/* The Ember Blades sword is long and thin: tilt it so it fills the art slot. */
+.card__art--weapon {
+  transform: rotate(-40deg) scale(1.15);
+  filter: drop-shadow(0 0 12px rgba(255, 107, 44, 0.55));
+}
+
+.card__synergy--near {
+  opacity: 0.85;
+}
+
+.tag--weapon {
+  color: var(--ember);
+  border-color: var(--ember);
 }
 
 .build-chip__art {

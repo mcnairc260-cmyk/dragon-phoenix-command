@@ -3,7 +3,7 @@ import { UPGRADES, computeStats } from './UpgradeDefs';
 import { SYNERGIES, activeSynergies, completedBy, hasSynergy } from './Synergies';
 
 describe('shard synergies', () => {
-  it('has the 10 synergies of the brief with their exact shard pairs', () => {
+  it('has the 10 synergies of the brief plus Infernal Cyclone, with their exact requirements', () => {
     expect(SYNERGIES.map((s) => [s.name, [...s.requires].sort().join('+')])).toEqual([
       ['Firestorm', 'ember+storm'],
       ['Frozen Barrage', 'arcane+frost'],
@@ -15,6 +15,7 @@ describe('shard synergies', () => {
       ['Celestial Harvest', 'cosmic+nature'],
       ["Titan's Judgment", 'hunter+titan'],
       ['Celestial Barrage', 'arcane+hunter+void'],
+      ['Infernal Cyclone', 'ember+ember-blades+storm'],
     ]);
   });
 
@@ -42,10 +43,8 @@ describe('shard synergies', () => {
     expect(completedBy({}, 'ember')).toEqual([]);
   });
 
-  it('folds Firestorm blades and Molten Armor into the stat block, bounded', () => {
-    expect(computeStats({ ember: 1 }).orbitBlades).toBe(0);
-    expect(computeStats({ ember: 1, storm: 1 }).orbitBlades).toBe(2);
-    expect(computeStats({ ember: 5, storm: 5 }).orbitBlades).toBe(4);
+  it('keeps blades out of Firestorm and bounds Molten Armor', () => {
+    expect(computeStats({ ember: 1, storm: 1 }).orbitBlades).toBe(0);
     expect(computeStats({ ember: 1, titan: 1 }).armorChance).toBeCloseTo(0.07 + 0.1);
     expect(computeStats({ ember: 5, titan: 4 }).armorChance).toBeLessThanOrEqual(0.4);
   });

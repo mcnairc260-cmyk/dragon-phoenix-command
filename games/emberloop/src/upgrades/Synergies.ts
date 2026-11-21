@@ -4,11 +4,14 @@
  * be active together.
  *
  * Founder decision "2a": the original upgrades' mechanics live on here —
- * Firestorm brings back the orbiting Emberblades with chain lightning, Thunder
- * Tempest the chain lightning, Molten Armor the flame armour.
+ * Thunder Tempest brings back chain lightning, Molten Armor the flame armour.
+ * The orbiting blades are now their own weapon, EMBER BLADES (founder brief
+ * 2026-11-21), boosted by Infernal Cyclone; Firestorm became the pulsing ring
+ * of lightning-fire its brief describes.
  *
  * Pure data: no Phaser, unit-tested. Effects run in scenes/SynergyController
- * (plus Firestorm and Molten Armor stat bonuses folded in computeStats).
+ * (Molten Armor's armour is folded in computeStats; Infernal Cyclone in
+ * upgrades/EmberBlades.bladeSpec).
  */
 import { BRAND, SIGNAL } from '../config/brand';
 import type { UpgradeLevels } from './UpgradeDefs';
@@ -23,7 +26,8 @@ export type SynergyId =
   | 'temporal-echo'
   | 'celestial-harvest'
   | 'titans-judgment'
-  | 'celestial-barrage';
+  | 'celestial-barrage'
+  | 'infernal-cyclone';
 
 export interface SynergyDef {
   id: SynergyId;
@@ -39,7 +43,7 @@ export const SYNERGIES: readonly SynergyDef[] = [
     name: 'Firestorm',
     requires: ['ember', 'storm'],
     color: BRAND.emberOrange,
-    blurb: 'A ring of lightning-fire blades orbits you; every 1.2 s a blade hit chains lightning.',
+    blurb: 'Every 1.6 s a ring of lightning-fire bursts out around you and chains lightning onward.',
   },
   {
     id: 'frozen-barrage',
@@ -104,6 +108,13 @@ export const SYNERGIES: readonly SynergyDef[] = [
     color: SIGNAL.magenta,
     blurb: 'Rare: every 3.5 s, 4 piercing star-bolts that can critically strike.',
   },
+  {
+    id: 'infernal-cyclone',
+    name: 'Infernal Cyclone',
+    requires: ['ember-blades', 'ember', 'storm'],
+    color: BRAND.emberOrange,
+    blurb: 'Your Ember Blades burn hotter: +12% spin, +20% blade damage, fiercer trails. The trails still never deal damage.',
+  },
 ];
 
 export const SYNERGIES_BY_ID: ReadonlyMap<SynergyId, SynergyDef> = new Map(SYNERGIES.map((s) => [s.id, s]));
@@ -130,9 +141,21 @@ export function completedBy(build: UpgradeLevels, shardId: string): SynergyDef[]
   return SYNERGIES.filter((s) => s.requires.includes(shardId) && !isActive(s, build) && isActive(s, next));
 }
 
+/**
+ * Rare synergies the card is one step closer to: taking `shardId` would leave
+ * exactly one requirement missing ("approaching", for 3-part synergies).
+ */
+export function approachedBy(build: UpgradeLevels, shardId: string): SynergyDef[] {
+  if (owns(build, shardId)) return [];
+  const next = { ...build, [shardId]: 1 };
+  return SYNERGIES.filter(
+    (s) => s.requires.length >= 3 && s.requires.includes(shardId) && s.requires.filter((id) => !owns(next, id)).length === 1,
+  );
+}
+
 /** Tuning, in one place. Damage numbers are before the Ember damage bonus. */
 export const SYN = {
-  firestorm: { chainEvery: 1.2, chainTargets: 2, chainDamage: 1.5, chainRange: 160 },
+  firestorm: { every: 1.6, radius: 90, damage: 1.5, perLevel: 0.25, chainTargets: 2, chainDamage: 1.5, chainRange: 160 },
   frozenBarrage: { every: 2, shards: 5, spread: 0.16, damage: 1, speed: 420, hitsToFreeze: 3, chillTime: 3, freeze: 1.2, chillSlow: 0.3 },
   shadowExecution: { cooldown: 0.6, radius: 90, damage: 2 },
   phoenixRenewal: { bloomAfter: 12 },

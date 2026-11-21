@@ -4,7 +4,7 @@ import { CONTROL_MODE_LABEL, type SaveData, type Settings } from '../systems/Pro
 import { UPGRADES_BY_ID, type UpgradeLevels } from '../upgrades/UpgradeDefs';
 import type { DraftedUpgrade } from '../upgrades/UpgradeDraft';
 import type { UltimateDef } from '../upgrades/Ultimates';
-import { activeSynergies, completedBy } from '../upgrades/Synergies';
+import { activeSynergies, approachedBy, completedBy } from '../upgrades/Synergies';
 import { esc, formatNumber, formatTime } from './Ui';
 
 /** Level-up draft: three cards, one tap. */
@@ -13,16 +13,19 @@ export function upgradePanel(cards: DraftedUpgrade[], level: number, build: Upgr
     .map(
       (card) => `
       <button class="card card--${card.def.rarity}${completedBy(build, card.def.id).length ? ' card--synergy' : ''}" data-action="pick" data-id="${esc(card.def.id)}">
-        <img class="card__art" src="${esc(card.def.art)}" alt="" draggable="false" />
+        <img class="card__art${card.def.weapon ? ' card__art--weapon' : ''}" src="${esc(card.def.art)}" alt="" draggable="false" />
         <span>
           <span class="card__name">${esc(card.def.name)}</span>
           <span class="card__desc">${esc(card.def.describe(card.nextLevel))}</span>
+          ${approachedBy(build, card.def.id)
+            .map((syn) => `<span class="card__synergy card__synergy--near">✧ One step toward ${esc(syn.name)}</span>`)
+            .join('')}
           ${completedBy(build, card.def.id)
             .map((syn) => `<span class="card__synergy">✦ Completes ${esc(syn.name)}: ${esc(syn.blurb)}</span>`)
             .join('')}
           <span class="card__meta">
             <span class="tag tag--${card.def.rarity}">${card.def.rarity}</span>
-            <span class="tag tag--${card.def.family}">${card.def.family}</span>
+            ${card.def.weapon ? '<span class="tag tag--weapon">weapon</span>' : `<span class="tag tag--${card.def.family}">${card.def.family}</span>`}
             <span class="tag tag--level">${card.isNew ? 'NEW' : `LV ${card.nextLevel} / ${card.def.maxLevel}`}</span>
           </span>
         </span>
@@ -33,7 +36,7 @@ export function upgradePanel(cards: DraftedUpgrade[], level: number, build: Upgr
   return `
     <div class="scrim"></div>
     <div class="panel">
-      <div class="eyebrow">Level ${level} — choose a Power Shard</div>
+      <div class="eyebrow">Level ${level} — choose an upgrade</div>
       <div class="cards">${cardHtml || '<p>Every path is fully forged. Keep burning.</p>'}</div>
       ${cards.length === 0 ? '<button class="btn btn--primary" data-action="skip">Continue</button>' : ''}
     </div>`;
@@ -64,6 +67,58 @@ export function ultimatePanel(options: UltimateDef[]): string {
       <div class="eyebrow">Awakened — choose your ultimate</div>
       <p class="panel__note">Release your finger to unleash it. One ultimate per run.</p>
       <div class="cards">${cards}</div>
+    </div>`;
+}
+
+export interface RestData {
+  board: number;
+  loop: number;
+  faction: string;
+  boss: string;
+  nextBoard: number;
+  nextLoop: number;
+  nextFaction: string;
+  score: number;
+  elapsed: number;
+  level: number;
+  kills: number;
+  health: number;
+  healed: number;
+}
+
+/** Faction names in board order, for the progress track. */
+const BOARD_NAMES = ['Volcanic', 'Frostborn', 'Shadow', 'Nature', 'Aerial', 'Arcane'];
+
+/**
+ * The rest point between boards: where you are in the loop, how the run is
+ * going, a heart back, and what comes next. Nothing moves until you continue.
+ */
+export function restPanel(d: RestData): string {
+  const loopDone = d.nextLoop > d.loop;
+  const track = BOARD_NAMES.map((name, i) => {
+    const state = loopDone || i <= d.board ? 'done' : i === d.nextBoard ? 'next' : 'todo';
+    return `<div class="board-pip board-pip--${state}"><span>${i + 1}</span><small>${esc(name)}</small></div>`;
+  }).join('');
+  return `
+    <div class="scrim"></div>
+    <div class="panel">
+      <div class="eyebrow">Board ${d.board + 1} of 6 cleared${d.loop > 0 ? ` · Loop ${d.loop + 1}` : ''}</div>
+      <h1>${esc(d.boss)} falls</h1>
+      <p class="panel__note">${esc(d.faction)} defeated. Catch your breath.</p>
+      <div class="board-track">${track}</div>
+      <div class="stats">
+        <div class="stat stat--wide stat--hero"><div class="stat__label">Score</div><div class="stat__value">${formatNumber(d.score)}</div></div>
+        <div class="stat"><div class="stat__label">Time</div><div class="stat__value">${formatTime(d.elapsed)}</div></div>
+        <div class="stat"><div class="stat__label">Level</div><div class="stat__value">${formatNumber(d.level)}</div></div>
+        <div class="stat"><div class="stat__label">Kills this board</div><div class="stat__value">${formatNumber(d.kills)}</div></div>
+        <div class="stat"><div class="stat__label">Hearts</div><div class="stat__value">${'♥'.repeat(Math.min(3, d.health + d.healed))}</div></div>
+      </div>
+      <p class="panel__note">${d.healed > 0 ? `Resting restores ${d.healed} heart.` : 'Hearts full.'} ${
+        loopDone
+          ? `<b>Loop ${d.loop + 1} complete!</b> The six boards begin again, a step harder.`
+          : `Next: Board ${d.nextBoard + 1}, ${esc(d.nextFaction)} — a little harder.`
+      }</p>
+      <button class="btn btn--primary" data-action="continue">${loopDone ? `Begin loop ${d.nextLoop + 1}` : 'Continue'}</button>
     </div>`;
 }
 
@@ -99,6 +154,8 @@ export interface ResultsData {
   embers: number;
   level: number;
   kills: number;
+  /** Boards fully cleared this run. */
+  boardsCleared: number;
   highScore: number;
   isHighScore: boolean;
   newAchievements: string[];
@@ -135,6 +192,8 @@ export function gameOverPanel(data: ResultsData): string {
         <div class="stat"><div class="stat__label">Best combo</div><div class="stat__value">${formatNumber(data.bestCombo)}</div></div>
         <div class="stat"><div class="stat__label">Embers</div><div class="stat__value">${formatNumber(data.embers)}</div></div>
         <div class="stat"><div class="stat__label">Level</div><div class="stat__value">${formatNumber(data.level)}</div></div>
+        <div class="stat"><div class="stat__label">Boards cleared</div><div class="stat__value">${formatNumber(data.boardsCleared)}</div></div>
+        <div class="stat"><div class="stat__label">Kills</div><div class="stat__value">${formatNumber(data.kills)}</div></div>
         <div class="stat stat--wide"><div class="stat__label">Best score</div><div class="stat__value">${formatNumber(data.highScore)}</div></div>
       </div>
       ${unlocks ? `<div class="section-title">Unlocked</div><div class="badge-row">${unlocks}</div>` : ''}

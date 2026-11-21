@@ -18,8 +18,11 @@ document and a value in that file disagree, the file is right.
 4. Pass *close* to enemies and bullets to bank **Heat**, which raises the score
    multiplier.
 5. Level up → the game pauses and offers **three upgrade cards**; pick one.
-6. Difficulty rises with **the clock only** — levelling never makes it harder.
-7. Elites arrive every ~46 s; **THE ASHBORN** wakes at 1:20, then every 1:40.
+6. The run is a sequence of **boards** (§4): each faction's three enemies for
+   a 60 s wave, then its boss, a clean-up beat and a **rest screen**. Six
+   boards make a loop; the loop then repeats, a step harder. Levelling never
+   makes it harder.
+7. One elite per board (two from board 4 and in later loops).
 8. Three hits and the run ends. Results screen → **one tap to run again.**
 
 The core tension: Heat only comes from being near things that kill you, and a
@@ -83,50 +86,30 @@ tail, a denser trail and a hotter glow.
 **Taking a hit breaks the combo outright** — the multiplier is the whole reward
 for risk, and losing it is the whole punishment.
 
-## 4. Difficulty scaling
+## 4. Boards and difficulty
 
-`src/systems/Difficulty.ts` — pure, unit-tested.
+Founder decision (2026-11-21): **each faction's three enemies and its boss are a
+single board**, with a rest point after each, and gently rising difficulty.
+Tuning: `BOARD` in `src/config/GameConfig.ts`; maths: `src/systems/Difficulty.ts`
+(pure, unit-tested); flow: `GameScene.updateBoard`.
 
-**Difficulty is a function of the clock, and nothing else.**
-
-```
-threat = elapsed_seconds / 60
-```
-
-This is the single most important rule in the game, and it is enforced by a
-test: `threatAt` and `difficultyAt` take *one* argument each, so there is no way
-for player progress to leak into enemy pressure.
-
-It did not always work this way. Threat used to include a term for player level,
-which meant collecting shards quickly — the entire point of the game — summoned
-more enemies, faster enemies and tougher enemies. That inverted the incentive:
-the optimal play was to *ignore* shards. Levelling is now pure upside. Collect
-fast and you face the same wave as everyone else, with more upgrades to face it.
-
-| Derived value | Formula | Range |
-|---|---|---|
-| Spawn interval | `1.45 × 0.87^threat` | 1.45 s → 0.32 s floor |
-| Enemy speed | `1 + threat × 0.075` | 1× → 2.0× cap |
-| Enemy HP | `1 + floor(threat) × 0.3` | steps in whole numbers |
-| Max live enemies | `6 + threat × 2.0` | 6 → 28 cap |
-| Elite interval | `46 − threat × 5` | 46 s → 26 s floor |
-| Arena collapse interval | `24 − threat × 2.2` | 24 s → 9 s floor |
-
-**Elites are on the clock too**, for the same reason — an elite is a 10-shard
-payout as much as a threat, and it must not arrive sooner because you played
-well. They used to spawn on every 3rd level-up.
-
-**Archetype unlocks** are on the clock, so the first minute teaches one threat at
-a time:
-
-| Time | Joins the spawn table |
+| Phase | What happens |
 |---|---|
-| 0:00 | Cinder |
-| 0:14 | Dart |
-| 0:30 | Spitter |
-| 0:50 | Orbiter |
-| 1:14 | Splitter |
-| 1:36 | Magma Mine |
+| Intro (2.2 s) | Banner: "Board n of 6: Faction", no spawns |
+| Wave (60 s) | That faction's chaser / charger / shooter; orbiters, splitters and mines join as half-weight extras from boards 2, 3 and 4 of loop 1 (all of them from loop 2). Elites at 25 s (and 48 s from board 4 / loop 2). Boss warning 3 s before the end |
+| Boss | The faction's boss; ordinary spawns halve |
+| Clear (2.2 s) | Remaining enemies and bullets dissolve, every ember flies to the phoenix |
+| Rest | Game paused: board cleared, 6-board progress track, score / time / level / kills, hearts, +1 heart, "next: a little harder". Continue starts the next board; after board 6, "Loop complete — Begin loop 2" |
+
+**Threat** = board × 0.45 + loop × 1.6 + (0 → 0.5 across the wave). Loop 1
+spans 0 → 2.75. Loop 2 starts at 1.6 — about board 4 of loop 1, so looping back
+is not a wall — and every loop-2 board is harder than its loop-1 twin. Boss HP
+×(1 + 0.15 per board + 0.6 per loop); attack pace rises gently the same way.
+Threat drives spawn interval, enemy speed, enemy HP, max enemies and arena
+collapse cadence through the same formulas as before (floors and caps kept).
+
+Threat is a pure function of (board, seconds into its wave). It never reads
+player level: collecting fast is pure upside.
 
 ### Rewarding fast collection
 
@@ -168,10 +151,11 @@ legible at a glance in a crowded arena.
 ### Faction bosses
 
 Since 2026-11-21 six faction bosses from the founder's Boss Roster replace THE
-ASHBORN (founder decision "3a"). They rotate in faction order — Magmathar,
-Criotharis, Nethermorph, Blightbloom, Skyrend, Aurelion, then repeat — one per
-encounter. **First at 1:20, then every 1:40**, with +45% HP per encounter and a
-three-second named warning (e.g. "MAGMATHAR — The Core Titan — awakens").
+ASHBORN (founder decision "3a"). Each boss closes its faction's board (§4):
+Magmathar, Criotharis, Nethermorph, Blightbloom, Skyrend, Aurelion, then the
+loop repeats. It arrives at the end of the 60 s wave after a three-second named
+warning (e.g. "MAGMATHAR — The Core Titan — awakens"), with HP scaled by board
+and loop (§4).
 Data: `src/config/bosses.ts`; attacks: `src/entities/bossAttacks.ts`; non-bullet
 attacks use `src/entities/Hazards.ts`.
 
@@ -259,12 +243,12 @@ Taking every shard of a pair (or trio) at least once switches on a synergy for
 the rest of the run. Several can be active together. A level-up card that would
 complete one glows pink and says so; the pause menu lists active synergies; a
 message announces each unlock. Data: `src/upgrades/Synergies.ts` (`SYN` holds
-every number); effects: `src/scenes/SynergyController.ts`, with Firestorm's
-blades and Molten Armor's armour folded into `computeStats()`.
+every number); effects: `src/scenes/SynergyController.ts`, with Molten Armor's
+armour folded into `computeStats()` and Infernal Cyclone into `bladeSpec()`.
 
 | Synergy | Shards | Effect | Limit |
 |---|---|---|---|
-| Firestorm | Ember + Storm | 2–4 fire-orange blades orbit you (the old Emberblades); a blade hit chains lightning to 2 enemies | chain once per 1.2 s |
+| Firestorm | Ember + Storm | Every 1.6 s a ring of lightning-fire bursts out to 90 px (1.5 dmg, +0.25 per Ember/Storm level past the first), then lightning chains from the farthest enemy caught to 2 more | a pulse, never a standing damage zone |
 | Frozen Barrage | Frost + Arcane | 5-shard ice fan at the nearest enemy every 2 s; chilled enemies move 30% slower; 3 hits freeze for 1.2 s | bosses are never frozen |
 | Shadow Execution | Void + Hunter | A crit detonates a 90 px void explosion (2 dmg) | once per 0.6 s; raw damage, so it cannot crit again |
 | Phoenix Renewal | Nature + Ward | A shield unbroken for 12 s blooms: +1 heart | resets when the shield breaks; never above 3 hearts |
@@ -275,8 +259,42 @@ blades and Molten Armor's armour folded into `computeStats()`.
 | Titan's Judgment | Titan + Hunter | Every 2 hits taken or shrugged off: golden 170 px counterblast (6 dmg) | once per 6 s |
 | Celestial Barrage | Arcane + Void + Hunter | Every 3.5 s, 4 homing star bolts that pierce 3 and can crit | 4 bolts |
 
-Orbit-blade damage is now per second (24 × blade damage), not per frame, so it
-is the same on every phone and no longer rolls a crit every frame.
+**Infernal Cyclone** (Ember Blades + Ember + Storm): blades spin 12% faster and
+deal 20% more, with hotter swords, fiercer trails and lightning flickers. The
+trails still never deal damage, and the bonus applies once.
+
+Until 2026-11-21 Firestorm summoned orbiting blades. The founder's Ember Blades
+brief made the blades their own weapon, so Firestorm became the pulsing
+lightning-fire ring its original brief describes (no second blade system).
+
+### Ember Blades (weapon)
+
+An orbital melee weapon, taken from the level-up draft like a shard (no separate
+levelling). Tuning: `src/upgrades/EmberBlades.ts`; weapon:
+`src/entities/EmberBlades.ts`; sword art cut from `art/ember-blades.png`.
+
+| Level | Swords | Change |
+|---|---|---|
+| 1 | 1 | Summon one red-hot orbiting blade |
+| 2 | 2 | Add a second blade |
+| 3 | 3 | Add a third blade |
+| 4 | 4 | + rotation speed (2 s → 1.7 s per turn) |
+| 5 | 5 | + damage (×1.25) |
+| 6 | 6 | + rotation speed (1.4 s per turn) |
+
+- Swords orbit the phoenix's position at 46 px, clockwise on screen, evenly
+  spaced (360° / n), gliding to new slots when one is forged in (sparks and a
+  molten flash). Edges point along the direction of travel.
+- Only the metal hurts: each sword has its own capsule (34 × 10 px), swept in
+  ≤ 0.12 rad steps so a fast spin cannot skip an enemy, with a 0.4 s cooldown per
+  sword per enemy. 2 damage per hit (bosses take half). Trails, sparks, glows and
+  the forging flash are drawn separately and never take part in collision.
+- Ember raises blade damage through the normal damage path (once); Hunter crits
+  apply; Storm adds +3% spin per level (cap +12%); Time does not change spin.
+  Spin can never be faster than 1.1 s per turn.
+- Trails are short tapered embers covering at most 35% of the gap to the next
+  sword (≤ 50°), so even six blades show clear gaps.
+
 
 ## 9. Progression & cosmetics
 

@@ -49,14 +49,11 @@ export class Player {
   private readonly aura: Phaser.GameObjects.Image;
   private readonly aura2: Phaser.GameObjects.Image;
 
-  private readonly scene: Phaser.Scene;
   private readonly glow: Phaser.GameObjects.Image;
   private readonly innerGlow: Phaser.GameObjects.Image;
   private readonly body: PhoenixSprite;
   private readonly shieldRing: Phaser.GameObjects.Image;
   private readonly trail: Phaser.GameObjects.Particles.ParticleEmitter;
-  private readonly blades: Phaser.GameObjects.Image[] = [];
-  private bladeAngle = 0;
   private facing = 0;
   private pulse = 0;
   private palette!: Palette;
@@ -70,7 +67,6 @@ export class Player {
   }
 
   constructor(scene: Phaser.Scene, depth: number, palette: Palette, stats: PlayerStats) {
-    this.scene = scene;
 
     this.trail = scene.add
       .particles(0, 0, TEX.glowTight, {
@@ -109,8 +105,6 @@ export class Player {
     this.innerGlow.setTint(palette.accent);
     this.shieldRing.setTint(palette.accent);
     this.trail.setParticleTint(palette.glow);
-    // Blades are fire-orange (Firestorm), never gold, so they cannot be mistaken for ember pickups.
-    for (const blade of this.blades) blade.setTint(BRAND.emberOrange);
   }
 
   /** Evolution stage from the Ascension Shard (Stage 7 of the expansion). */
@@ -130,20 +124,6 @@ export class Player {
   /** Re-read the stat block after an upgrade is taken. */
   applyStats(stats: PlayerStats): void {
     this.stats = stats;
-
-    // Orbiting blades: add/remove sprites so the visual always matches the build.
-    while (this.blades.length < stats.orbitBlades) {
-      const blade = this.scene.add
-        .image(0, 0, TEX.blade)
-        .setBlendMode(Phaser.BlendModes.ADD)
-        .setDepth(this.body.container.depth + 1)
-        .setTint(BRAND.emberOrange)
-        .setScale(0.9);
-      this.blades.push(blade);
-    }
-    while (this.blades.length > stats.orbitBlades) {
-      this.blades.pop()?.destroy();
-    }
 
     if (stats.shieldRecharge > 0 && this.shieldTimer === 0 && !this.shieldActive) {
       // First time the shield is taken it comes online immediately.
@@ -281,17 +261,6 @@ export class Player {
       this.shieldRing.setScale(0.3 + Math.sin(this.pulse * 3) * 0.015);
       this.shieldRing.setAlpha(0.55 + Math.sin(this.pulse * 3) * 0.15);
     }
-
-    // Blades sweep faster and wider as the build grows.
-    this.bladeAngle += dt * (2.4 + this.stats.orbitBladeDamage * 0.5);
-    const radius = 44 + this.stats.orbitBladeDamage * 7;
-    for (let i = 0; i < this.blades.length; i++) {
-      const a = this.bladeAngle + (i / this.blades.length) * Math.PI * 2;
-      const blade = this.blades[i];
-      blade.setPosition(this.x + Math.cos(a) * radius, this.y + Math.sin(a) * radius);
-      blade.setRotation(a + Math.PI / 2);
-      blade.setAlpha(0.85);
-    }
   }
 
   /**
@@ -319,11 +288,6 @@ export class Player {
       .setScale(base * 1.25 - beat * 0.012)
       .setRotation(-this.pulse * 0.9)
       .setAlpha(this.celestial ? 0.6 : 0.35);
-  }
-
-  /** Positions of the live orbit blades, for collision in the game scene. */
-  bladePositions(): { x: number; y: number }[] {
-    return this.blades.map((b) => ({ x: b.x, y: b.y }));
   }
 
   setAscended(on: boolean): void {
@@ -410,7 +374,5 @@ export class Player {
     this.shieldRing.destroy();
     this.aura.destroy();
     this.aura2.destroy();
-    for (const blade of this.blades) blade.destroy();
-    this.blades.length = 0;
   }
 }

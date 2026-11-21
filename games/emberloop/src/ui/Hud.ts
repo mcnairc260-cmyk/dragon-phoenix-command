@@ -16,6 +16,9 @@ export interface HudState {
   level: number;
   xpProgress: number;
   burstFraction: number;
+  /** "BOARD 2/6" (plus "· LOOP 2" from the second loop) and the board's faction colour. */
+  boardLabel: string;
+  boardColor: number;
   /** Equipped ultimate (the Phoenix Burst until Ascension). */
   ultimateName: string;
   ultimateColor: number;
@@ -40,6 +43,7 @@ export class Hud {
   private readonly scoreText: Phaser.GameObjects.Text;
   private readonly multText: Phaser.GameObjects.Text;
   private readonly timeText: Phaser.GameObjects.Text;
+  private readonly boardText: Phaser.GameObjects.Text;
   private readonly levelText: Phaser.GameObjects.Text;
   private readonly heatLabel: Phaser.GameObjects.Text;
   private readonly xpLabel: Phaser.GameObjects.Text;
@@ -74,6 +78,9 @@ export class Hud {
     this.timeText = scene.add
       .text(0, 0, '0:00', { fontFamily: FONT_MONO, fontSize: '14px', color: BRAND_CSS.steel })
       .setOrigin(1, 0);
+    this.boardText = scene.add
+      .text(0, 0, '', { fontFamily: FONT_MONO, fontSize: '10px', color: BRAND_CSS.steel })
+      .setOrigin(0, 0.5);
     this.levelText = scene.add
       .text(0, 0, 'LV 1', { fontFamily: FONT_MONO, fontSize: '12px', color: BRAND_CSS.signalCyan })
       .setOrigin(0, 0.5);
@@ -117,7 +124,7 @@ export class Hud {
       .text(0, 0, '', { fontFamily: FONT_MONO, fontSize: '10px', color: BRAND_CSS.ghostWhite })
       .setOrigin(0.5)
       .setVisible(false);
-    this.root.add([this.scoreText, this.multText, this.timeText, this.levelText, this.xpLabel, this.heatLabel, this.burstLabel, this.bossLabel, this.bossAttackLabel, this.pauseButton]);
+    this.root.add([this.scoreText, this.multText, this.timeText, this.levelText, this.xpLabel, this.heatLabel, this.burstLabel, this.bossLabel, this.bossAttackLabel, this.boardText, this.pauseButton]);
   }
 
   private createPauseButton(onPause: () => void): Phaser.GameObjects.Container {
@@ -150,6 +157,8 @@ export class Hud {
     this.timeText.setPosition(width - inset.right - 16, top + 4);
     // Level sits beside the health pips, clear of the centred readout.
     this.levelText.setPosition(inset.left + 82, top + 14);
+    // Board progress sits under the hearts, above the gauge labels.
+    this.boardText.setPosition(inset.left + 18, top + 38);
     this.xpLabel.setPosition(inset.left + 18, top + 60);
     this.heatLabel.setPosition(inset.left + 18, top + 76);
     this.burstLabel.setPosition(width / 2, height - inset.bottom - 40);
@@ -168,6 +177,7 @@ export class Hud {
 
     this.scoreText.setText(Math.round(state.score).toLocaleString('en-US'));
     this.timeText.setText(formatClock(state.elapsed));
+    this.boardText.setText(state.boardLabel).setColor(`#${state.boardColor.toString(16).padStart(6, '0')}`);
     this.levelText.setText(`LV ${state.level}`);
 
     if (state.multiplier > 1 || state.combo > 0) {

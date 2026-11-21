@@ -4,6 +4,7 @@ import { draftUpgrades, takeUpgrade } from './UpgradeDraft';
 import { BASE_STATS, COOLDOWN_FLOOR, FROST_CAP, UPGRADES, computeStats, type UpgradeLevels } from './UpgradeDefs';
 
 const STACK_LIMITS: Record<string, number> = {
+  'ember-blades': 6,
   ember: 5,
   frost: 4,
   void: 5,
@@ -21,8 +22,8 @@ const STACK_LIMITS: Record<string, number> = {
 const maxed = (): UpgradeLevels => Object.fromEntries(UPGRADES.map((u) => [u.id, u.maxLevel]));
 
 describe('Power Shard catalogue', () => {
-  it('is exactly the 12 founder shards with the brief’s stacking limits', () => {
-    expect(UPGRADES).toHaveLength(12);
+  it('is the 12 founder shards plus the Ember Blades weapon, with the briefs’ limits', () => {
+    expect(UPGRADES).toHaveLength(13);
     expect(Object.fromEntries(UPGRADES.map((u) => [u.id, u.maxLevel]))).toEqual(STACK_LIMITS);
   });
 

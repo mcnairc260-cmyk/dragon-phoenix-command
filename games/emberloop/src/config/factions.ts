@@ -2,6 +2,9 @@
  * The six enemy factions and their 18 species (founder's Enemy Collection art,
  * art/enemy-collection.png; sprites cut out by scripts/extract-enemies.py).
  *
+ * Since 2026-11-21 each faction is one BOARD (GameConfig BOARD): its three
+ * species for a wave, then its boss (config/bosses.ts), then a rest screen.
+ *
  * Every species reuses one of the three proven behaviours in entities/Enemy.ts:
  *   chaser  → the `cinder` pursuit AI
  *   charger → the `dart` rest / telegraph-line / locked dash / recover AI
@@ -42,8 +45,6 @@ export interface Faction {
   name: string;
   /** Glow, telegraph line and projectile colour. */
   color: number;
-  /** Seconds into a run when this faction starts appearing. */
-  unlockAt: number;
 }
 
 export interface Species {
@@ -59,13 +60,14 @@ export interface Species {
   sizeMul: number;
 }
 
+/** In board order: board 1 is the Volcanic Legion … board 6 the Arcane Sentinels. */
 export const FACTIONS: readonly Faction[] = [
-  { id: 'volcanic', name: 'Volcanic Legion', color: BRAND.emberOrange, unlockAt: 0 },
-  { id: 'frostborn', name: 'Frostborn Pack', color: BRAND.signalCyan, unlockAt: 35 },
-  { id: 'shadow', name: 'Shadow Void', color: SIGNAL.violet, unlockAt: 70 },
-  { id: 'nature', name: 'Nature Blight', color: SIGNAL.toxic, unlockAt: 110 },
-  { id: 'aerial', name: 'Aerial Terrors', color: SIGNAL.magenta, unlockAt: 150 },
-  { id: 'arcane', name: 'Arcane Sentinels', color: BRAND.rebirthGold, unlockAt: 190 },
+  { id: 'volcanic', name: 'Volcanic Legion', color: BRAND.emberOrange },
+  { id: 'frostborn', name: 'Frostborn Pack', color: BRAND.signalCyan },
+  { id: 'shadow', name: 'Shadow Void', color: SIGNAL.violet },
+  { id: 'nature', name: 'Nature Blight', color: SIGNAL.toxic },
+  { id: 'aerial', name: 'Aerial Terrors', color: SIGNAL.magenta },
+  { id: 'arcane', name: 'Arcane Sentinels', color: BRAND.rebirthGold },
 ];
 
 const S = (
@@ -114,28 +116,12 @@ export const FACTION_BY_ID: Record<FactionId, Faction> = Object.fromEntries(FACT
 
 export const speciesTextureKey = (s: Species): string => `enemy-${s.id}`;
 
-/** Factions unlocked at this point in a run, oldest first. */
-export function unlockedFactions(elapsedSeconds: number): Faction[] {
-  return FACTIONS.filter((f) => elapsedSeconds >= f.unlockAt);
+/** The faction a board belongs to (board 0–5; loops repeat the same order). */
+export function factionForBoard(board: number): Faction {
+  return FACTIONS[((board % FACTIONS.length) + FACTIONS.length) % FACTIONS.length];
 }
 
-/**
- * Pick a species for a behaviour. The newest unlocked faction is weighted
- * double so each arrival is noticeable, then it blends into the mix.
- */
-export function pickSpecies(role: Role, elapsedSeconds: number, rng: () => number = Math.random): Species | null {
-  const factions = unlockedFactions(elapsedSeconds);
-  if (factions.length === 0) return null;
-  const weights = factions.map((_, i) => (i === factions.length - 1 && factions.length > 1 ? 2 : 1));
-  const total = weights.reduce((a, b) => a + b, 0);
-  let roll = rng() * total;
-  let faction = factions[factions.length - 1];
-  for (let i = 0; i < factions.length; i++) {
-    roll -= weights[i];
-    if (roll < 0) {
-      faction = factions[i];
-      break;
-    }
-  }
-  return SPECIES.find((s) => s.faction === faction.id && s.role === role) ?? null;
+/** The species a board's faction fields for a behaviour. */
+export function speciesFor(role: Role, faction: FactionId): Species | null {
+  return SPECIES.find((s) => s.faction === faction && s.role === role) ?? null;
 }

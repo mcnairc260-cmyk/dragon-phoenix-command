@@ -4,7 +4,7 @@ import { ATTACK_RECOVERY, BOSSES, PHASE_SHARES, attacksForStage, bossFor } from 
 import { FACTIONS } from './factions';
 
 describe('faction bosses', () => {
-  it('has the six roster bosses, one per faction, in faction order', () => {
+  it('has the six roster bosses, one per faction, in board order', () => {
     expect(BOSSES.map((b) => b.name)).toEqual(['MAGMATHAR', 'CRIOTHARIS', 'NETHERMORPH', 'BLIGHTBLOOM', 'SKYREND', 'AURELION']);
     expect(BOSSES.map((b) => b.faction)).toEqual(FACTIONS.map((f) => f.id));
   });

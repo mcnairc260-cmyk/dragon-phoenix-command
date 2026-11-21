@@ -43,8 +43,13 @@ export interface EnemyContext {
 
 export type EnemyPhase = 'rest' | 'telegraph' | 'charge' | 'approach' | 'orbit' | 'dive' | 'arming';
 
+/** Counts spawns so a recycled (pooled) enemy is never mistaken for its previous life. */
+let nextSerial = 1;
+
 export class Enemy {
   active = false;
+  /** Unique per spawn (Ember Blades keys its per-enemy hit cooldowns on this). */
+  serial = 0;
   kind: EnemyKind = 'cinder';
   isElite = false;
 
@@ -131,6 +136,7 @@ export class Enemy {
     this.kind = options.kind;
     this.isElite = options.elite === true;
     this.isChild = options.child === true;
+    this.serial = nextSerial++;
     this.species = options.species ?? null;
     const sp = this.species;
     this.x = options.x;

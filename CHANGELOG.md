@@ -2,6 +2,7 @@
 
 One line per material change, newest first. Format: `date · scope · what` (PR # where applicable).
 
+- 2026-11-21 · product · EMBERLOOP boards: each faction + its boss is one board with a paused rest screen between boards; gentle per-board steps, harder second loop. Ember Blades weapon (6 levels, founder sword art, metal-only swept collision, cosmetic trails) + Infernal Cyclone synergy; Firestorm reworked to a fire-ring pulse (no blades). Docs: GAME_DESIGN.md §4/§8, EXPANSION.md.
 - 2026-11-21 · product · EMBERLOOP expansion Stage 5: the 10 shard synergies (Firestorm, Frozen Barrage, Shadow Execution, Phoenix Renewal, Thunder Tempest, Molten Armor, Temporal Echo, Celestial Harvest, Titan's Judgment, Celestial Barrage) with cooldowns and no recursion; card and pause-menu synergy hints; blade damage now per second. Docs: GAME_DESIGN.md §8, EXPANSION.md.
 - 2026-11-21 · product · EMBERLOOP expansion Stage 3: six faction bosses replace THE ASHBORN (founder art), rotating per encounter; 18 telegraphed signature attacks (9 bullet, 9 hazard: waves, meteors, beams, ice walls, gravity well, spores, vines, tornadoes, orbs, rifts), phases at 65% / 30% with phase-3 combos. Docs: GAME_DESIGN.md §5, EXPANSION.md.
 - 2026-11-21 · product · EMBERLOOP ultimate meter charges from kills only (founder decision): 14 per kill, 50 per elite or boss stage, full on boss kill; an ultimate's own kills never recharge it. Docs: EXPANSION.md, GAME_DESIGN.md.

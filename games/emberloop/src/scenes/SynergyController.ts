@@ -42,9 +42,9 @@ export interface SynergyHost {
  */
 export class SynergyController {
   private barrageTimer = 0;
+  private firestormTimer = 0;
   private tempestTimer = 0;
   private starTimer = 0;
-  private firestormCd = 0;
   private shadowCd = 0;
   private moltenCd = 0;
   private echoCd = 0;
@@ -70,10 +70,17 @@ export class SynergyController {
   }
 
   update(dt: number): void {
-    for (const key of ['firestormCd', 'shadowCd', 'moltenCd', 'echoCd', 'harvestCd', 'judgmentCd'] as const) {
+    for (const key of ['shadowCd', 'moltenCd', 'echoCd', 'harvestCd', 'judgmentCd'] as const) {
       if (this[key] > 0) this[key] = Math.max(0, this[key] - dt);
     }
 
+    if (this.on('firestorm')) {
+      this.firestormTimer -= dt;
+      if (this.firestormTimer <= 0) {
+        this.firestormTimer = this.cd(SYN.firestorm.every);
+        this.firestorm();
+      }
+    }
     if (this.on('frozen-barrage')) {
       this.barrageTimer -= dt;
       if (this.barrageTimer <= 0) {
@@ -121,14 +128,6 @@ export class SynergyController {
   }
 
   // ── Event hooks (called by GameScene) ─────────────────────────────────────
-  /** Firestorm: a blade hit chains lightning, on a cooldown. */
-  onBladeHit(enemy: Enemy): void {
-    if (!this.on('firestorm') || this.firestormCd > 0) return;
-    this.firestormCd = this.cd(SYN.firestorm.chainEvery);
-    const c = SYN.firestorm;
-    this.chain(enemy, c.chainTargets, c.chainDamage, 1, c.chainRange, BRAND.rebirthGold);
-  }
-
   /** Shadow Execution: a crit detonates a void explosion. Uses raw damage, so it cannot crit again. */
   onCrit(enemy: Enemy): void {
     if (!this.on('shadow-execution') || this.shadowCd > 0) return;
@@ -219,6 +218,36 @@ export class SynergyController {
       .filter((e) => e.active && Math.hypot(e.x - p.x, e.y - p.y) <= maxRange)
       .sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))
       .slice(0, count);
+  }
+
+  /**
+   * Firestorm: a ring of lightning-infused fire bursts out around the phoenix,
+   * scorching everything inside it, then lightning chains on from the farthest
+   * enemy it caught. Scales with Ember and Storm levels. A pulse, not a
+   * permanent damage zone.
+   */
+  private firestorm(): void {
+    const c = SYN.firestorm;
+    const p = this.host.player();
+    const build = this.host.build();
+    const levels = Math.min(5, build.ember ?? 0) + Math.min(5, build.storm ?? 0);
+    const radius = this.range(c.radius);
+    const damage = c.damage + Math.max(0, levels - 2) * c.perLevel;
+    this.host.fx.shockwave(p.x, p.y, BRAND.emberOrange, radius * 2, 420, 1.4);
+    this.host.fx.shockwave(p.x, p.y, BRAND.rebirthGold, radius * 1.6, 360, 0.6);
+    let farthest: Enemy | null = null;
+    let far = -1;
+    for (const e of [...this.host.enemies()]) {
+      if (!e.active) continue;
+      const d = Math.hypot(e.x - p.x, e.y - p.y);
+      if (d > radius + e.radius) continue;
+      this.host.damageEnemy(e, damage, false);
+      if (e.active && d > far) {
+        far = d;
+        farthest = e;
+      }
+    }
+    if (farthest) this.chain(farthest, c.chainTargets, c.chainDamage, 1, c.chainRange, BRAND.rebirthGold);
   }
 
   private frozenBarrage(): void {

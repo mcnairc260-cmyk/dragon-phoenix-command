@@ -183,7 +183,59 @@ frozen at 1 s, thawed by 3 s). Zero console errors. Two design bugs found and
 fixed by these tests: the first Void Collapse opened on the phoenix and
 dragged enemies into the player; Storm kept striking the same three enemies.
 
+## Boards (founder request 2026-11-21, done)
+
+"Each group of three enemies and corresponding bosses should be treated as a
+single board", with a rest between boards, gently rising difficulty, and a
+harder second loop that still leaves room to loop back. Implemented as
+intro → 60 s wave → boss → clean-up → rest screen; details in `GAME_DESIGN.md`
+§4. Time-based bosses, elites and "Phase" toasts were replaced by this flow.
+
+Choices made (founder can change): the older procedural enemies (orbiter,
+splitter, mine) stay as half-weight extras from boards 2–4 of loop 1 so each
+board is still mainly its faction; the rest screen restores 1 heart (on top of
+the boss kill's +1); loop 2 starts at threat 1.6 (≈ board 4 of loop 1).
+
+Verified in Playwright: run opens on "Board 1 of 6: Volcanic Legion" with only
+Volcanic species; boss warning and Magmathar at the end of the wave; on the
+kill 0 enemies / bullets / hazards remain and all embers are collected; the
+rest screen pauses the game (time did not advance), shows the 6-board track,
+and Continue starts "Board 2 of 6: Frostborn Pack" with only Frostborn species
+and higher threat (0.23 → 0.68); after board 6 "Loop 1 complete … Begin loop 2"
+and loop 2 opens at threat 1.6 with "BOARD 1/6 · LOOP 2" on the HUD; results
+show boards cleared. 13 unit tests in `systems/Difficulty.test.ts`.
+
+## Ember Blades and Infernal Cyclone (founder brief 2026-11-21, done)
+
+Full design in `GAME_DESIGN.md` §8. The brief's 23 checks, as tested in
+Playwright on the real game (all passed, zero console errors):
+
+| # | Check | Result |
+|---|---|---|
+| 1–4 | none before unlock; 1 per level; 6 at max | 0, then 1…6; card left the pool at 6 (0 of 60 drafts) |
+| 5 | even spacing | 60.0° between all six |
+| 6 | clockwise | verified on screen (Y-down) |
+| 7 | follows the phoenix | orbit centre offset 0 px, radius 46 px |
+| 8 | contact damage | yes, through the normal damage path |
+| 9, 10, 16 | trails / sparks never damage | enemy sitting on a trail point 15.5 px from the metal: 0 hits |
+| 11 | reliable at max speed | 10 fps, 1.4 s/turn: every enemy hit by every sword, none skipped |
+| 12 | Ember | ×1.24 at Ember 2, applied once |
+| 13 | Storm | +3% spin per level, capped (unit test) |
+| 14 | Hunter | crits doubled the hit |
+| 15 | Infernal Cyclone | unlocked with Blades + Ember + Storm |
+| 17 | bosses | hit, half damage |
+| 18 | no duplicates | count stable; never above 6 |
+| 19 | pause | blades frozen while paused |
+| 20 | restart | 0 blades, weapon level 0 |
+| 21 | ultimates still work | release path unchanged |
+| 23 | performance | 0.12 ms per frame with 6 swords and 30 enemies |
+
+Fixes found while testing: trails at six blades with Infernal Cyclone merged
+into a solid bright ring — trails now cover at most 35% of the gap; bosses took
+~34 dps from six cyclone blades — blades now deal half damage to bosses.
+
 ## Not started
 
-Stage 7 polish beyond the basic auras, Stage 8 full QA (next). Not tested on a real device. Ultimate balance needs
+Stage 7 polish beyond the basic auras, Stage 8 full QA (next). Real-device play
+of boards, blades and bosses. Not tested on a real device. Ultimate balance needs
 real play.

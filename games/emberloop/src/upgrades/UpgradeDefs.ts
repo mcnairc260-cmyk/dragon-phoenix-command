@@ -22,15 +22,16 @@ import timeArt from '../assets/shards/time.png';
 import hunterArt from '../assets/shards/hunter.png';
 import wardArt from '../assets/shards/ward.png';
 import cosmicArt from '../assets/shards/cosmic.png';
+import bladeArt from '../assets/weapons/ember-blade.png';
+import { BLADES, BLADE_LEVEL_TEXT } from './EmberBlades';
 
 export type UpgradeFamily = 'offense' | 'defense' | 'utility';
 export type Rarity = 'common' | 'rare' | 'legendary';
 
 /** Aggregated player stats produced by `computeStats()`. */
 export interface PlayerStats {
-  /** Number of orbiting fire blades circling the player. */
+  /** Ember Blades weapon level 0–6 = number of orbiting swords (entities/EmberBlades.ts). */
   orbitBlades: number;
-  orbitBladeDamage: number;
   /** Chain lightning arcs per trigger (0 = disabled). */
   chainTargets: number;
   chainDamage: number;
@@ -91,6 +92,8 @@ export interface UpgradeDef {
   icon: string;
   /** Crystal artwork URL. */
   art: string;
+  /** A weapon card (Ember Blades) rather than a shard. */
+  weapon?: boolean;
   /** False keeps a shard out of the draft entirely. */
   available: boolean;
   /** Extra draft condition on the current build (Ascension needs an element shard). */
@@ -105,7 +108,6 @@ export interface UpgradeDef {
 
 export const BASE_STATS: PlayerStats = {
   orbitBlades: 0,
-  orbitBladeDamage: 1,
   chainTargets: 0,
   chainDamage: 1,
   critChance: 0,
@@ -163,6 +165,23 @@ const WARD_SECONDS = [0, 14, 11, 8];
 const ARCANE_INTERVAL = [0, 1.6, 1.4, 1.2];
 
 export const UPGRADES: readonly UpgradeDef[] = [
+  {
+    // A weapon, not a shard: it must be chosen itself; owning the Ember Shard does not grant it.
+    id: 'ember-blades',
+    name: 'Ember Blades',
+    family: 'offense',
+    rarity: 'rare',
+    maxLevel: BLADES.maxLevel,
+    icon: '🗡️',
+    art: bladeArt,
+    weapon: true,
+    available: true,
+    effect: (l) => `${l} orbiting blade${l > 1 ? 's' : ''}`,
+    describe: (next) => BLADE_LEVEL_TEXT[Math.max(1, Math.min(BLADES.maxLevel, next))],
+    apply: (s, level) => {
+      s.orbitBlades = level;
+    },
+  },
   shard({
     id: 'ember', name: 'Ember Shard', family: 'offense', rarity: 'common', maxLevel: 5, icon: '🔥', art: emberArt, available: true,
     effect: (l) => `+${l * 12}% damage`,
@@ -256,13 +275,6 @@ export function computeStats(levels: UpgradeLevels): PlayerStats {
   }
   // Synergies that are pure stat changes (the rest run in SynergyController).
   const owns = (id: string) => (levels[id] ?? 0) > 0;
-  if (owns('ember') && owns('storm')) {
-    // Firestorm: the old Emberblades, 2–4 blades, harder with more Ember and Storm.
-    const ember = Math.min(levels.ember ?? 0, 5);
-    const storm = Math.min(levels.storm ?? 0, 5);
-    stats.orbitBlades = 2 + (ember >= 3 ? 1 : 0) + (storm >= 3 ? 1 : 0);
-    stats.orbitBladeDamage = 1 + (ember + storm - 2) * 0.2;
-  }
   if (owns('ember') && owns('titan')) stats.armorChance += 0.1; // Molten Armor
   stats.armorChance = Math.min(0.4, stats.armorChance);
 

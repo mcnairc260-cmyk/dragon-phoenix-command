@@ -280,6 +280,8 @@ Also applied from the Bible in the same pass: the player sprite was rebuilt as *
 
 **Expansion Stage 5 — Synergies (2026-11-21).** All 10 shard synergies are live; the old upgrades' mechanics return through them (Firestorm = Emberblades + chain lightning, Thunder Tempest, Molten Armor). Every triggered effect has a cooldown and synergy damage cannot re-trigger itself. Orbit-blade damage changed from per-frame to per-second. Table in `games/emberloop/GAME_DESIGN.md` §8; tests and measurements in `EXPANSION.md`. Remaining: Stage 8 QA/polish and real-device play.
 
+**Boards + Ember Blades (2026-11-21, founder requests).** (1) The run is now a sequence of **boards**: each faction's three enemies (60 s wave) then its boss, a clean-up beat and a paused **rest screen** with progress; six boards make a loop that repeats a step harder (loop 2 starts ≈ board 4 of loop 1). Time-based bosses/elites were replaced. (2) **Ember Blades** is a new six-level orbital weapon (founder sword art), taken from the level-up draft; only the metal swords deal damage (swept per-sword capsules, 0.4 s per-enemy cooldown); trails are cosmetic. **Infernal Cyclone** (Blades + Ember + Storm) boosts it. To avoid two blade systems, **Firestorm no longer summons blades** — it is now the pulsing lightning-fire ring of its original brief. Details and the 23-point test table in `games/emberloop/EXPANSION.md`; tuning in `GAME_DESIGN.md` §4 and §8.
+
 ## 19. BREAKPOINT — 3D pool game, Phase 1 vertical slice (2026-08-29)
 
 A founder-directed session built **BREAKPOINT**, a physics-first 3D pool game, as a self-contained sub-application in `games/breakpoint/` — branch `claude/breakpoint-phase-1-pool-1sjmmi`. Full engineering record: `games/breakpoint/README.md`.
