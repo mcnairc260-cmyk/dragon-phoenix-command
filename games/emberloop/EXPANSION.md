@@ -115,6 +115,31 @@ be tougher.
   followed, the kill charged the ultimate. Zero console errors.
 - Not measured: how hard each boss feels to a human. Needs play.
 
+## Stage 5 — Synergies (done)
+
+All 10 synergies of the brief; table in `GAME_DESIGN.md` §8. The old upgrades
+return here (founder "2a"): Firestorm = Emberblades + chain lightning, Thunder
+Tempest = chain lightning, Molten Armor = flame armour.
+
+- UI: unlock message; level-up cards that would complete a synergy glow pink
+  and name it; pause menu lists active synergies. Messages move to the bottom
+  while a menu is open and at most three show at once.
+- Fixes on the way: orbit-blade damage was per frame (frame-rate dependent,
+  and with crit chance it rolled a crit explosion nearly every frame) — now per
+  second without crit rolls. Blades are fire-orange so they no longer look like
+  gold ember pickups.
+- Tests: 6 unit tests (`upgrades/Synergies.test.ts`: the 10 exact pairs, real
+  shard ids, activation, several at once, card hints, stat bonuses bounded).
+  Playwright, each synergy unlocked through the real level-up screen, then
+  measured: Firestorm 2 blades, chain to a neighbour; Frozen Barrage 20 shards
+  in 7 s, froze its target after 3 hits; Shadow Execution exploded on the
+  first crit and not on a second within 0.6 s; Phoenix Renewal healed at 12 s,
+  capped at 3, reset on a broken shield; Thunder Tempest hit 3 → 2.1 → 1.5 → 1
+  per jump, 4 enemies max; Molten Armor scorched only nearby, not twice in 1 s;
+  Temporal Echo 3 shots → 2 echoes, no echo of an echo; Celestial Harvest
+  healed after 25 embers, not again inside 20 s; Titan's Judgment fired on
+  the 2nd hit; Celestial Barrage 8 piercing bolts in 3.8 s. Zero console errors.
+
 ## Stage 6 — Ultimates (done) and Stage 7 — Evolution (basic, done)
 
 How it works (founder decision 1, above):
@@ -160,6 +185,5 @@ dragged enemies into the player; Storm kept striking the same three enemies.
 
 ## Not started
 
-Stage 5 synergies (next), Stage 7 polish beyond the basic
-auras, Stage 8 full QA. Not tested on a real device. Ultimate balance needs
+Stage 7 polish beyond the basic auras, Stage 8 full QA (next). Not tested on a real device. Ultimate balance needs
 real play.

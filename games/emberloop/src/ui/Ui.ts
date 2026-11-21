@@ -57,6 +57,8 @@ export class Ui {
     el.className = 'toast';
     el.textContent = text;
     this.toasts.appendChild(el);
+    // At most three at once; the oldest makes way so messages never pile over the play area.
+    while (this.toasts.children.length > 3) this.toasts.firstElementChild?.remove();
     window.setTimeout(() => {
       el.style.transition = 'opacity 240ms ease-out';
       el.style.opacity = '0';

@@ -253,6 +253,31 @@ remain implemented and stat-driven; they return as shard **synergies**
 `computeStats()`, which also applies Time to every timed effect and enforces
 the hard limits.
 
+### Synergies
+
+Taking every shard of a pair (or trio) at least once switches on a synergy for
+the rest of the run. Several can be active together. A level-up card that would
+complete one glows pink and says so; the pause menu lists active synergies; a
+message announces each unlock. Data: `src/upgrades/Synergies.ts` (`SYN` holds
+every number); effects: `src/scenes/SynergyController.ts`, with Firestorm's
+blades and Molten Armor's armour folded into `computeStats()`.
+
+| Synergy | Shards | Effect | Limit |
+|---|---|---|---|
+| Firestorm | Ember + Storm | 2–4 fire-orange blades orbit you (the old Emberblades); a blade hit chains lightning to 2 enemies | chain once per 1.2 s |
+| Frozen Barrage | Frost + Arcane | 5-shard ice fan at the nearest enemy every 2 s; chilled enemies move 30% slower; 3 hits freeze for 1.2 s | bosses are never frozen |
+| Shadow Execution | Void + Hunter | A crit detonates a 90 px void explosion (2 dmg) | once per 0.6 s; raw damage, so it cannot crit again |
+| Phoenix Renewal | Nature + Ward | A shield unbroken for 12 s blooms: +1 heart | resets when the shield breaks; never above 3 hearts |
+| Thunder Tempest | Storm + Arcane | Every 2.5 s lightning hits the nearest enemy (3 dmg) and jumps 3 times at 70% each | 3 jumps |
+| Molten Armor | Ember + Titan | +10% shrug-off chance; whatever hits you is scorched (85 px, 2 dmg) | once per 1 s; shrug-off capped at 40% overall |
+| Temporal Echo | Time + Void | A graze shot repeats 0.35 s later at half damage | once per 0.4 s; echoes never echo |
+| Celestial Harvest | Cosmic + Nature | Every 25 embers, +1 heart | once per 20 s; grants no XP |
+| Titan's Judgment | Titan + Hunter | Every 2 hits taken or shrugged off: golden 170 px counterblast (6 dmg) | once per 6 s |
+| Celestial Barrage | Arcane + Void + Hunter | Every 3.5 s, 4 homing star bolts that pierce 3 and can crit | 4 bolts |
+
+Orbit-blade damage is now per second (24 × blade damage), not per frame, so it
+is the same on every phone and no longer rolls a crit every frame.
+
 ## 9. Progression & cosmetics
 
 Saved to `localStorage`, surfaced on the Progress screen.

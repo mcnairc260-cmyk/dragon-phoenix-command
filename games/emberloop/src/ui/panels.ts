@@ -4,18 +4,22 @@ import { CONTROL_MODE_LABEL, type SaveData, type Settings } from '../systems/Pro
 import { UPGRADES_BY_ID, type UpgradeLevels } from '../upgrades/UpgradeDefs';
 import type { DraftedUpgrade } from '../upgrades/UpgradeDraft';
 import type { UltimateDef } from '../upgrades/Ultimates';
+import { activeSynergies, completedBy } from '../upgrades/Synergies';
 import { esc, formatNumber, formatTime } from './Ui';
 
 /** Level-up draft: three cards, one tap. */
-export function upgradePanel(cards: DraftedUpgrade[], level: number): string {
+export function upgradePanel(cards: DraftedUpgrade[], level: number, build: UpgradeLevels = {}): string {
   const cardHtml = cards
     .map(
       (card) => `
-      <button class="card card--${card.def.rarity}" data-action="pick" data-id="${esc(card.def.id)}">
+      <button class="card card--${card.def.rarity}${completedBy(build, card.def.id).length ? ' card--synergy' : ''}" data-action="pick" data-id="${esc(card.def.id)}">
         <img class="card__art" src="${esc(card.def.art)}" alt="" draggable="false" />
         <span>
           <span class="card__name">${esc(card.def.name)}</span>
           <span class="card__desc">${esc(card.def.describe(card.nextLevel))}</span>
+          ${completedBy(build, card.def.id)
+            .map((syn) => `<span class="card__synergy">✦ Completes ${esc(syn.name)}: ${esc(syn.blurb)}</span>`)
+            .join('')}
           <span class="card__meta">
             <span class="tag tag--${card.def.rarity}">${card.def.rarity}</span>
             <span class="tag tag--${card.def.family}">${card.def.family}</span>
@@ -235,6 +239,14 @@ function toggle(key: 'sound' | 'music' | 'haptics' | 'reducedMotion', label: str
 }
 
 /** Compact summary of the run's build, shown on pause and results. */
+function synergyList(build: UpgradeLevels): string {
+  const active = activeSynergies(build);
+  if (active.length === 0) return '';
+  return `<div class="section-title">Synergies</div><div class="synergy-list">${active
+    .map((syn) => `<div class="synergy"><b>${esc(syn.name)}</b><span>${esc(syn.blurb)}</span></div>`)
+    .join('')}</div>`;
+}
+
 function buildChips(build: UpgradeLevels): string {
   const chips = Object.entries(build)
     .filter(([, level]) => level > 0)
@@ -246,5 +258,5 @@ function buildChips(build: UpgradeLevels): string {
     .filter(Boolean)
     .join('');
   if (!chips) return '';
-  return `<div class="section-title">Your build</div><div class="build-list">${chips}</div>`;
+  return `<div class="section-title">Your build</div><div class="build-list">${chips}</div>${synergyList(build)}`;
 }

@@ -81,6 +81,9 @@ export class Enemy {
   burnDps = 0;
   /** Caught in a Void Collapse pull: no own movement, no attacks, no contact damage. */
   heldTimer = 0;
+  /** Frozen Barrage chill: slowed while > 0; enough hits freeze. */
+  chillTimer = 0;
+  chillHits = 0;
 
   private readonly glow: Phaser.GameObjects.Image;
   private readonly body: Phaser.GameObjects.Image;
@@ -137,6 +140,8 @@ export class Enemy {
     this.nearMissTimer = 0;
     this.frozenTimer = 0;
     this.heldTimer = 0;
+    this.chillTimer = 0;
+    this.chillHits = 0;
     this.burnTimer = 0;
     this.burnDps = 0;
     this.pulse = Math.random() * TAU;

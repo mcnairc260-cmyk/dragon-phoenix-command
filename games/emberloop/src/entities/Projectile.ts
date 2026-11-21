@@ -30,6 +30,8 @@ export class Projectile {
   lastHit: unknown = null;
   /** Fired by an ultimate: its kills do not charge the ultimate meter. */
   fromUltimate = false;
+  /** Synergy shot type: 'ice' chills, 'echo' never echoes again, 'star' is Celestial Barrage. */
+  tag: '' | 'ice' | 'echo' | 'star' = '';
   /** Seconds of homing left (Infinity = for its whole life) and turn rate in rad/s. */
   homingTime = Infinity;
   turnRate = 6;
@@ -71,6 +73,7 @@ export class Projectile {
     this.pierce = options.pierce ?? 0;
     this.lastHit = null;
     this.fromUltimate = false;
+    this.tag = '';
     this.homingTime = options.homingTime ?? Infinity;
     this.turnRate = options.turnRate ?? 6;
 

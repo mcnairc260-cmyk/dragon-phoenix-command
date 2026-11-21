@@ -17,6 +17,7 @@
   --gold: #ffb300;        /* Rebirth Gold — Phoenix Flame, secondary accent */
   --crimson: #ff3b30;
   --violet: #a855f7;
+  --magenta: #f43f7e;      /* SIGNAL.magenta — Aerial faction, synergies */
   --cyan: #22d3ee;        /* Signal Cyan  — Ascension, data/AI/systems */
   --ash: #f4f4f5;         /* Ghost White  — primary text */
   --ash-dim: #8b8b99;     /* Steel        — secondary text, captions */
@@ -289,6 +290,43 @@ body {
   text-align: center;
   font-size: 13px;
   color: var(--ash);
+}
+
+/* A card that would complete a synergy. */
+.card--synergy {
+  border-color: rgba(244, 63, 126, 0.75);
+  box-shadow: 0 0 30px rgba(244, 63, 126, 0.22);
+}
+
+.card__synergy {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--magenta);
+}
+
+.synergy-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.synergy {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--ash);
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(244, 63, 126, 0.3);
+}
+
+.synergy b {
+  display: block;
+  color: var(--white);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
 }
 
 /* Power Shard crystal art (founder's art/power-shards.png). */
@@ -618,6 +656,13 @@ body {
   align-items: center;
   gap: 6px;
   pointer-events: none;
+}
+
+/* While a menu is open, messages move to the bottom so they never cover its header. */
+#ui-panels.open ~ #ui-toasts {
+  top: auto;
+  bottom: calc(var(--safe-bottom) + 14px);
+  flex-direction: column-reverse;
 }
 
 .toast {

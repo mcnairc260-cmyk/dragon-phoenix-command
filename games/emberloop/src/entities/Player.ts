@@ -109,7 +109,8 @@ export class Player {
     this.innerGlow.setTint(palette.accent);
     this.shieldRing.setTint(palette.accent);
     this.trail.setParticleTint(palette.glow);
-    for (const blade of this.blades) blade.setTint(palette.accent);
+    // Blades are fire-orange (Firestorm), never gold, so they cannot be mistaken for ember pickups.
+    for (const blade of this.blades) blade.setTint(BRAND.emberOrange);
   }
 
   /** Evolution stage from the Ascension Shard (Stage 7 of the expansion). */
@@ -136,7 +137,7 @@ export class Player {
         .image(0, 0, TEX.blade)
         .setBlendMode(Phaser.BlendModes.ADD)
         .setDepth(this.body.container.depth + 1)
-        .setTint(this.palette.accent)
+        .setTint(BRAND.emberOrange)
         .setScale(0.9);
       this.blades.push(blade);
     }

@@ -254,6 +254,18 @@ export function computeStats(levels: UpgradeLevels): PlayerStats {
     const capped = Math.min(owned, def.maxLevel);
     for (let level = 1; level <= capped; level++) def.apply(stats, level);
   }
+  // Synergies that are pure stat changes (the rest run in SynergyController).
+  const owns = (id: string) => (levels[id] ?? 0) > 0;
+  if (owns('ember') && owns('storm')) {
+    // Firestorm: the old Emberblades, 2–4 blades, harder with more Ember and Storm.
+    const ember = Math.min(levels.ember ?? 0, 5);
+    const storm = Math.min(levels.storm ?? 0, 5);
+    stats.orbitBlades = 2 + (ember >= 3 ? 1 : 0) + (storm >= 3 ? 1 : 0);
+    stats.orbitBladeDamage = 1 + (ember + storm - 2) * 0.2;
+  }
+  if (owns('ember') && owns('titan')) stats.armorChance += 0.1; // Molten Armor
+  stats.armorChance = Math.min(0.4, stats.armorChance);
+
   // Time shortens every timed effect in one place, so new ones cannot forget it.
   stats.cooldownMul = Math.max(COOLDOWN_FLOOR, stats.cooldownMul);
   stats.homingInterval *= stats.cooldownMul;

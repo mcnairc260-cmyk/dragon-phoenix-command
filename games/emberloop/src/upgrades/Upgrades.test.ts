@@ -64,7 +64,7 @@ describe('computeStats', () => {
     expect(s.damageMul).toBeCloseTo(1.24);
     expect(s.rangeMul).toBeCloseTo(1.3);
     expect(s.speedMul).toBeCloseTo(1.08);
-    expect(s.armorChance).toBeCloseTo(0.14);
+    expect(s.armorChance).toBeCloseTo(0.14 + 0.1); // Titan 2 + Molten Armor (Ember + Titan synergy)
     expect(s.critChance).toBeCloseTo(0.18);
     expect(s.xpMul).toBeCloseTo(1.12);
     expect(s.emberValueMul).toBeCloseTo(1.12);

@@ -39,9 +39,14 @@ import { draftUpgrades, takeUpgrade } from '../upgrades/UpgradeDraft';
 import { gameOverPanel, pausePanel, progressionPanel, ultimatePanel, upgradePanel } from '../ui/panels';
 import { FACTIONS, KIND_ROLE, pickSpecies, type FactionId } from '../config/factions';
 import { UltimateController } from './UltimateController';
+import { SynergyController, type ShotTag } from './SynergyController';
+import { SYN, activeSynergies } from '../upgrades/Synergies';
 import { HazardField } from '../entities/Hazards';
 import { bossFor } from '../config/bosses';
 import { ULTIMATES_BY_ID, eligibleUltimates, evolutionStage, type UltimateId } from '../upgrades/Ultimates';
+
+/** Orbit-blade damage per second per point of blade damage (was 0.4 per frame at 60 fps). */
+const BLADE_DPS = 24;
 
 const DEPTH = {
   arena: 0,
@@ -71,6 +76,7 @@ export class GameScene extends Phaser.Scene {
   private boss!: Boss;
   private ultimates!: UltimateController;
   private hazards!: HazardField;
+  private synergies!: SynergyController;
   /** > 0 while damage from an ultimate is being applied (its kills do not charge the meter). */
   private ultimateDamageDepth = 0;
 
@@ -151,6 +157,29 @@ export class GameScene extends Phaser.Scene {
     this.player.spawn(this.arena.cx, this.arena.cy);
 
     this.boss = new Boss(this, DEPTH.boss);
+    this.synergies = new SynergyController({
+      scene: this,
+      fxDepth: DEPTH.fx,
+      fx: this.fx,
+      player: () => this.player,
+      stats: () => this.stats,
+      build: () => this.build,
+      enemies: () => this.enemies,
+      boss: () =>
+        this.bossActive && this.boss.active && !this.boss.intangible ? { x: this.boss.x, y: this.boss.y, radius: this.boss.radius } : null,
+      damageEnemy: (enemy, amount, canCrit) => this.damageEnemy(enemy, amount, canCrit),
+      damageEnemyRaw: (enemy, amount) => {
+        if (enemy.active && enemy.damage(amount)) this.killEnemy(enemy);
+      },
+      damageBoss: (amount) => this.damageBoss(amount),
+      healPlayer: (hearts) => this.healPlayer(hearts),
+      fireShot: (o) => {
+        this.spawnFriendlyShot({ ...o, x: this.player.x, y: this.player.y });
+      },
+      echoGrazeShot: (target, scale) => this.fireGrazeShot(target, scale),
+      announce: (text, color) =>
+        this.fx.floatText(this.player.x, this.player.y - 40, text, `#${color.toString(16).padStart(6, '0')}`, 15),
+    });
     // Boss hazards draw under enemies and the phoenix, over the board.
     this.hazards = new HazardField(this, DEPTH.pickup - 0.5);
     this.ultimates = new UltimateController({
@@ -167,10 +196,8 @@ export class GameScene extends Phaser.Scene {
       clearHostileBullets: (x, y, radius) => this.clearHostileBullets(x, y, radius),
       healPlayer: (hearts) => this.healPlayer(hearts),
       fireFriendly: (o) => {
-        const projectile = this.projectilePool.acquire();
-        projectile.spawn({ ...o, hostile: false, homing: false, radius: 5 });
+        const projectile = this.spawnFriendlyShot({ ...o, homing: false, radius: 5, tag: '' });
         projectile.fromUltimate = true;
-        this.projectiles.push(projectile);
       },
       slowMo: (scale, duration) => this.slowMo(scale, duration),
     });
@@ -418,6 +445,7 @@ export class GameScene extends Phaser.Scene {
     this.updateEnemies(dt);
     this.updateHazards(dt);
     this.ultimates.update(dt);
+    this.synergies.update(dt);
     this.updateProjectiles(dt);
     this.updatePickups(dt);
     this.updateTrail(dt);
@@ -576,7 +604,12 @@ export class GameScene extends Phaser.Scene {
         this.removeEnemyAt(i);
         continue;
       }
+      if (enemy.chillTimer > 0) {
+        enemy.chillTimer -= enemyDt;
+        if (enemy.chillTimer <= 0) enemy.chillHits = 0;
+      }
       if (enemy.disabled) enemy.updateDisabled(enemyDt);
+      else if (enemy.chillTimer > 0) enemy.update({ ...ctx, dt: enemyDt * (1 - SYN.frozenBarrage.chillSlow) });
       else enemy.update(ctx);
       // Anything that wanders far outside the caldera is recycled.
       if (this.arena.norm(enemy.x, enemy.y) > ARENA.cullRadius) {
@@ -794,7 +827,6 @@ export class GameScene extends Phaser.Scene {
 
   // ── Collisions ────────────────────────────────────────────────────────────
   private checkCollisions(dt: number): void {
-    void dt;
     const px = this.player.x;
     const py = this.player.y;
     const hitR = this.player.hitRadius;
@@ -823,7 +855,9 @@ export class GameScene extends Phaser.Scene {
       if (blades.length > 0) {
         for (const blade of blades) {
           if (Math.hypot(enemy.x - blade.x, enemy.y - blade.y) <= 16 + enemy.radius) {
-            this.damageEnemy(enemy, bladeDamage * 0.4, true);
+            // Per second, not per frame (the same on any phone), and no per-frame crit rolls.
+            this.damageEnemy(enemy, bladeDamage * BLADE_DPS * dt, false);
+            this.synergies.onBladeHit(enemy);
             break;
           }
         }
@@ -858,6 +892,7 @@ export class GameScene extends Phaser.Scene {
           if (Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y) <= projectile.radius + enemy.radius) {
             if (projectile.fromUltimate) this.asUltimate(() => this.damageEnemy(enemy, projectile.damage, true));
             else this.damageEnemy(enemy, projectile.damage, true);
+            if (projectile.tag === 'ice' && enemy.active) this.synergies.onIceHit(enemy);
             // Celestial bolts pass through a limited number of enemies.
             if (projectile.pierce > 0) {
               projectile.pierce -= 1;
@@ -897,7 +932,7 @@ export class GameScene extends Phaser.Scene {
       if (dist <= hitR + this.boss.radius && !this.boss.intangible) this.damagePlayer();
       for (const blade of blades) {
         if (Math.hypot(this.boss.x - blade.x, this.boss.y - blade.y) <= 16 + this.boss.radius) {
-          this.damageBoss(bladeDamage * 0.4);
+          this.damageBoss(bladeDamage * BLADE_DPS * dt);
           break;
         }
       }
@@ -925,7 +960,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   /** Option B: a near-miss fires a real ember from the phoenix (see GRAZE_SHOT). */
-  private fireGrazeShot(grazedEnemy: Enemy | null): void {
+  /** `echoScale` > 0 marks a Temporal Echo copy (half damage, never echoes again). */
+  private fireGrazeShot(grazedEnemy: Enemy | null, echoScale = 0): void {
     const px = this.player.x;
     const py = this.player.y;
     let target: { x: number; y: number } | null = grazedEnemy;
@@ -937,25 +973,47 @@ export class GameScene extends Phaser.Scene {
       damage = GRAZE_SHOT.damageBulletGraze;
     }
     const angle = Math.atan2(target.y - py, target.x - px);
-    const projectile = this.projectilePool.acquire();
-    projectile.spawn({
+    this.spawnFriendlyShot({
       x: px,
       y: py,
       angle,
       speed: GRAZE_SHOT.speed,
-      color: this.player.colors.accent,
-      hostile: false,
+      color: echoScale > 0 ? BRAND.signalCyan : this.player.colors.accent,
       homing: true,
-      damage,
+      damage: echoScale > 0 ? damage * echoScale : damage,
       radius: GRAZE_SHOT.radius,
       life: GRAZE_SHOT.life,
+      pierce: 0,
+      tag: echoScale > 0 ? 'echo' : '',
     });
-    this.projectiles.push(projectile);
     this.fx.burstSparks(px, py, this.player.colors.accent, 3, 90);
+    if (echoScale === 0) this.synergies.onGrazeShot(grazedEnemy);
+  }
+
+  /** One friendly shot (graze shots, synergy shots, ultimate bolts). */
+  private spawnFriendlyShot(o: {
+    x: number;
+    y: number;
+    angle: number;
+    speed: number;
+    color: number;
+    damage: number;
+    radius: number;
+    life: number;
+    pierce: number;
+    homing: boolean;
+    tag: ShotTag;
+  }): Projectile {
+    const projectile = this.projectilePool.acquire();
+    projectile.spawn({ ...o, hostile: false });
+    projectile.tag = o.tag;
+    this.projectiles.push(projectile);
+    return projectile;
   }
 
   private collectPickup(pickup: Pickup): void {
     scoreEmber(this.score, this.stats.emberValueMul);
+    this.synergies.onPickup();
     audio.pickup(this.score.combo);
     haptics.play('pickup');
     this.fx.burstEmbers(pickup.x, pickup.y, this.player.colors.glow, 5);
@@ -1026,6 +1084,7 @@ export class GameScene extends Phaser.Scene {
     audio.hitEnemy();
 
     if (crit) {
+      this.synergies.onCrit(enemy);
       this.fx.flashOrb(enemy.x, enemy.y, this.player.colors.accent, this.stats.critRadius, 240);
       this.fx.shockwave(enemy.x, enemy.y, this.player.colors.accent, this.stats.critRadius, 300);
       // Critical explosions splash everything nearby.
@@ -1160,6 +1219,7 @@ export class GameScene extends Phaser.Scene {
   private damagePlayer(): void {
     const result = this.player.takeDamage();
     if (result === 'ignored') return;
+    this.synergies.onPlayerHit(result);
 
     if (result === 'shielded' || result === 'armored') {
       audio.hitEnemy();
@@ -1350,11 +1410,17 @@ export class GameScene extends Phaser.Scene {
     this.paused = true;
     const cards = draftUpgrades(this.build, Math.random, { playerLevel: this.levels.level });
 
-    session.ui.openPanel(upgradePanel(cards, this.levels.level), {
+    session.ui.openPanel(upgradePanel(cards, this.levels.level, this.build), {
       pick: (dataset) => {
         const id = dataset.id;
         if (!id) return;
+        const synergiesBefore = new Set(activeSynergies(this.build).map((s) => s.id));
         this.build = takeUpgrade(this.build, id);
+        for (const syn of activeSynergies(this.build)) {
+          if (synergiesBefore.has(syn.id)) continue;
+          session.ui.toast(`Synergy unlocked: ${syn.name}`, 2600);
+          this.fx.shockwave(this.player.x, this.player.y, syn.color, 300, 640, 1.2);
+        }
         this.stats = computeStats(this.build);
         this.player.applyStats(this.stats);
         this.score.comboDuration = SCORING.baseComboDuration * this.stats.comboDurationMul;

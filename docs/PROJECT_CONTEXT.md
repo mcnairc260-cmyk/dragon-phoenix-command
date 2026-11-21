@@ -278,6 +278,8 @@ Also applied from the Bible in the same pass: the player sprite was rebuilt as *
 
 **Expansion Stage 3 — Faction bosses (2026-11-21).** THE ASHBORN is retired (founder "3a"). Six faction bosses from the founder's Boss Roster (Magmathar, Criotharis, Nethermorph, Blightbloom, Skyrend, Aurelion) rotate one per encounter, each with three telegraphed signature attacks unlocked by phase (65% / 30% HP), phase-3 combos, a coloured named health bar and attack names on the HUD. Art cut with BiRefNet (older models failed on the poster's fiery backgrounds). All 18 attacks verified in-game; table in `games/emberloop/GAME_DESIGN.md` §5, detail and test results in `EXPANSION.md`.
 
+**Expansion Stage 5 — Synergies (2026-11-21).** All 10 shard synergies are live; the old upgrades' mechanics return through them (Firestorm = Emberblades + chain lightning, Thunder Tempest, Molten Armor). Every triggered effect has a cooldown and synergy damage cannot re-trigger itself. Orbit-blade damage changed from per-frame to per-second. Table in `games/emberloop/GAME_DESIGN.md` §8; tests and measurements in `EXPANSION.md`. Remaining: Stage 8 QA/polish and real-device play.
+
 ## 19. BREAKPOINT — 3D pool game, Phase 1 vertical slice (2026-08-29)
 
 A founder-directed session built **BREAKPOINT**, a physics-first 3D pool game, as a self-contained sub-application in `games/breakpoint/` — branch `claude/breakpoint-phase-1-pool-1sjmmi`. Full engineering record: `games/breakpoint/README.md`.
