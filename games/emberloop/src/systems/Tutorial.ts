@@ -44,7 +44,7 @@ const STEPS: Step[] = [
   },
   {
     id: 'burst',
-    html: 'Burst charged — <b>RELEASE TO IGNITE</b>',
+    html: 'Ultimate charged — <b>RELEASE TO UNLEASH</b>',
     done: (s) => s.burstsUsed >= 1,
     ready: (s) => s.burstReady,
     timeout: 8,

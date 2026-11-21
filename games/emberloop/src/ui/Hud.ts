@@ -16,6 +16,9 @@ export interface HudState {
   level: number;
   xpProgress: number;
   burstFraction: number;
+  /** Equipped ultimate (the Phoenix Burst until Ascension). */
+  ultimateName: string;
+  ultimateColor: number;
   burstCharges: number;
   maxBurstCharges: number;
   bossName?: string;
@@ -189,6 +192,7 @@ export class Hud {
         .setAlpha(charged ? 1 : 0.6);
     }
 
+    this.burstLabel.setText(state.ultimateName.toUpperCase());
     this.drawBars(state);
   }
 
@@ -226,11 +230,11 @@ export class Hud {
     g.fillStyle(BRAND.carbon, 0.9);
     g.fillRoundedRect(margin, burstY, burstWidth, 9, 4.5);
     const full = state.burstCharges >= state.maxBurstCharges;
-    g.fillStyle(full ? BRAND.rebirthGold : BRAND.emberOrange, full ? 0.95 : 0.85);
+    g.fillStyle(full ? state.ultimateColor : BRAND.emberOrange, full ? 0.95 : 0.85);
     g.fillRoundedRect(margin, burstY, Math.max(3, burstWidth * clamp(state.burstFraction, 0, 1)), 9, 4.5);
     if (state.burstCharges > 0) {
       // A pulsing outline says "you can release now".
-      g.lineStyle(2, BRAND.rebirthGold, 0.5 + 0.4 * Math.sin(this.pulse * 7));
+      g.lineStyle(2, state.ultimateColor, 0.5 + 0.4 * Math.sin(this.pulse * 7));
       g.strokeRoundedRect(margin - 1, burstY - 1, burstWidth + 2, 11, 5.5);
     }
 

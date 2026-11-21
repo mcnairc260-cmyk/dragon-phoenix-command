@@ -9,6 +9,7 @@ import { GameScene } from './scenes/GameScene';
 import { TitleScene } from './scenes/TitleScene';
 import { audio } from './systems/AudioEngine';
 import { Ui } from './ui/Ui';
+import { Capacitor } from '@capacitor/core';
 
 const ui = new Ui();
 session.init(ui);
@@ -121,12 +122,28 @@ if (session.debug) {
   requestAnimationFrame(sampleFps);
 }
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+// Skipped in the native iPhone app: the game ships inside the app, so it is already offline.
+if ('serviceWorker' in navigator && import.meta.env.PROD && !Capacitor.isNativePlatform()) {
   window.addEventListener('load', () => {
     // sw.js is copied verbatim from public/ and sits next to index.html.
     const swUrl = new URL('sw.js', window.location.href).href;
-    navigator.serviceWorker.register(swUrl, { scope: './' }).catch(() => {
-      // Offline support is a bonus, never a requirement to play.
-    });
+    navigator.serviceWorker
+      .register(swUrl, { scope: './', updateViaCache: 'none' })
+      .then((registration) => {
+        // A Home Screen app is usually resumed, not reopened, so look for a new
+        // deploy whenever it comes back to the foreground.
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') registration.update().catch(() => undefined);
+        });
+      })
+      .catch(() => {
+        // Offline support is a bonus, never a requirement to play.
+      });
+  });
+
+  // When a new version takes over, reload into it, but never in the middle of a run.
+  const hadController = navigator.serviceWorker.controller !== null;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController && !game.scene.isActive('Game')) window.location.reload();
   });
 }

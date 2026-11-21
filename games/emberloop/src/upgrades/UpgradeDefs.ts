@@ -1,9 +1,27 @@
 /**
- * Upgrade catalogue.
+ * Upgrade catalogue: the 12 Power Shards (founder's Power Shards art,
+ * art/power-shards.png; founder decision 2026-11-20 "2a": the shards replace
+ * the original 21 upgrades).
  *
- * Every upgrade is a pure description: a set of stat deltas applied per level.
+ * Every shard is a pure description: a set of stat deltas applied per level.
  * Nothing here touches Phaser or the DOM, so the whole build system is testable.
+ *
+ * The original upgrades' mechanics (orbit blades, chain lightning, magma trail,
+ * shrapnel, reflection, second Burst charge…) are still implemented and driven
+ * by the stats below; they return as shard synergies (Stage 5, EXPANSION.md).
  */
+import emberArt from '../assets/shards/ember.png';
+import frostArt from '../assets/shards/frost.png';
+import voidArt from '../assets/shards/void.png';
+import natureArt from '../assets/shards/nature.png';
+import stormArt from '../assets/shards/storm.png';
+import arcaneArt from '../assets/shards/arcane.png';
+import ascensionArt from '../assets/shards/ascension.png';
+import titanArt from '../assets/shards/titan.png';
+import timeArt from '../assets/shards/time.png';
+import hunterArt from '../assets/shards/hunter.png';
+import wardArt from '../assets/shards/ward.png';
+import cosmicArt from '../assets/shards/cosmic.png';
 
 export type UpgradeFamily = 'offense' | 'defense' | 'utility';
 export type Rarity = 'common' | 'rare' | 'legendary';
@@ -51,6 +69,17 @@ export interface PlayerStats {
   comboDurationMul: number;
   nearMissMul: number;
   emberValueMul: number;
+
+  /** Multiplies all damage the phoenix deals (Ember). */
+  damageMul: number;
+  /** Fraction enemies are slowed by, 0..FROST_CAP (Frost). Bosses get half. */
+  enemySlow: number;
+  /** Multiplies graze reach, graze-shot reach and Burst radius (Void). */
+  rangeMul: number;
+  /** Seconds per regenerated heart, 0 = off (Nature). */
+  regenInterval: number;
+  /** Multiplies every cooldown: Burst, shield, regen, auto-fire (Time). */
+  cooldownMul: number;
 }
 
 export interface UpgradeDef {
@@ -60,6 +89,14 @@ export interface UpgradeDef {
   rarity: Rarity;
   maxLevel: number;
   icon: string;
+  /** Crystal artwork URL. */
+  art: string;
+  /** False keeps a shard out of the draft entirely. */
+  available: boolean;
+  /** Extra draft condition on the current build (Ascension needs an element shard). */
+  requires?: (owned: UpgradeLevels) => boolean;
+  /** Player-facing effect at a given owned level (1-based). */
+  effect: (level: number) => string;
   /** Short player-facing text for the given (1-based) level being offered. */
   describe: (nextLevel: number) => string;
   /** Mutates the accumulating stat block for one owned level. */
@@ -96,277 +133,107 @@ export const BASE_STATS: PlayerStats = {
   comboDurationMul: 1,
   nearMissMul: 1,
   emberValueMul: 1,
+
+  damageMul: 1,
+  enemySlow: 0,
+  rangeMul: 1,
+  regenInterval: 0,
+  cooldownMul: 1,
 };
+
+/** Hard limits so no stack of shards can break the game. */
+export const FROST_CAP = 0.48;
+export const COOLDOWN_FLOOR = 0.72;
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
+/** Builds `describe` from `effect`: "+12% damage" or "+12% → +24% damage". */
+function shard(def: Omit<UpgradeDef, 'describe'>): UpgradeDef {
+  return {
+    ...def,
+    describe: (next) => (next <= 1 ? def.effect(1) : `${def.effect(next - 1)}  →  ${def.effect(next)}`),
+  };
+}
+
+/** Shards that each unlock an elemental ultimate (mirrors upgrades/Ultimates.ts). */
+export const ELEMENT_SHARD_IDS = ['ember', 'frost', 'void', 'nature', 'storm', 'arcane'] as const;
+
+const REGEN_SECONDS = [0, 0, 45, 35, 25];
+const WARD_SECONDS = [0, 14, 11, 8];
+const ARCANE_INTERVAL = [0, 1.6, 1.4, 1.2];
+
 export const UPGRADES: readonly UpgradeDef[] = [
-  // ── OFFENSE ────────────────────────────────────────────────────────────────
-  {
-    id: 'orbit-blades',
-    name: 'Emberblades',
-    family: 'offense',
-    rarity: 'common',
-    maxLevel: 4,
-    icon: '🗡',
-    describe: (n) => `${n} fire blade${n > 1 ? 's' : ''} orbit you, burning anything they touch.`,
-    apply: (s) => {
-      s.orbitBlades += 1;
-    },
-  },
-  {
-    id: 'blade-heat',
-    name: 'White-Hot Edge',
-    family: 'offense',
-    rarity: 'rare',
-    maxLevel: 3,
-    icon: '♨',
-    describe: (n) => `Orbiting blades deal +${n} damage and swing wider.`,
-    apply: (s) => {
-      s.orbitBladeDamage += 1;
-    },
-  },
-  {
-    id: 'chain-lightning',
-    name: 'Chain Lightning',
-    family: 'offense',
-    rarity: 'rare',
-    maxLevel: 3,
-    icon: '⚡',
-    describe: (n) => `Damage arcs to ${n + 1} nearby enemies.`,
+  shard({
+    id: 'ember', name: 'Ember Shard', family: 'offense', rarity: 'common', maxLevel: 5, icon: '🔥', art: emberArt, available: true,
+    effect: (l) => `+${l * 12}% damage`,
+    apply: (s) => { s.damageMul += 0.12; },
+  }),
+  shard({
+    id: 'frost', name: 'Frost Shard', family: 'defense', rarity: 'common', maxLevel: 4, icon: '❄️', art: frostArt, available: true,
+    effect: (l) => `Enemies ${pct(Math.min(FROST_CAP, l * 0.12))} slower (bosses half)`,
+    apply: (s) => { s.enemySlow = Math.min(FROST_CAP, s.enemySlow + 0.12); },
+  }),
+  shard({
+    id: 'void', name: 'Void Shard', family: 'offense', rarity: 'common', maxLevel: 5, icon: '🌀', art: voidArt, available: true,
+    effect: (l) => `+${l * 10}% range: graze reach, graze shots, Burst`,
+    apply: (s) => { s.rangeMul += 0.1; },
+  }),
+  shard({
+    id: 'nature', name: 'Nature Shard', family: 'defense', rarity: 'rare', maxLevel: 4, icon: '🌿', art: natureArt, available: true,
+    effect: (l) => (l <= 1 ? 'Restore 1 heart now' : `Restore 1 heart now; regrow 1 every ${REGEN_SECONDS[l]}s`),
+    apply: (s, level) => { s.regenInterval = REGEN_SECONDS[level] ?? 0; },
+  }),
+  shard({
+    id: 'storm', name: 'Storm Shard', family: 'utility', rarity: 'common', maxLevel: 5, icon: '⚡', art: stormArt, available: true,
+    effect: (l) => `+${l * 8}% flight speed`,
+    apply: (s) => { s.speedMul += 0.08; },
+  }),
+  shard({
+    id: 'arcane', name: 'Arcane Shard', family: 'offense', rarity: 'legendary', maxLevel: 3, icon: '✴️', art: arcaneArt, available: true,
+    effect: (l) => `Auto-fire ${l} seeking bolt${l > 1 ? 's' : ''} every ${ARCANE_INTERVAL[l]}s`,
     apply: (s, level) => {
-      s.chainTargets += 1;
-      if (level > 1) s.chainDamage += 0.5;
+      s.homingShots = level;
+      s.homingInterval = ARCANE_INTERVAL[level] ?? 1.2;
     },
-  },
-  {
-    id: 'crit-bloom',
-    name: 'Critical Bloom',
-    family: 'offense',
-    rarity: 'common',
-    maxLevel: 4,
-    icon: '✹',
-    describe: (n) => `${pct(n * 0.12)} chance for hits to detonate in a fire bloom.`,
+  }),
+  shard({
+    id: 'ascension', name: 'Ascension Shard', family: 'utility', rarity: 'legendary', maxLevel: 3, icon: '🜂', art: ascensionArt,
+    // Turns the Burst into an elemental ultimate (upgrades/Ultimates.ts); only
+    // offered once the player owns an element shard to draw it from.
+    available: true,
+    requires: (owned) => ELEMENT_SHARD_IDS.some((id) => (owned[id] ?? 0) > 0),
+    effect: (l) =>
+      l <= 1 ? 'Awaken: trade the Burst for an elemental ultimate' : `${l === 2 ? 'Radiant' : 'Transcendent'}: ultimate +${(l - 1) * 35}% power`,
+    apply: () => undefined,
+  }),
+  shard({
+    id: 'titan', name: 'Titan Shard', family: 'defense', rarity: 'common', maxLevel: 4, icon: '🛡️', art: titanArt, available: true,
+    effect: (l) => `${l * 7}% chance to shrug off a hit`,
+    apply: (s) => { s.armorChance += 0.07; },
+  }),
+  shard({
+    id: 'time', name: 'Time Shard', family: 'utility', rarity: 'common', maxLevel: 4, icon: '⏳', art: timeArt, available: true,
+    effect: (l) => `Cooldowns ${l * 7}% shorter`,
+    apply: (s) => { s.cooldownMul = Math.max(COOLDOWN_FLOOR, s.cooldownMul - 0.07); },
+  }),
+  shard({
+    id: 'hunter', name: 'Hunter Shard', family: 'offense', rarity: 'common', maxLevel: 4, icon: '🎯', art: hunterArt, available: true,
+    effect: (l) => `${l * 6}% crit chance (double damage + blast)`,
+    apply: (s) => { s.critChance += 0.06; },
+  }),
+  shard({
+    id: 'ward', name: 'Ward Shard', family: 'defense', rarity: 'rare', maxLevel: 3, icon: '✚', art: wardArt, available: true,
+    effect: (l) => `Shield blocks 1 hit, recharges in ${WARD_SECONDS[l]}s`,
+    apply: (s, level) => { s.shieldRecharge = WARD_SECONDS[level] ?? 8; },
+  }),
+  shard({
+    id: 'cosmic', name: 'Cosmic Shard', family: 'utility', rarity: 'common', maxLevel: 4, icon: '🌌', art: cosmicArt, available: true,
+    effect: (l) => `+${l * 12}% XP and ember value`,
     apply: (s) => {
-      s.critChance += 0.12;
-      s.critRadius += 8;
+      s.xpMul += 0.12;
+      s.emberValueMul += 0.12;
     },
-  },
-  {
-    id: 'homing-embers',
-    name: 'Homing Embers',
-    family: 'offense',
-    rarity: 'common',
-    maxLevel: 4,
-    icon: '✦',
-    describe: (n) => (n === 1 ? 'Auto-fire a seeking ember at the nearest threat.' : `Fire ${n} seeking embers per volley.`),
-    apply: (s) => {
-      s.homingShots += 1;
-      s.homingInterval = Math.max(0.55, s.homingInterval - 0.16);
-    },
-  },
-  {
-    id: 'burst-force',
-    name: 'Solar Detonation',
-    family: 'offense',
-    rarity: 'rare',
-    maxLevel: 3,
-    icon: '☀',
-    describe: () => 'Phoenix Burst deals +60% damage and reaches 20% further.',
-    apply: (s) => {
-      s.burstDamageMul += 0.6;
-      s.burstRadiusMul += 0.2;
-    },
-  },
-  {
-    id: 'magma-trail',
-    name: 'Magma Wake',
-    family: 'offense',
-    rarity: 'rare',
-    maxLevel: 3,
-    icon: '🌋',
-    describe: (n) => `Leave a burning trail dealing ${(n * 2.5).toFixed(1)} damage/sec.`,
-    apply: (s) => {
-      s.trailDps += 2.5;
-      s.trailRadius += 5;
-    },
-  },
-  {
-    id: 'ashfall',
-    name: 'Ashfall Doctrine',
-    family: 'offense',
-    rarity: 'legendary',
-    maxLevel: 1,
-    icon: '☄',
-    describe: () => 'Every kill spits three embers of shrapnel. Crits chain twice.',
-    apply: (s) => {
-      s.critChance += 0.18;
-      s.chainTargets += 2;
-      s.chainDamage += 0.5;
-      s.shrapnelOnKill = 3;
-    },
-  },
-
-  // ── DEFENSE ────────────────────────────────────────────────────────────────
-  {
-    id: 'shield',
-    name: 'Cinder Shield',
-    family: 'defense',
-    rarity: 'common',
-    maxLevel: 3,
-    icon: '🛡',
-    describe: (n) => `A shield absorbs one hit, recharging every ${(14 - (n - 1) * 3).toFixed(0)}s.`,
-    apply: (s, level) => {
-      // Level 1 grants the shield at 14s; each level shortens the recharge.
-      s.shieldRecharge = level === 1 ? 14 : Math.max(5, s.shieldRecharge - 3);
-    },
-  },
-  {
-    id: 'long-invuln',
-    name: 'Ashen Grace',
-    family: 'defense',
-    rarity: 'common',
-    maxLevel: 3,
-    icon: '⏳',
-    describe: () => 'Invulnerability after a hit lasts 0.5s longer.',
-    apply: (s) => {
-      s.invulnBonus += 0.5;
-    },
-  },
-  {
-    id: 'reflect',
-    name: 'Mirror Flame',
-    family: 'defense',
-    rarity: 'rare',
-    maxLevel: 3,
-    icon: '🪞',
-    describe: (n) => `${pct(n * 0.25)} chance to reflect enemy projectiles back.`,
-    apply: (s) => {
-      s.reflectChance += 0.25;
-    },
-  },
-  {
-    id: 'emergency-heal',
-    name: 'Second Dawn',
-    family: 'defense',
-    rarity: 'legendary',
-    maxLevel: 2,
-    icon: '🕊',
-    describe: () => 'When a hit would kill you, survive it and restore 1 health.',
-    apply: (s) => {
-      s.emergencyHeals += 1;
-    },
-  },
-  {
-    id: 'flame-armor',
-    name: 'Flame Armor',
-    family: 'defense',
-    rarity: 'rare',
-    maxLevel: 3,
-    icon: '🜂',
-    describe: (n) => `${pct(n * 0.15)} chance to shrug off damage entirely.`,
-    apply: (s) => {
-      s.armorChance += 0.15;
-    },
-  },
-
-  // ── UTILITY ────────────────────────────────────────────────────────────────
-  {
-    id: 'pickup-radius',
-    name: 'Ember Draw',
-    family: 'utility',
-    rarity: 'common',
-    maxLevel: 4,
-    icon: '🧲',
-    describe: () => 'Pull ember shards in from 45% further away.',
-    apply: (s) => {
-      s.pickupRadiusMul += 0.45;
-    },
-  },
-  {
-    id: 'swift',
-    name: 'Updraft',
-    family: 'utility',
-    rarity: 'common',
-    maxLevel: 4,
-    icon: '💨',
-    describe: () => 'Move 12% faster.',
-    apply: (s) => {
-      s.speedMul += 0.12;
-    },
-  },
-  {
-    id: 'slow-projectiles',
-    name: 'Heavy Air',
-    family: 'utility',
-    rarity: 'rare',
-    maxLevel: 3,
-    icon: '🌫',
-    describe: () => 'Enemy projectiles travel 18% slower.',
-    apply: (s) => {
-      s.enemyProjectileSpeedMul *= 0.82;
-    },
-  },
-  {
-    id: 'more-xp',
-    name: 'Rising Insight',
-    family: 'utility',
-    rarity: 'common',
-    maxLevel: 4,
-    icon: '📈',
-    describe: () => 'Gain 25% more experience.',
-    apply: (s) => {
-      s.xpMul += 0.25;
-    },
-  },
-  {
-    id: 'combo-duration',
-    name: 'Long Burn',
-    family: 'utility',
-    rarity: 'common',
-    maxLevel: 3,
-    icon: '⏱',
-    describe: () => 'Your Heat combo lasts 30% longer before cooling.',
-    apply: (s) => {
-      s.comboDurationMul += 0.3;
-    },
-  },
-  {
-    id: 'near-miss',
-    name: 'Brinkwalker',
-    family: 'utility',
-    rarity: 'rare',
-    maxLevel: 3,
-    icon: '🎯',
-    describe: () => 'Near-misses give 60% more Heat, score and burst energy.',
-    apply: (s) => {
-      s.nearMissMul += 0.6;
-    },
-  },
-  {
-    id: 'second-burst',
-    name: 'Twin Phoenix',
-    family: 'utility',
-    rarity: 'legendary',
-    maxLevel: 1,
-    icon: '🔥',
-    describe: () => 'Store a second Phoenix Burst charge.',
-    apply: (s) => {
-      s.burstCharges += 1;
-    },
-  },
-  {
-    id: 'ember-value',
-    name: 'Molten Fortune',
-    family: 'utility',
-    rarity: 'rare',
-    maxLevel: 3,
-    icon: '💎',
-    describe: () => 'Ember shards are worth 40% more score and currency.',
-    apply: (s) => {
-      s.emberValueMul += 0.4;
-    },
-  },
+  }),
 ];
 
 export const UPGRADES_BY_ID: ReadonlyMap<string, UpgradeDef> = new Map(
@@ -387,5 +254,11 @@ export function computeStats(levels: UpgradeLevels): PlayerStats {
     const capped = Math.min(owned, def.maxLevel);
     for (let level = 1; level <= capped; level++) def.apply(stats, level);
   }
+  // Time shortens every timed effect in one place, so new ones cannot forget it.
+  stats.cooldownMul = Math.max(COOLDOWN_FLOOR, stats.cooldownMul);
+  stats.homingInterval *= stats.cooldownMul;
+  stats.shieldRecharge *= stats.cooldownMul;
+  stats.regenInterval *= stats.cooldownMul;
+  stats.enemySlow = Math.min(FROST_CAP, Math.max(0, stats.enemySlow));
   return stats;
 }

@@ -3,6 +3,7 @@ import { PALETTES } from '../systems/Cosmetics';
 import { CONTROL_MODE_LABEL, type SaveData, type Settings } from '../systems/Progression';
 import { UPGRADES_BY_ID, type UpgradeLevels } from '../upgrades/UpgradeDefs';
 import type { DraftedUpgrade } from '../upgrades/UpgradeDraft';
+import type { UltimateDef } from '../upgrades/Ultimates';
 import { esc, formatNumber, formatTime } from './Ui';
 
 /** Level-up draft: three cards, one tap. */
@@ -11,14 +12,14 @@ export function upgradePanel(cards: DraftedUpgrade[], level: number): string {
     .map(
       (card) => `
       <button class="card card--${card.def.rarity}" data-action="pick" data-id="${esc(card.def.id)}">
-        <span class="card__icon">${esc(card.def.icon)}</span>
+        <img class="card__art" src="${esc(card.def.art)}" alt="" draggable="false" />
         <span>
           <span class="card__name">${esc(card.def.name)}</span>
           <span class="card__desc">${esc(card.def.describe(card.nextLevel))}</span>
           <span class="card__meta">
             <span class="tag tag--${card.def.rarity}">${card.def.rarity}</span>
             <span class="tag tag--${card.def.family}">${card.def.family}</span>
-            <span class="tag tag--level">${card.isNew ? 'NEW' : `LV ${card.nextLevel}`}</span>
+            <span class="tag tag--level">${card.isNew ? 'NEW' : `LV ${card.nextLevel} / ${card.def.maxLevel}`}</span>
           </span>
         </span>
       </button>`,
@@ -28,9 +29,37 @@ export function upgradePanel(cards: DraftedUpgrade[], level: number): string {
   return `
     <div class="scrim"></div>
     <div class="panel">
-      <div class="eyebrow">Level ${level} — choose your rising</div>
+      <div class="eyebrow">Level ${level} — choose a Power Shard</div>
       <div class="cards">${cardHtml || '<p>Every path is fully forged. Keep burning.</p>'}</div>
       ${cards.length === 0 ? '<button class="btn btn--primary" data-action="skip">Continue</button>' : ''}
+    </div>`;
+}
+
+/**
+ * Ascension, first level: trade the Phoenix Burst for one elemental ultimate.
+ * Only ultimates of element shards the player owns are offered. One per run.
+ */
+export function ultimatePanel(options: UltimateDef[]): string {
+  const cards = options
+    .map((u) => {
+      const shard = u.element ? UPGRADES_BY_ID.get(u.element) : undefined;
+      return `
+      <button class="card card--legendary" data-action="ultimate" data-id="${esc(u.id)}">
+        ${shard ? `<img class="card__art" src="${esc(shard.art)}" alt="" draggable="false" />` : '<span></span>'}
+        <span>
+          <span class="card__name">${esc(u.name)}</span>
+          <span class="card__desc">${esc(u.blurb)}</span>
+          <span class="card__meta"><span class="tag tag--legendary">ultimate</span><span class="tag tag--level">replaces burst</span></span>
+        </span>
+      </button>`;
+    })
+    .join('');
+  return `
+    <div class="scrim"></div>
+    <div class="panel">
+      <div class="eyebrow">Awakened — choose your ultimate</div>
+      <p class="panel__note">Release your finger to unleash it. One ultimate per run.</p>
+      <div class="cards">${cards}</div>
     </div>`;
 }
 
@@ -172,7 +201,7 @@ export function howToPanel(): string {
         ${howRow('👆', 'Drag anywhere', 'The phoenix mirrors your finger from wherever it already is — rest your thumb low, away from the action, so you can always see it. Other control styles are in the pause menu.')}
         ${howRow('💎', 'Collect embers, fast', 'Shards are score, currency and experience. Gather them in quick succession to build an Ember Chain for bonus XP — levelling never makes the enemies harder.')}
         ${howRow('🔥', 'Graze danger', 'Near-misses build Heat. Heat multiplies everything — but it cools fast.')}
-        ${howRow('☄', 'Release to burst', 'Holding charges the Phoenix Burst. Let go when it is full to clear the screen.')}
+        ${howRow('☄', 'Release to unleash', 'Holding charges your ultimate. Let go when the bar is full. You start with the Phoenix Burst; an Ascension Shard turns it into an elemental ultimate.')}
         ${howRow('❤', 'Three lives', 'Every hit costs one and breaks your combo. The Ashborn wakes at 80 seconds — felling it restores a life.')}
       </div>
       <button class="btn btn--primary" data-action="close">Got it</button>
@@ -212,7 +241,7 @@ function buildChips(build: UpgradeLevels): string {
     .map(([id, level]) => {
       const def = UPGRADES_BY_ID.get(id);
       if (!def) return '';
-      return `<span class="build-chip">${esc(def.icon)} ${esc(def.name)}${level > 1 ? ` ×${level}` : ''}</span>`;
+      return `<span class="build-chip"><img class="build-chip__art" src="${esc(def.art)}" alt="" />${esc(def.name)}${level > 1 ? ` ×${level}` : ''}</span>`;
     })
     .filter(Boolean)
     .join('');

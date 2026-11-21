@@ -51,6 +51,8 @@ export const SIGNAL = {
   violet: 0xa855f7,
   magenta: 0xf43f7e,
   crimson: 0xff3b30,
+  /** Nature Blight faction (founder's enemy roster): toxic green has no brand equivalent. */
+  toxic: 0x7ddc3a,
 } as const;
 
 /**

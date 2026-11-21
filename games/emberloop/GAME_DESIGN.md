@@ -40,8 +40,8 @@ only where the target comes from differs.
 | Input | Effect |
 |---|---|
 | Press and drag anywhere | Steer per the mode above. Speed ramps with distance to the target, hitting full speed ~90 px out, so small nudges give fine control. |
-| Hold | Charge the Phoenix Burst meter (faster while moving; near-misses and kills add extra). |
-| Release | **Fire the Phoenix Burst** if a charge is stored. |
+| Hold | Charge the ultimate meter (faster while moving; near-misses and kills add extra). |
+| Release | **Fire your ultimate** if a charge is stored: the Phoenix Burst until the Ascension Shard swaps it for an elemental ultimate (see `EXPANSION.md`, Stage 6). |
 | Pause button (top-right) | Pause + settings. |
 | Desktop extras | Space = burst, Esc/P = pause. |
 
@@ -155,6 +155,11 @@ stages 10; a boss kill a further 24.
 | 5 | **Splitter** | Magenta | Slow, tanky; on death divides into 3 faster half-size shards. Killing it near you is a mistake. |
 | 6 | **Magma Mine** | Crimson | Spawns *inside* the arena and never moves. Pulses faster and faster, then detonates in a 96 px blast. Area denial. |
 
+**Faction species (2026-11-20).** Cinder, Dart and Spitter now appear as the
+founder's 18 faction creatures (chaser / charger / shooter of six factions),
+keeping these exact behaviours with per-species speed, toughness and size.
+Data: `src/config/factions.ts`; details: `EXPANSION.md`.
+
 **Readability rules:** every committed attack has a telegraph you can see before
 it lands; the telegraph line shows exactly where the attack will go; each
 archetype has a distinct silhouette *and* a distinct colour, so threat type is
@@ -207,49 +212,36 @@ expensive.
 - **Burst energy** from movement (14/s at speed), idling (3.5/s), near-misses (7)
   and kills (2.2).
 
-## 8. Upgrades
+## 8. Power Shards (upgrades)
 
-21 upgrades across three families and three rarities. Draw weights are
-common 100 / rare 32 / legendary 7, with non-commons scaled by `1 + level/25` so
-late runs see rarer cards. A card already at max level is never offered, and the
-three cards in a draft are always distinct.
+Since 2026-11-20 the level-up draft offers the founder's **12 Power Shards**
+(art: `art/power-shards.png`), replacing the original 21 upgrades (founder
+decision "2a"). Draw weights stay common 100 / rare 32 / legendary 7, with
+non-commons scaled by `1 + level/25`. A maxed shard is never offered, and the
+three cards in a draft are always distinct. Cards show the crystal, the effect
+now → next, and `LV n / max`. Values live in `src/upgrades/UpgradeDefs.ts`.
 
-### Offense
-| Upgrade | Rarity | Max | Effect |
-|---|---|---|---|
-| Emberblades | Common | 4 | +1 orbiting fire blade |
-| White-Hot Edge | Rare | 3 | Blades deal +1 damage and orbit wider/faster |
-| Chain Lightning | Rare | 3 | Damage arcs to +1 nearby enemy (and +0.5 arc damage after L1) |
-| Critical Bloom | Common | 4 | +12% chance hits detonate in a fire bloom |
-| Homing Embers | Common | 4 | +1 auto-fired seeking ember, faster volleys |
-| Solar Detonation | Rare | 3 | Burst +60% damage, +20% radius |
-| Magma Wake | Rare | 3 | Burning trail, +2.5 damage/sec |
-| Ashfall Doctrine | **Legendary** | 1 | +18% crit, +2 chain targets, kills throw 3 shrapnel embers |
+| Shard | Rarity | Max | Effect per level | Hard limit |
+|---|---|---|---|---|
+| Ember | Common | 5 | +12% damage (graze shots, Burst, bolts, crit splash, bosses) | — |
+| Frost | Common | 4 | Enemies run 12% slower (movement and wind-ups); bosses half | 48% |
+| Void | Common | 5 | +10% range: graze ring, graze-shot reach, Burst radius | — |
+| Nature | Rare | 4 | Restore 1 heart on pick; from L2 regrow 1 heart every 45 / 35 / 25 s | never above 3 hearts |
+| Storm | Common | 5 | +8% flight speed | — |
+| Arcane | Legendary | 3 | Auto-fire 1 / 2 / 3 seeking bolts every 1.6 / 1.4 / 1.2 s | 3 bolts |
+| Ascension | Legendary | 3 | L1: trade the Burst for an elemental ultimate (needs an element shard); L2–L3: ultimate ×1.35 / ×1.7 and evolution | — |
+| Titan | Common | 4 | +7% chance to shrug off a hit | 28% |
+| Time | Common | 4 | All cooldowns 7% shorter (Burst, shield, regen, bolts) | 72% of base |
+| Hunter | Common | 4 | +6% crit chance (double damage + splash blast) | 24% |
+| Ward | Rare | 3 | Shield blocks 1 hit; recharge 14 / 11 / 8 s | — |
+| Cosmic | Common | 4 | +12% XP and ember value | — |
 
-### Defense
-| Upgrade | Rarity | Max | Effect |
-|---|---|---|---|
-| Cinder Shield | Common | 3 | Absorbs one hit; recharge 14 s → 11 s → 8 s |
-| Ashen Grace | Common | 3 | +0.5 s invulnerability after a hit |
-| Mirror Flame | Rare | 3 | +25% chance to reflect enemy bullets back as yours |
-| Flame Armor | Rare | 3 | +15% chance to ignore damage entirely |
-| Second Dawn | **Legendary** | 2 | A lethal hit is survived at 1 HP instead |
-
-### Utility
-| Upgrade | Rarity | Max | Effect |
-|---|---|---|---|
-| Ember Draw | Common | 4 | +45% pickup radius |
-| Updraft | Common | 4 | +12% movement speed |
-| Rising Insight | Common | 4 | +25% XP |
-| Long Burn | Common | 3 | +30% combo duration |
-| Heavy Air | Rare | 3 | Enemy bullets 18% slower (multiplicative) |
-| Brinkwalker | Rare | 3 | +60% near-miss Heat, score and burst energy |
-| Molten Fortune | Rare | 3 | +40% shard score and currency |
-| Twin Phoenix | **Legendary** | 1 | A second stored Phoenix Burst charge |
-
-Stacking is intentional and visible: Emberblades adds real orbiting sprites,
-Magma Wake paints a trail, Cinder Shield draws a ring, Twin Phoenix adds a HUD
-charge pip. All levels fold into one stat block via `computeStats()`.
+The original upgrades' mechanics (orbiting blades, chain lightning, magma
+trail, shrapnel, bullet reflection, second Burst charge, emergency revive)
+remain implemented and stat-driven; they return as shard **synergies**
+(`EXPANSION.md`, Stage 5). All levels fold into one stat block via
+`computeStats()`, which also applies Time to every timed effect and enforces
+the hard limits.
 
 ## 9. Progression & cosmetics
 

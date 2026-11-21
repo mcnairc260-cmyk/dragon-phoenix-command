@@ -3,8 +3,10 @@ import { BURST, PLAYER } from '../config/GameConfig';
 import { clamp, damp } from '../core/math';
 import { TEX } from '../effects/Textures';
 import type { Arena } from '../effects/Arena';
+import { PhoenixSprite } from './PhoenixSprite';
 import type { Palette } from '../systems/Cosmetics';
 import type { PlayerStats } from '../upgrades/UpgradeDefs';
+import { BRAND, SIGNAL } from '../config/brand';
 
 export interface PointerTarget {
   active: boolean;
@@ -37,11 +39,18 @@ export class Player {
 
   ascended = false;
   stats!: PlayerStats;
+  /** Temporary flight-speed multiplier (Storm Apocalypse). */
+  speedBoost = 1;
+  /** Ascension level 0–3: Mortal, Awakened, Radiant, Transcendent. */
+  evolution = 0;
+  private celestial = false;
+  private readonly aura: Phaser.GameObjects.Image;
+  private readonly aura2: Phaser.GameObjects.Image;
 
   private readonly scene: Phaser.Scene;
   private readonly glow: Phaser.GameObjects.Image;
   private readonly innerGlow: Phaser.GameObjects.Image;
-  private readonly body: Phaser.GameObjects.Image;
+  private readonly body: PhoenixSprite;
   private readonly shieldRing: Phaser.GameObjects.Image;
   private readonly trail: Phaser.GameObjects.Particles.ParticleEmitter;
   private readonly blades: Phaser.GameObjects.Image[] = [];
@@ -50,7 +59,13 @@ export class Player {
   private pulse = 0;
   private palette!: Palette;
 
-  reducedMotion = false;
+  get reducedMotion(): boolean {
+    return this.body.reducedMotion;
+  }
+
+  set reducedMotion(on: boolean) {
+    this.body.reducedMotion = on;
+  }
 
   constructor(scene: Phaser.Scene, depth: number, palette: Palette, stats: PlayerStats) {
     this.scene = scene;
@@ -77,7 +92,10 @@ export class Player {
       .setDepth(depth + 2)
       .setScale(0.32)
       .setVisible(false);
-    this.body = scene.add.image(0, 0, TEX.phoenix).setDepth(depth + 3).setScale(1.0);
+    this.body = new PhoenixSprite(scene, depth + 3);
+    // Evolution overlays sit behind the bird so the art is never covered.
+    this.aura = scene.add.image(0, 0, TEX.ring).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth + 1).setVisible(false);
+    this.aura2 = scene.add.image(0, 0, TEX.ring).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth + 1).setVisible(false);
 
     this.setPalette(palette);
     this.applyStats(stats);
@@ -87,10 +105,19 @@ export class Player {
     this.palette = palette;
     this.glow.setTint(palette.glow);
     this.innerGlow.setTint(palette.accent);
-    this.body.setTint(palette.core);
     this.shieldRing.setTint(palette.accent);
     this.trail.setParticleTint(palette.glow);
     for (const blade of this.blades) blade.setTint(palette.accent);
+  }
+
+  /** Evolution stage from the Ascension Shard (Stage 7 of the expansion). */
+  setEvolution(level: number): void {
+    this.evolution = Math.max(0, Math.min(3, level));
+  }
+
+  /** Celestial Ascendancy transformation on/off. */
+  setCelestial(on: boolean): void {
+    this.celestial = on;
   }
 
   get colors(): Palette {
@@ -106,7 +133,7 @@ export class Player {
       const blade = this.scene.add
         .image(0, 0, TEX.blade)
         .setBlendMode(Phaser.BlendModes.ADD)
-        .setDepth(this.body.depth + 1)
+        .setDepth(this.body.container.depth + 1)
         .setTint(this.palette.accent)
         .setScale(0.9);
       this.blades.push(blade);
@@ -123,6 +150,9 @@ export class Player {
   }
 
   spawn(x: number, y: number): void {
+    this.speedBoost = 1;
+    this.evolution = 0;
+    this.celestial = false;
     this.x = x;
     this.y = y;
     this.vx = 0;
@@ -151,7 +181,7 @@ export class Player {
   }
 
   get nearMissRadius(): number {
-    return PLAYER.nearMissRadius;
+    return PLAYER.nearMissRadius * this.stats.rangeMul;
   }
 
   get invulnerable(): boolean {
@@ -159,7 +189,7 @@ export class Player {
   }
 
   update(dt: number, pointer: PointerTarget, arena: Arena): void {
-    const maxSpeed = PLAYER.baseSpeed * this.stats.speedMul;
+    const maxSpeed = PLAYER.baseSpeed * this.stats.speedMul * this.speedBoost;
 
     if (pointer.active) {
       const dx = pointer.x - this.x;
@@ -194,13 +224,11 @@ export class Player {
     if (arena.clamp(point, 1)) {
       this.x = point.x;
       this.y = point.y;
-      const nx = (this.x - arena.cx) / arena.rx;
-      const ny = (this.y - arena.cy) / arena.ry;
-      const len = Math.hypot(nx, ny) || 1;
-      const dot = (this.vx * nx + this.vy * ny) / len;
+      const n = arena.wallNormal(this.x, this.y);
+      const dot = this.vx * n.x + this.vy * n.y;
       if (dot > 0) {
-        this.vx -= (nx / len) * dot * 1.3;
-        this.vy -= (ny / len) * dot * 1.3;
+        this.vx -= n.x * dot * 1.3;
+        this.vy -= n.y * dot * 1.3;
       }
     }
 
@@ -224,9 +252,6 @@ export class Player {
       const target = Math.atan2(this.vy, this.vx);
       this.facing = Phaser.Math.Angle.RotateTo(this.facing, target, 12 * dt);
     }
-    this.body.setRotation(this.facing);
-    this.body.setPosition(this.x, this.y);
-    this.body.setTexture(this.ascended ? TEX.phoenixAscended : TEX.phoenix);
 
     // Brand Bible motion rule: "subtle, purposeful ... never bouncy, never
     // busy." A slow breath only — the fast wing-beat read as bounce.
@@ -240,13 +265,15 @@ export class Player {
     this.innerGlow.setPosition(this.x, this.y).setRotation(this.facing);
     this.innerGlow.setScale(0.62 * breathe * ascendBoost);
     this.innerGlow.setAlpha(this.invulnerable ? 0.4 : 0.85);
-    const bodyScale = this.ascended ? 1.16 : 1.0;
-    this.body.setScale(bodyScale * breathe);
+    const maxSpeed = PLAYER.baseSpeed * this.stats.speedMul;
+    this.body.setSize(this.ascended ? 1.16 : 1.0);
+    this.body.update(dt, this.x, this.y, this.vx, this.vy, this.speed / maxSpeed);
     this.body.setAlpha(this.invulnerable ? 0.5 + 0.4 * Math.sin(this.pulse * 30) : 1);
 
     // Emit behind the bird so its nose and wings remain crisp at full speed.
     this.trail.setPosition(this.x - Math.cos(this.facing) * 22, this.y - Math.sin(this.facing) * 22);
-    this.trail.frequency = this.ascended ? 10 : 18;
+    this.trail.frequency = this.ascended || this.evolution >= 2 || this.celestial ? 10 : 18;
+    this.updateAura();
 
     this.shieldRing.setVisible(this.shieldActive);
     if (this.shieldActive) {
@@ -265,6 +292,33 @@ export class Player {
       blade.setRotation(a + Math.PI / 2);
       blade.setAlpha(0.85);
     }
+  }
+
+  /**
+   * Awakened: a faint gold ring. Radiant: brighter, plus a stronger trail.
+   * Transcendent: a second counter-rotating ring. Celestial Ascendancy: both
+   * rings in gold and violet, larger. Kept behind the bird and translucent.
+   */
+  private updateAura(): void {
+    const stage = this.evolution;
+    const show = stage > 0 || this.celestial;
+    this.aura.setVisible(show);
+    this.aura2.setVisible(stage >= 3 || this.celestial);
+    if (!show) return;
+    const beat = this.reducedMotion ? 0 : Math.sin(this.pulse * 3);
+    const base = this.celestial ? 0.36 : 0.2 + stage * 0.035;
+    this.aura
+      .setPosition(this.x, this.y)
+      .setTint(this.celestial ? SIGNAL.magenta : BRAND.rebirthGold)
+      .setScale(base + beat * 0.012)
+      .setRotation(this.pulse * 0.6)
+      .setAlpha(this.celestial ? 0.75 : 0.25 + stage * 0.12);
+    this.aura2
+      .setPosition(this.x, this.y)
+      .setTint(this.celestial ? BRAND.rebirthGold : BRAND.ghostWhite)
+      .setScale(base * 1.25 - beat * 0.012)
+      .setRotation(-this.pulse * 0.9)
+      .setAlpha(this.celestial ? 0.6 : 0.35);
   }
 
   /** Positions of the live orbit blades, for collision in the game scene. */
@@ -302,11 +356,11 @@ export class Player {
 
   consumeBurst(): void {
     this.burstCharges = Math.max(0, this.burstCharges - 1);
-    this.burstCooldown = BURST.cooldown;
+    this.burstCooldown = BURST.cooldown * this.stats.cooldownMul;
   }
 
   get burstRadius(): number {
-    return BURST.radius * this.stats.burstRadiusMul;
+    return BURST.radius * this.stats.burstRadiusMul * this.stats.rangeMul;
   }
 
   get burstDamage(): number {
@@ -354,6 +408,8 @@ export class Player {
     this.innerGlow.destroy();
     this.body.destroy();
     this.shieldRing.destroy();
+    this.aura.destroy();
+    this.aura2.destroy();
     for (const blade of this.blades) blade.destroy();
     this.blades.length = 0;
   }

@@ -9,32 +9,48 @@
 export const DESIGN = { width: 390, height: 844 } as const;
 
 /**
- * The arena is a circle in *normalised* space that is rendered as an ellipse so
- * it fills a tall portrait screen. All gameplay maths uses the normalised radius
- *   n = sqrt((dx/rx)^2 + (dy/ry)^2)
- * where n = 1 is the arena wall. This keeps "circular arena" logic (angular
- * wedges, orbits, radial spawns) while using the whole phone screen.
+ * The arena wall is a rounded rectangle (a superellipse) fitted to the frame of
+ * the board art; see effects/Arena.ts. All gameplay maths uses the normalised
+ * radius n, where n = 1 is the wall. This keeps "circular arena" logic (angular
+ * wedges, orbits, radial spawns) whatever the shape or screen size.
  */
 export const ARENA = {
-  /** Fraction of half-width used for the horizontal radius. */
-  radiusXFactor: 0.94,
-  /** Fraction of half-height used for the vertical radius. */
-  radiusYFactor: 0.9,
-  /** Vertical centre of the arena as a fraction of screen height (HUD sits above). */
-  centerYFactor: 0.52,
-  /** Radius used when drawing arena art in unit space before the ellipse scale. */
+  /** Radius used when drawing hazard wedges in unit space before the arena scale. */
   drawRadius: 1000,
   /** Enemies spawn at this normalised radius (just outside the wall/screen). */
   spawnRadius: 1.18,
   /** Enemies further out than this are culled. */
   cullRadius: 1.9,
-  /** Degrees per second the arena art slowly rotates. */
-  spinDegPerSec: 1.6,
+} as const;
+
+/**
+ * Graze shots (founder decision 2026-11-20, "option B"): every near-miss also
+ * fires a real ember from the phoenix. Grazing an enemy shoots that enemy;
+ * grazing a bullet shoots the nearest enemy. Close flying is now an attack as
+ * well as the Heat/Burst engine. Damage is deliberately small: the Burst stays
+ * the big hit.
+ */
+export const GRAZE_SHOT = {
+  /** Damage when you grazed the enemy itself. */
+  damageEnemyGraze: 1,
+  /** Damage when you grazed a bullet (shot goes to the nearest enemy). */
+  damageBulletGraze: 0.5,
+  speed: 560,
+  radius: 5,
+  life: 1.2,
+  /** Bullet grazes only fire if an enemy is this close (px). */
+  bulletGrazeRange: 260,
 } as const;
 
 export const PLAYER = {
   maxHealth: 3,
   radius: 13,
+  /**
+   * On-screen wingspan of the phoenix art in CSS px. Kept small so the bird reads
+   * close to its hitbox, fits through gaps between enemies, and never hides the
+   * Emberblades orbiting at 44 px or shots leaving the body.
+   */
+  wingspan: 56,
   /** Hit radius is smaller than the visual — forgiving hitbox feels better on touch. */
   hitRadius: 9,
   /** Peak speed in px/sec at pointer-far distance. */
