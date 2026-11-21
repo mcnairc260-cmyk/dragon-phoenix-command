@@ -30,6 +30,9 @@ export class Projectile {
   lastHit: unknown = null;
   /** Fired by an ultimate: its kills do not charge the ultimate meter. */
   fromUltimate = false;
+  /** Seconds of homing left (Infinity = for its whole life) and turn rate in rad/s. */
+  homingTime = Infinity;
+  turnRate = 6;
 
   private readonly glow: Phaser.GameObjects.Image;
   private readonly body: Phaser.GameObjects.Image;
@@ -51,6 +54,8 @@ export class Projectile {
     radius?: number;
     life?: number;
     pierce?: number;
+    homingTime?: number;
+    turnRate?: number;
   }): void {
     this.active = true;
     this.x = options.x;
@@ -66,6 +71,8 @@ export class Projectile {
     this.pierce = options.pierce ?? 0;
     this.lastHit = null;
     this.fromUltimate = false;
+    this.homingTime = options.homingTime ?? Infinity;
+    this.turnRate = options.turnRate ?? 6;
 
     this.glow.setVisible(true).setTint(options.color).setScale((this.radius / 32) * 2.4).setAlpha(0.85);
     this.body.setVisible(true).setTint(0xffffff).setDisplaySize(this.radius * 2.6, this.radius * 2.6);
@@ -92,13 +99,14 @@ export class Projectile {
     if (this.nearMissTimer > 0) this.nearMissTimer -= dt;
     if (this.life <= 0) return false;
 
-    if (this.homing) {
+    if (this.homing && this.homingTime > 0) {
+      this.homingTime -= dt;
       const target = findTarget();
       if (target) {
         const desired = Math.atan2(target.y - this.y, target.x - this.x);
         const current = Math.atan2(this.vy, this.vx);
         // Limited turn rate keeps homing shots readable rather than instant-hit.
-        const next = Phaser.Math.Angle.RotateTo(current, desired, 6 * dt);
+        const next = Phaser.Math.Angle.RotateTo(current, desired, this.turnRate * dt);
         const speed = Math.hypot(this.vx, this.vy);
         this.vx = Math.cos(next) * speed;
         this.vy = Math.sin(next) * speed;

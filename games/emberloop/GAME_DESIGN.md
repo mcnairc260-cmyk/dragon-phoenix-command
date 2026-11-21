@@ -165,30 +165,38 @@ it lands; the telegraph line shows exactly where the attack will go; each
 archetype has a distinct silhouette *and* a distinct colour, so threat type is
 legible at a glance in a crowded arena.
 
-### The Ashborn (boss)
+### Faction bosses
 
-**Wakes at 1:20, and returns every 1:40** thereafter with +45% HP per encounter.
-A three-second warning (audio sting, screen flash, toast) precedes it.
+Since 2026-11-21 six faction bosses from the founder's Boss Roster replace THE
+ASHBORN (founder decision "3a"). They rotate in faction order — Magmathar,
+Criotharis, Nethermorph, Blightbloom, Skyrend, Aurelion, then repeat — one per
+encounter. **First at 1:20, then every 1:40**, with +45% HP per encounter and a
+three-second named warning (e.g. "MAGMATHAR — The Core Titan — awakens").
+Data: `src/config/bosses.ts`; attacks: `src/entities/bossAttacks.ts`; non-bullet
+attacks use `src/entities/Hazards.ts`.
 
-The first encounter used to sit at 2:50, which meant most runs ended without ever
-meeting the headline fight — a poor reason to stop playing. It now lands inside a
-typical run, and each cycle is announced as a named **Phase** so progress through
-a run is legible rather than an undifferentiated stream of enemies.
+**Phases** (brief): three stages sized 35 / 35 / 30% of total HP, so phase 2
+starts below 65% and phase 3 below 30%. Phase 1 uses the first signature attack,
+phase 2 adds the second, phase 3 adds the third and may combine two at once
+(35% of the time, with a 40% longer breather after). Between stages the boss is
+briefly invulnerable, bullets and hazards clear, six shards drop.
 
-| Stage | Behaviour |
-|---|---|
-| 1 | Drifts on a slow circular path, firing 14-bullet radial crowns every 2.4 s. |
-| 2 | Traces a figure-eight (Lissajous 1:2) while spraying a 3-armed rotating spiral, and summons cinders. |
-| 3 | Stalks you, telegraphs a heavy charge for 0.85 s, slams, then erupts a 20-bullet ring at the impact point. |
+| Boss | Moves | Phase 1 | Phase 2 adds | Phase 3 adds |
+|---|---|---|---|---|
+| Magmathar, Core Titan | drifts | **Lava Wave** — a fire band sweeps the board; the outlined gap is safe | **Meteor Rain** — 8 marked impacts in two waves, one on you | **Eruption Rings** — 3 bullet rings, each with a gap |
+| Criotharis, Winter Alpha | swoops | **Ice Shard Barrage** — 4 aimed 5-shot fans | **Frost Nova** — wind-up, then 2 dense rings with 2 gaps each | **Ice Wall Prison** — 3 walls in a U around you (open side toward the centre), plus aimed shots |
+| Nethermorph, Void Harbinger | keeps its distance | **Void Beams** — 2 volleys of 3 telegraphed beams | **Teleport Strike** — vanishes, reappears 150 px from you, marked slam, then a ring | **Gravity Well** — pulls you toward a small harmful core for 3.5 s |
+| Blightbloom, Wildfeeder | rooted at the top | **Seed Swarm** — 16 seeds that curve toward you for 1.4 s | **Toxic Spores** — 3 lingering clouds near you | **Vine Snare** — 4 marked patches; caught = 82% slower for 1.1 s, no damage |
+| Skyrend, Storm Crown | swoops | **Feather Storm** — 4-arm spiral for 1.8 s | **Dive Bomb** — marks your spot, dives onto it, then a ring | **Wind Tornadoes** — 3 wandering tornadoes that hurt and shove |
+| Aurelion, Arcane Warden | drifts | **Orbiting Orbs** — 6 orbs circling it, radius breathing 60–210 px | **Arcane Laser Grid** — 3 horizontal + 2 vertical beams, safe cells between | **Reality Rift** — 3 rifts (never on you) that pulse damage |
 
-Between stages it is briefly invulnerable while it re-forms: the screen clears of
-bullets, six shards drop and you get 10 XP. That beat is deliberate breathing
-room, not dead time.
+**Fairness rules:** every attack shows a telegraph before it can hurt (earliest
+measured hit on a still player: 0.8 s); bullets stay grazeable; walls never
+damage and always leave a side open; hazards never exceed 40 at once; a stage
+break cancels running attacks and clears the screen.
 
-**Felling one pays properly** — 1,500 score, 40 shards, 24 XP, and **+1 health**.
-Without a reward that size there is no reason to fight a boss rather than kite it
-until it leaves, and "the fight is optional and unrewarding" is how a survival
-game loses its spine.
+**Felling one pays properly** — 1,500 score, 40 shards, 24 XP, **+1 health**, and a
+full ultimate charge.
 
 ## 6. Arena hazards
 

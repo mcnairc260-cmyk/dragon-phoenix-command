@@ -195,9 +195,12 @@ export const ELITE = {
 } as const;
 
 export const BOSS = {
-  name: 'THE ASHBORN',
-  /** Hit points for each of the three stages (stage 1 → 3). */
-  stageHp: [44, 56, 68],
+  /**
+   * Hit points for each of the three stages: 35% / 35% / 30% of 168, so phase 2
+   * begins below 65% and phase 3 below 30% (founder brief). Which boss appears
+   * is config/bosses.ts.
+   */
+  stageHp: [59, 59, 50],
   radius: 54,
   warningTime: 3,
   emberDrop: 40,

@@ -39,6 +39,8 @@ import { draftUpgrades, takeUpgrade } from '../upgrades/UpgradeDraft';
 import { gameOverPanel, pausePanel, progressionPanel, ultimatePanel, upgradePanel } from '../ui/panels';
 import { FACTIONS, KIND_ROLE, pickSpecies, type FactionId } from '../config/factions';
 import { UltimateController } from './UltimateController';
+import { HazardField } from '../entities/Hazards';
+import { bossFor } from '../config/bosses';
 import { ULTIMATES_BY_ID, eligibleUltimates, evolutionStage, type UltimateId } from '../upgrades/Ultimates';
 
 const DEPTH = {
@@ -68,6 +70,7 @@ export class GameScene extends Phaser.Scene {
   private player!: Player;
   private boss!: Boss;
   private ultimates!: UltimateController;
+  private hazards!: HazardField;
   /** > 0 while damage from an ultimate is being applied (its kills do not charge the meter). */
   private ultimateDamageDepth = 0;
 
@@ -148,6 +151,8 @@ export class GameScene extends Phaser.Scene {
     this.player.spawn(this.arena.cx, this.arena.cy);
 
     this.boss = new Boss(this, DEPTH.boss);
+    // Boss hazards draw under enemies and the phoenix, over the board.
+    this.hazards = new HazardField(this, DEPTH.pickup - 0.5);
     this.ultimates = new UltimateController({
       scene: this,
       fxDepth: DEPTH.fx,
@@ -155,7 +160,8 @@ export class GameScene extends Phaser.Scene {
       player: () => this.player,
       stats: () => this.stats,
       enemies: () => this.enemies,
-      boss: () => (this.bossActive && this.boss.active ? { x: this.boss.x, y: this.boss.y, radius: this.boss.radius } : null),
+      boss: () =>
+        this.bossActive && this.boss.active && !this.boss.intangible ? { x: this.boss.x, y: this.boss.y, radius: this.boss.radius } : null,
       damageEnemy: (enemy, amount) => this.asUltimate(() => this.damageEnemy(enemy, amount, false)),
       damageBoss: (amount) => this.asUltimate(() => this.damageBoss(amount)),
       clearHostileBullets: (x, y, radius) => this.clearHostileBullets(x, y, radius),
@@ -410,6 +416,7 @@ export class GameScene extends Phaser.Scene {
     this.updateCollapses(dt, difficulty.collapseInterval);
     this.updateBossSchedule(dt, difficulty);
     this.updateEnemies(dt);
+    this.updateHazards(dt);
     this.ultimates.update(dt);
     this.updateProjectiles(dt);
     this.updatePickups(dt);
@@ -527,20 +534,23 @@ export class GameScene extends Phaser.Scene {
     if (this.bossActive) return;
     const dueAt = bossTimeFor(this.bossIndex);
 
+    const def = bossFor(this.bossIndex);
     if (!this.bossWarned && this.elapsed >= dueAt - BOSS.warningTime) {
       this.bossWarned = true;
-      session.ui.toast(`${BOSS.name} awakens`, 3000);
+      session.ui.toast(`${def.name} — ${def.title} — awakens`, 3000);
       audio.bossWarning();
       haptics.play('boss');
-      this.fx.flash(BRAND.emberOrange, 0.3, 400);
+      this.fx.flash(def.color, 0.3, 400);
     }
 
     if (this.elapsed >= dueAt) {
       this.bossActive = true;
       this.bossWarned = false;
       const spawn = this.arena.pointAt(-Math.PI / 2, 0.55);
-      this.boss.spawn(spawn.x, spawn.y, bossStageHp(BOSS.stageHp, this.bossIndex));
-      this.fx.shockwave(spawn.x, spawn.y, BRAND.emberOrange, 460, 700);
+      this.hazards.clear();
+      this.boss.spawn(def, spawn.x, spawn.y, bossStageHp(BOSS.stageHp, this.bossIndex), this.bossIndex);
+      this.fx.shockwave(spawn.x, spawn.y, def.color, 460, 700);
+      this.fx.flashOrb(spawn.x, spawn.y, def.color, 160, 420);
       this.fx.chromaticFlash(10, 240);
       this.fx.shake(0.012, 420);
       audio.setIntensity(1);
@@ -582,9 +592,10 @@ export class GameScene extends Phaser.Scene {
         playerX: this.player.x,
         playerY: this.player.y,
         arena: this.arena,
-        fire: (x, y, angle, speed, color) => this.fireEnemyShot(x, y, angle, speed, color),
-        summon: (x, y) => this.spawnEnemy('cinder', x, y, 1.4, 1.1),
-        onStageChange: (stage) => this.onBossStage(stage),
+        hazards: this.hazards,
+        fire: (x, y, angle, speed, color, opts) => this.fireEnemyShot(x, y, angle, speed, color, opts),
+        cue: (x, y, radius, color) => this.fx.shockwave(x, y, color, radius * 2, 600, 1.2),
+        onAttack: (name) => this.hud.flashBossAttack(name),
       });
     }
   }
@@ -595,7 +606,14 @@ export class GameScene extends Phaser.Scene {
     this.enemyPool.release(enemy);
   }
 
-  private fireEnemyShot(x: number, y: number, angle: number, speed: number, color: number): void {
+  private fireEnemyShot(
+    x: number,
+    y: number,
+    angle: number,
+    speed: number,
+    color: number,
+    opts: { homingTime?: number; turnRate?: number; radius?: number } = {},
+  ): void {
     const projectile = this.projectilePool.acquire();
     projectile.spawn({
       x,
@@ -604,16 +622,46 @@ export class GameScene extends Phaser.Scene {
       speed: speed * this.stats.enemyProjectileSpeedMul,
       color,
       hostile: true,
-      radius: 7,
+      radius: opts.radius ?? 7,
       life: 7,
+      // Boss seeds curve toward the phoenix for a limited time.
+      homing: opts.homingTime !== undefined,
+      homingTime: opts.homingTime,
+      turnRate: opts.turnRate,
     });
     this.projectiles.push(projectile);
+  }
+
+  /** Boss hazards: advance, hit the phoenix, draw. */
+  private updateHazards(dt: number): void {
+    this.hazards.update(dt, this.boss.x, this.boss.y, this.arena);
+    if (this.hazards.count > 0) {
+      const p = this.player;
+      const target = {
+        x: p.x,
+        y: p.y,
+        vx: p.vx,
+        vy: p.vy,
+        hitRadius: p.hitRadius,
+        damage: () => this.damagePlayer(),
+        root: (seconds: number) => {
+          if (p.rootTimer <= 0) session.ui.toast('Snared!', 900);
+          p.rootTimer = Math.max(p.rootTimer, seconds);
+        },
+      };
+      this.hazards.affect(target, dt);
+      p.x = target.x;
+      p.y = target.y;
+      p.vx = target.vx;
+      p.vy = target.vy;
+    }
+    this.hazards.draw();
   }
 
   private updateProjectiles(dt: number): void {
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const projectile = this.projectiles[i];
-      const alive = projectile.update(dt, () => this.nearestEnemy(projectile.x, projectile.y));
+      const alive = projectile.update(dt, () => (projectile.hostile ? { x: this.player.x, y: this.player.y, active: true } : this.nearestEnemy(projectile.x, projectile.y)));
       if (!alive || this.arena.norm(projectile.x, projectile.y) > 1.25) {
         projectile.deactivate();
         this.projectiles.splice(i, 1);
@@ -846,7 +894,7 @@ export class GameScene extends Phaser.Scene {
 
     if (this.bossActive && this.boss.active) {
       const dist = Math.hypot(this.boss.x - px, this.boss.y - py);
-      if (dist <= hitR + this.boss.radius) this.damagePlayer();
+      if (dist <= hitR + this.boss.radius && !this.boss.intangible) this.damagePlayer();
       for (const blade of blades) {
         if (Math.hypot(this.boss.x - blade.x, this.boss.y - blade.y) <= 16 + this.boss.radius) {
           this.damageBoss(bladeDamage * 0.4);
@@ -1237,6 +1285,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onBossStage(stage: number): void {
+    this.hazards.clear();
     this.fx.shockwave(this.boss.x, this.boss.y, this.boss.color, 520, 700);
     this.fx.chromaticFlash(10, 220);
     this.fx.shake(0.012, 400);
@@ -1255,6 +1304,7 @@ export class GameScene extends Phaser.Scene {
   private killBoss(): void {
     const x = this.boss.x;
     const y = this.boss.y;
+    this.hazards.clear();
     this.boss.deactivate();
     this.bossActive = false;
     this.bossIndex += 1;
@@ -1516,7 +1566,8 @@ export class GameScene extends Phaser.Scene {
         maxBurstCharges: this.player.maxBurstCharges,
         ...(this.bossActive && this.boss.active
           ? {
-              bossName: BOSS.name,
+              bossName: this.boss.def?.name ?? '',
+              bossColor: this.boss.color,
               bossHp: clamp(this.boss.hp / this.boss.maxStageHp, 0, 1),
               bossStage: this.boss.stage,
               bossStages: this.boss.totalStages - this.boss.stage,

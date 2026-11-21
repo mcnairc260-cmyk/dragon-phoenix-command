@@ -2,31 +2,28 @@ import Phaser from 'phaser';
 import { BOSS } from '../config/GameConfig';
 import { TAU } from '../core/math';
 import type { Arena } from '../effects/Arena';
-import { BRAND, SIGNAL } from '../config/brand';
+import { BRAND } from '../config/brand';
 import { TEX } from '../effects/Textures';
+import { ATTACK_RECOVERY, attacksForStage, bossTextureKey, type BossAttackId, type BossDef } from '../config/bosses';
+import { createAttack, type AttackCtx, type AttackScript } from './bossAttacks';
+import type { HazardField } from './Hazards';
 
 export interface BossContext {
   dt: number;
   playerX: number;
   playerY: number;
   arena: Arena;
-  fire: (x: number, y: number, angle: number, speed: number, color: number) => void;
-  summon: (x: number, y: number) => void;
-  onStageChange: (stage: number) => void;
+  hazards: HazardField;
+  fire: (x: number, y: number, angle: number, speed: number, color: number, opts?: { homingTime?: number; turnRate?: number; radius?: number }) => void;
+  cue: (x: number, y: number, radius: number, color: number) => void;
+  onAttack: (name: string) => void;
 }
 
-// Stages walk the brand accents in order: Dragon fire → the unknown → systems.
-const STAGE_COLORS = [BRAND.emberOrange, SIGNAL.violet, BRAND.signalCyan];
-
 /**
- * THE ASHBORN — a three-stage boss.
- *
- * Stage 1: drifting radial bullet crowns.
- * Stage 2: rotating spiral streams plus summoned cinders.
- * Stage 3: telegraphed charges followed by expanding bullet shockwaves.
- *
- * Between stages the boss is briefly invulnerable while it re-forms, which
- * gives the player a readable beat to reposition and collect.
+ * A faction boss (config/bosses.ts). Three stages sized 35/35/30% of total
+ * HP; each stage unlocks one more signature attack, and the last stage may
+ * run two attacks at once. Between stages the boss is briefly invulnerable
+ * while it re-forms, which gives the player a readable beat.
  */
 export class Boss {
   active = false;
@@ -34,66 +31,70 @@ export class Boss {
   y = 0;
   vx = 0;
   vy = 0;
-  radius = BOSS.radius;
+  radius: number = BOSS.radius;
+  def: BossDef | null = null;
 
   stage = 0;
   stageHp: number[] = [];
   hp = 0;
   invulnerable = false;
+  /** Vanished mid-teleport: cannot hurt or be hurt. */
+  intangible = false;
 
-  private attackTimer = 0;
-  private stateTimer = 0;
-  private spiralAngle = 0;
-  private phase: 'idle' | 'charge-telegraph' | 'charging' | 'transition' = 'idle';
-  private lockedAngle = 0;
+  private held = false;
+  private recover = 0;
+  private transition = 0;
+  private running: AttackScript[] = [];
+  private nextAttack = 0;
   private pulse = 0;
   private driftAngle = 0;
+  private encounter = 0;
 
   private readonly glow: Phaser.GameObjects.Image;
   private readonly body: Phaser.GameObjects.Image;
   private readonly aura: Phaser.GameObjects.Image;
-  private readonly telegraph: Phaser.GameObjects.Rectangle;
 
   constructor(scene: Phaser.Scene, depth: number) {
-    this.telegraph = scene.add
-      .rectangle(0, 0, 4, 4, BRAND.emberOrange, 0.4)
-      .setOrigin(0, 0.5)
-      .setBlendMode(Phaser.BlendModes.ADD)
-      .setDepth(depth - 1)
-      .setVisible(false);
     this.aura = scene.add.image(0, 0, TEX.ring).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth).setVisible(false);
     this.glow = scene.add.image(0, 0, TEX.glow).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth + 1).setVisible(false);
-    this.body = scene.add.image(0, 0, TEX.boss).setDepth(depth + 2).setVisible(false);
+    this.body = scene.add.image(0, 0, TEX.glow).setDepth(depth + 2).setVisible(false);
   }
 
-  spawn(x: number, y: number, stageHp: number[]): void {
+  spawn(def: BossDef, x: number, y: number, stageHp: number[], encounter: number): void {
+    this.def = def;
     this.active = true;
+    this.encounter = encounter;
     this.x = x;
     this.y = y;
     this.vx = 0;
     this.vy = 0;
+    this.radius = def.radius;
     this.stage = 0;
     this.stageHp = [...stageHp];
     this.hp = this.stageHp[0];
     this.invulnerable = false;
-    this.phase = 'idle';
-    this.attackTimer = 1.5;
-    this.stateTimer = 0;
-    this.spiralAngle = 0;
+    this.intangible = false;
+    this.held = false;
+    this.transition = 0;
+    this.running = [];
+    this.nextAttack = 0;
+    this.recover = 1.6;
     this.driftAngle = Math.random() * TAU;
 
-    this.glow.setVisible(true).setScale(2.6).setAlpha(0.75);
-    this.aura.setVisible(true).setScale(1.1).setAlpha(0.5);
-    this.body.setVisible(true).setDisplaySize(this.radius * 2.4, this.radius * 2.4);
-    this.applyStageColor();
+    this.glow.setVisible(true).setTint(def.color).setScale(2.6).setAlpha(0.7);
+    this.aura.setVisible(true).setTint(def.color).setScale(0.9).setAlpha(0.45);
+    const frame = this.body.setTexture(bossTextureKey(def)).frame;
+    // Wide art: size by width so every boss reads at the same scale.
+    const width = def.radius * 3.4;
+    this.body.setVisible(true).setDisplaySize(width, (frame.height / frame.width) * width).setAlpha(1);
   }
 
   deactivate(): void {
     this.active = false;
+    this.running = [];
     this.glow.setVisible(false);
     this.body.setVisible(false);
     this.aura.setVisible(false);
-    this.telegraph.setVisible(false);
   }
 
   get maxStageHp(): number {
@@ -105,21 +106,22 @@ export class Boss {
   }
 
   get color(): number {
-    return STAGE_COLORS[Math.min(this.stage, STAGE_COLORS.length - 1)];
+    return this.def?.color ?? BRAND.emberOrange;
   }
 
-  private applyStageColor(): void {
-    this.glow.setTint(this.color);
-    this.aura.setTint(this.color);
-    this.body.setTint(BRAND.ghostWhite);
+  /** Fraction of total HP left, across all stages (0..1). */
+  get totalHpFraction(): number {
+    const total = this.stageHp.reduce((a, b) => a + b, 0) || 1;
+    const left = this.hp + this.stageHp.slice(this.stage + 1).reduce((a, b) => a + b, 0);
+    return Math.max(0, left / total);
   }
 
   /**
    * Apply damage. Returns 'stage' when a stage was cleared, 'dead' when the
    * final stage fell, or 'hit' otherwise.
    */
-  damage(amount: number, ctx: Pick<BossContext, 'onStageChange'>): 'hit' | 'stage' | 'dead' {
-    if (this.invulnerable) return 'hit';
+  damage(amount: number, ctx: { onStageChange: (stage: number) => void }): 'hit' | 'stage' | 'dead' {
+    if (this.invulnerable || this.intangible) return 'hit';
     this.hp -= amount;
     if (this.hp > 0) return 'hit';
 
@@ -130,159 +132,168 @@ export class Boss {
     this.stage += 1;
     this.hp = this.stageHp[this.stage];
     this.invulnerable = true;
-    this.phase = 'transition';
-    this.stateTimer = 1.6;
-    this.applyStageColor();
+    this.transition = 1.6;
+    // A stage break cancels whatever was running: the phase change is a breath.
+    this.running = [];
+    this.held = false;
+    this.setVanished(false);
     ctx.onStageChange(this.stage);
     return 'stage';
+  }
+
+  private setVanished(on: boolean): void {
+    this.intangible = on;
   }
 
   update(ctx: BossContext): void {
     const dt = ctx.dt;
     this.pulse += dt;
-    this.stateTimer -= dt;
-    this.attackTimer -= dt;
+    const def = this.def;
+    if (!def) return;
 
-    if (this.phase === 'transition') {
+    if (this.transition > 0) {
+      this.transition -= dt;
       this.vx *= 0.9;
       this.vy *= 0.9;
-      if (this.stateTimer <= 0) {
+      if (this.transition <= 0) {
         this.invulnerable = false;
-        this.phase = 'idle';
-        this.attackTimer = 0.8;
+        this.recover = 0.8;
       }
     } else {
-      switch (this.stage) {
-        case 0:
-          this.updateStage1(ctx);
-          break;
-        case 1:
-          this.updateStage2(ctx);
-          break;
-        default:
-          this.updateStage3(ctx);
-          break;
-      }
+      if (!this.held) this.move(ctx, def);
+      this.runAttacks(ctx, def);
     }
 
-    this.x += this.vx * dt;
-    this.y += this.vy * dt;
-
-    // The boss stays inside the caldera like everything else.
-    const point = { x: this.x, y: this.y };
-    if (ctx.arena.clamp(point, 0.82)) {
-      this.x = point.x;
-      this.y = point.y;
-      this.vx *= -0.6;
-      this.vy *= -0.6;
+    if (!this.held) {
+      this.x += this.vx * dt;
+      this.y += this.vy * dt;
+      const point = { x: this.x, y: this.y };
+      if (ctx.arena.clamp(point, 0.8)) {
+        this.x = point.x;
+        this.y = point.y;
+        this.vx *= -0.6;
+        this.vy *= -0.6;
+      }
     }
 
     this.render();
   }
 
-  /** Stage 1 — slow drift, radial bullet crowns. */
-  private updateStage1(ctx: BossContext): void {
-    this.driftAngle += ctx.dt * 0.4;
-    const target = ctx.arena.pointAt(this.driftAngle, 0.45);
-    this.vx = (target.x - this.x) * 0.9;
-    this.vy = (target.y - this.y) * 0.9;
-
-    if (this.attackTimer <= 0) {
-      const count = 14;
-      const offset = Math.random() * TAU;
-      for (let i = 0; i < count; i++) {
-        ctx.fire(this.x, this.y, offset + (i / count) * TAU, 150, this.color);
+  private move(ctx: BossContext, def: BossDef): void {
+    const a = ctx.arena;
+    switch (def.movement) {
+      case 'rooted': {
+        // Planted near the top of the board, swaying.
+        const tx = a.cx + Math.sin(this.pulse * 0.5) * a.rx * 0.25;
+        const ty = a.cy - a.ry * 0.5;
+        this.vx = (tx - this.x) * 1.2;
+        this.vy = (ty - this.y) * 1.2;
+        break;
       }
-      this.attackTimer = 2.4;
+      case 'swoop': {
+        // Figure eight across the upper board.
+        this.driftAngle += ctx.dt * 0.7;
+        const tx = a.cx + Math.sin(this.driftAngle) * a.rx * 0.55;
+        const ty = a.cy - a.ry * 0.25 + Math.sin(this.driftAngle * 2) * a.ry * 0.25;
+        this.vx = (tx - this.x) * 1.3;
+        this.vy = (ty - this.y) * 1.3;
+        break;
+      }
+      case 'hover': {
+        // Keeps a stand-off distance from the phoenix.
+        const dx = ctx.playerX - this.x;
+        const dy = ctx.playerY - this.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        const drift = dist > 230 ? 60 : dist < 170 ? -60 : 0;
+        this.vx = (dx / dist) * drift;
+        this.vy = (dy / dist) * drift;
+        break;
+      }
+      default: {
+        // Slow drift around the board.
+        this.driftAngle += ctx.dt * 0.4;
+        const target = a.pointAt(this.driftAngle, 0.45);
+        this.vx = (target.x - this.x) * 0.9;
+        this.vy = (target.y - this.y) * 0.9;
+      }
     }
   }
 
-  /** Stage 2 — figure-eight movement, rotating spiral, periodic summons. */
-  private updateStage2(ctx: BossContext): void {
-    this.driftAngle += ctx.dt * 0.7;
-    // Lissajous path (1:2) traces a figure eight across the caldera.
-    const target = {
-      x: ctx.arena.cx + Math.sin(this.driftAngle) * ctx.arena.rx * 0.5,
-      y: ctx.arena.cy + Math.sin(this.driftAngle * 2) * ctx.arena.ry * 0.35,
+  private runAttacks(ctx: BossContext, def: BossDef): void {
+    const actx = this.attackCtx(ctx, def);
+    this.running = this.running.filter((script) => !script(actx));
+    if (this.running.length > 0) return;
+
+    this.recover -= ctx.dt;
+    if (this.recover > 0) return;
+
+    const pool = attacksForStage(def, this.stage);
+    const first = pool[this.nextAttack % pool.length];
+    this.nextAttack += 1;
+    const started: BossAttackId[] = [first];
+    // Phase 3: sometimes combine two different attacks.
+    if (this.stage >= 2 && Math.random() < 0.35) {
+      const other = pool.filter((id) => id !== first)[Math.floor(Math.random() * (pool.length - 1))];
+      if (other) started.push(other);
+    }
+    for (const id of started) {
+      this.running.push(createAttack(id));
+      ctx.onAttack(def.attackNames[def.attacks.indexOf(id)]);
+    }
+    const recovery = Math.max(...started.map((id) => ATTACK_RECOVERY[id]));
+    // Later phases recover a little faster; a combo earns a longer breather.
+    this.recover = recovery * (this.stage === 0 ? 1 : this.stage === 1 ? 0.9 : 0.8) * (started.length > 1 ? 1.4 : 1);
+  }
+
+  private attackCtx(ctx: BossContext, def: BossDef): AttackCtx {
+    return {
+      dt: ctx.dt,
+      playerX: ctx.playerX,
+      playerY: ctx.playerY,
+      arena: ctx.arena,
+      hazards: ctx.hazards,
+      color: def.color,
+      pace: 1 + Math.min(5, this.encounter) * 0.06,
+      boss: {
+        x: this.x,
+        y: this.y,
+        radius: this.radius,
+        vanish: (on) => this.setVanished(on),
+        hold: (on) => {
+          this.held = on;
+          if (on) {
+            this.vx = 0;
+            this.vy = 0;
+          }
+        },
+        moveTo: (x, y) => {
+          this.x = x;
+          this.y = y;
+        },
+      },
+      fire: (x, y, angle, speed, opts) => ctx.fire(x, y, angle, speed, def.color, opts),
+      cue: (x, y, radius) => ctx.cue(x, y, radius, def.color),
     };
-    this.vx = (target.x - this.x) * 1.3;
-    this.vy = (target.y - this.y) * 1.3;
-
-    this.spiralAngle += ctx.dt * 2.6;
-    if (this.attackTimer <= 0) {
-      for (let arm = 0; arm < 3; arm++) {
-        ctx.fire(this.x, this.y, this.spiralAngle + (arm / 3) * TAU, 175, this.color);
-      }
-      this.attackTimer = 0.14;
-    }
-
-    if (this.stateTimer <= 0) {
-      ctx.summon(this.x, this.y);
-      this.stateTimer = 5.5;
-    }
-  }
-
-  /** Stage 3 — telegraphed charges, then an expanding bullet shockwave. */
-  private updateStage3(ctx: BossContext): void {
-    if (this.phase === 'idle') {
-      const dx = ctx.playerX - this.x;
-      const dy = ctx.playerY - this.y;
-      const dist = Math.hypot(dx, dy) || 1;
-      this.vx = (dx / dist) * 70;
-      this.vy = (dy / dist) * 70;
-      if (this.attackTimer <= 0) {
-        this.phase = 'charge-telegraph';
-        this.stateTimer = 0.85;
-        this.lockedAngle = Math.atan2(dy, dx);
-      }
-    } else if (this.phase === 'charge-telegraph') {
-      this.vx *= 0.85;
-      this.vy *= 0.85;
-      const desired = Math.atan2(ctx.playerY - this.y, ctx.playerX - this.x);
-      this.lockedAngle = Phaser.Math.Angle.RotateTo(this.lockedAngle, desired, 1.2 * ctx.dt);
-      this.telegraph
-        .setVisible(true)
-        .setPosition(this.x, this.y)
-        .setSize(900, 10 + (1 - this.stateTimer / 0.85) * 16)
-        .setRotation(this.lockedAngle)
-        .setAlpha(0.3 + 0.35 * Math.abs(Math.sin(this.pulse * 14)));
-      if (this.stateTimer <= 0) {
-        this.telegraph.setVisible(false);
-        this.phase = 'charging';
-        this.stateTimer = 0.9;
-        this.vx = Math.cos(this.lockedAngle) * 560;
-        this.vy = Math.sin(this.lockedAngle) * 560;
-      }
-    } else if (this.phase === 'charging') {
-      this.vx *= 0.985;
-      this.vy *= 0.985;
-      if (this.stateTimer <= 0) {
-        // Slam: a full ring of bullets erupts where the charge ended.
-        const count = 20;
-        for (let i = 0; i < count; i++) {
-          ctx.fire(this.x, this.y, (i / count) * TAU, 210, this.color);
-        }
-        this.phase = 'idle';
-        this.attackTimer = 1.9;
-      }
-    }
   }
 
   private render(): void {
     this.glow.setPosition(this.x, this.y);
-    this.body.setPosition(this.x, this.y).setRotation(this.pulse * 0.35);
     this.aura.setPosition(this.x, this.y);
-
     const beat = 0.5 + 0.5 * Math.sin(this.pulse * 3);
-    this.glow.setScale(2.4 + beat * 0.35).setAlpha(this.invulnerable ? 0.4 + 0.5 * Math.sin(this.pulse * 22) : 0.75);
-    this.aura.setScale(0.95 + beat * 0.1).setAlpha(0.35 + beat * 0.25);
-    this.body.setAlpha(this.invulnerable ? 0.5 + 0.4 * Math.sin(this.pulse * 22) : 1);
+    // Upright art with a slow breath and a lean into movement.
+    const lean = Math.max(-0.12, Math.min(0.12, this.vx / 1200));
+    this.body.setPosition(this.x, this.y + Math.sin(this.pulse * 2) * 2).setRotation(lean);
+
+    const flicker = this.invulnerable ? 0.5 + 0.4 * Math.sin(this.pulse * 22) : 1;
+    const fade = this.intangible ? 0.12 : 1;
+    this.glow.setScale(2.4 + beat * 0.35).setAlpha(0.7 * flicker * fade);
+    this.aura.setScale(0.85 + beat * 0.1).setAlpha((0.3 + beat * 0.25) * fade);
+    this.body.setAlpha(flicker * fade);
   }
 
   destroy(): void {
     this.glow.destroy();
     this.body.destroy();
     this.aura.destroy();
-    this.telegraph.destroy();
   }
 }

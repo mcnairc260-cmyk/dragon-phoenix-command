@@ -23,7 +23,6 @@ export const TEX = {
   orbiter: 'tex-orbiter',
   splitter: 'tex-splitter',
   mine: 'tex-mine',
-  boss: 'tex-boss',
   crown: 'tex-crown',
   arrow: 'tex-arrow',
 } as const;
@@ -225,28 +224,6 @@ export function generateTextures(scene: Phaser.Scene): void {
     g.fillCircle(22, 22, 11);
     g.fillStyle(0x000000, 0.5);
     g.fillCircle(22, 22, 5);
-  });
-
-  // Boss — a jagged crown/eye silhouette.
-  bake(scene, TEX.boss, 140, 140, (g) => {
-    const c = 70;
-    g.fillStyle(0xffffff, 0.95);
-    g.beginPath();
-    const spikes = 11;
-    for (let i = 0; i < spikes * 2; i++) {
-      const a = (i / (spikes * 2)) * Math.PI * 2;
-      const r = i % 2 === 0 ? 62 : 40;
-      const x = c + Math.cos(a) * r;
-      const y = c + Math.sin(a) * r;
-      if (i === 0) g.moveTo(x, y);
-      else g.lineTo(x, y);
-    }
-    g.closePath();
-    g.fillPath();
-    g.fillStyle(0x000000, 0.55);
-    g.fillCircle(c, c, 30);
-    g.fillStyle(0xffffff, 1);
-    g.fillCircle(c, c, 15);
   });
 
   // Elite crown marker.

@@ -41,6 +41,8 @@ export class Player {
   stats!: PlayerStats;
   /** Temporary flight-speed multiplier (Storm Apocalypse). */
   speedBoost = 1;
+  /** Vine Snare: seconds left rooted (flight speed cut to 18%). */
+  rootTimer = 0;
   /** Ascension level 0–3: Mortal, Awakened, Radiant, Transcendent. */
   evolution = 0;
   private celestial = false;
@@ -151,6 +153,7 @@ export class Player {
 
   spawn(x: number, y: number): void {
     this.speedBoost = 1;
+    this.rootTimer = 0;
     this.evolution = 0;
     this.celestial = false;
     this.x = x;
@@ -189,7 +192,8 @@ export class Player {
   }
 
   update(dt: number, pointer: PointerTarget, arena: Arena): void {
-    const maxSpeed = PLAYER.baseSpeed * this.stats.speedMul * this.speedBoost;
+    if (this.rootTimer > 0) this.rootTimer = Math.max(0, this.rootTimer - dt);
+    const maxSpeed = PLAYER.baseSpeed * this.stats.speedMul * this.speedBoost * (this.rootTimer > 0 ? 0.18 : 1);
 
     if (pointer.active) {
       const dx = pointer.x - this.x;

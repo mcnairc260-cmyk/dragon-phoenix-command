@@ -22,6 +22,7 @@ export interface HudState {
   burstCharges: number;
   maxBurstCharges: number;
   bossName?: string;
+  bossColor?: number;
   bossHp?: number;
   bossStage?: number;
   bossStages?: number;
@@ -47,6 +48,9 @@ export class Hud {
   private readonly hearts: Phaser.GameObjects.Image[] = [];
   private readonly burstPips: Phaser.GameObjects.Image[] = [];
   private readonly bossLabel: Phaser.GameObjects.Text;
+  /** The boss's current signature attack, shown briefly under its bar. */
+  private readonly bossAttackLabel: Phaser.GameObjects.Text;
+  private bossAttackUntil = 0;
   private readonly pauseButton: Phaser.GameObjects.Container;
   private readonly edgeMarkers: Phaser.GameObjects.Image[] = [];
 
@@ -109,7 +113,11 @@ export class Hud {
 
     this.pauseButton = this.createPauseButton(onPause);
 
-    this.root.add([this.scoreText, this.multText, this.timeText, this.levelText, this.xpLabel, this.heatLabel, this.burstLabel, this.bossLabel, this.pauseButton]);
+    this.bossAttackLabel = scene.add
+      .text(0, 0, '', { fontFamily: FONT_MONO, fontSize: '10px', color: BRAND_CSS.ghostWhite })
+      .setOrigin(0.5)
+      .setVisible(false);
+    this.root.add([this.scoreText, this.multText, this.timeText, this.levelText, this.xpLabel, this.heatLabel, this.burstLabel, this.bossLabel, this.bossAttackLabel, this.pauseButton]);
   }
 
   private createPauseButton(onPause: () => void): Phaser.GameObjects.Container {
@@ -146,6 +154,7 @@ export class Hud {
     this.heatLabel.setPosition(inset.left + 18, top + 76);
     this.burstLabel.setPosition(width / 2, height - inset.bottom - 40);
     this.bossLabel.setPosition(width / 2, top + 88);
+    this.bossAttackLabel.setPosition(width / 2, top + 122);
     this.pauseButton.setPosition(width - inset.right - 30, top + 34);
 
     for (let i = 0; i < this.hearts.length; i++) {
@@ -241,17 +250,29 @@ export class Hud {
     // Boss health, when one is alive.
     if (state.bossHp !== undefined && state.bossName) {
       const bossY = top + 100;
-      this.bossLabel.setVisible(true).setText(`${state.bossName}   ${'◆'.repeat(state.bossStages ?? 1)}`.trim());
+      this.bossLabel
+        .setVisible(true)
+        .setText(`${state.bossName}   ${'◆'.repeat(state.bossStages ?? 1)}`.trim())
+        .setColor(`#${(state.bossColor ?? BRAND.emberOrange).toString(16).padStart(6, '0')}`);
       const bossWidth = this.width - margin * 2;
       g.fillStyle(BRAND.carbon, 0.95);
       g.fillRoundedRect(margin, bossY, bossWidth, 8, 4);
-      g.fillStyle(BRAND.emberOrange, 0.95);
+      g.fillStyle(state.bossColor ?? BRAND.emberOrange, 0.95);
       g.fillRoundedRect(margin, bossY, Math.max(2, bossWidth * clamp(state.bossHp, 0, 1)), 8, 4);
+      const left = this.bossAttackUntil - this.pulse;
+      this.bossAttackLabel.setVisible(left > 0).setAlpha(clamp(left, 0, 1));
       g.lineStyle(1, BRAND.rebirthGold, 0.7);
       g.strokeRoundedRect(margin, bossY, bossWidth, 8, 4);
     } else {
       this.bossLabel.setVisible(false);
+      this.bossAttackLabel.setVisible(false);
     }
+  }
+
+  /** Name the attack the boss is starting (matches the Boss Roster art). */
+  flashBossAttack(name: string): void {
+    this.bossAttackLabel.setText(`▸ ${name.toUpperCase()}`);
+    this.bossAttackUntil = this.pulse + 1.8;
   }
 
   /**

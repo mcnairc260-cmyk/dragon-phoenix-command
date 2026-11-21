@@ -85,6 +85,36 @@ be tougher.
   top (now auto-margin centred), and the tutorial tip no longer sits on top of
   menus.
 
+## Stage 3 — Faction bosses (done)
+
+- Six bosses cut from `art/boss-roster.png` with BiRefNet (`scripts/extract-bosses.py`;
+  the older models failed on the fiery backgrounds) → `src/assets/bosses/`
+  (280 px PNGs, 416 KB). Crops stop above the printed names, so they are upper
+  bodies; bottoms are faded. Skyrend's dark body was lost in the cut (wings and
+  head remain). Cleaner single-boss art would improve them.
+- THE ASHBORN is retired (founder "3a"). Bosses rotate by faction; full table,
+  phases and fairness rules in `GAME_DESIGN.md` §5.
+- 18 signature attacks: 9 bullet-based (grazeable, reuse Projectile; seeds use
+  new limited-time homing) and 9 hazard-based (`src/entities/Hazards.ts`: zone,
+  beam, wave, wall, well, tornado, orb), all telegraphed first.
+- HUD: boss bar and name in the boss colour; the current attack's name flashes
+  under the bar.
+- Ultimates: bosses are never frozen or pulled; Absolute Zero slows them; a
+  teleporting (vanished) boss cannot be hit or targeted.
+- Tests: 5 unit tests (`config/bosses.test.ts`: roster, 18 distinct attacks,
+  phase unlocks, 65% / 30% thresholds, rotation). Playwright, every attack
+  forced in-game with a still phoenix and exact time steps: all 18 fired;
+  earliest hit 0.8 s after start; Lava Wave 0 hits in the gap vs 1 outside;
+  Gravity Well pulled 104 px; Tornadoes shoved 101 px; Vine Snare rooted
+  without damage; seeds curved; Teleport made the boss intangible then
+  reappear 120 px away; Dive Bomb landed on the marked spot; Ice Walls blocked
+  three sides at 78 px and left the fourth open, also with 43 px slow-frame
+  steps (a tunnelling bug found and fixed). Full fights of Magmathar and
+  Criotharis: phases broke at exactly 65% / 30%, attacks unlocked in order,
+  hazards cleared on each break and on the kill, the next boss in the rotation
+  followed, the kill charged the ultimate. Zero console errors.
+- Not measured: how hard each boss feels to a human. Needs play.
+
 ## Stage 6 — Ultimates (done) and Stage 7 — Evolution (basic, done)
 
 How it works (founder decision 1, above):
@@ -130,6 +160,6 @@ dragged enemies into the player; Storm kept striking the same three enemies.
 
 ## Not started
 
-Stage 3 bosses (next), Stage 5 synergies, Stage 7 polish beyond the basic
+Stage 5 synergies (next), Stage 7 polish beyond the basic
 auras, Stage 8 full QA. Not tested on a real device. Ultimate balance needs
 real play.

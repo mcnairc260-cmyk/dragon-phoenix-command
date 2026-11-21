@@ -2,6 +2,7 @@
 
 One line per material change, newest first. Format: `date · scope · what` (PR # where applicable).
 
+- 2026-11-21 · product · EMBERLOOP expansion Stage 3: six faction bosses replace THE ASHBORN (founder art), rotating per encounter; 18 telegraphed signature attacks (9 bullet, 9 hazard: waves, meteors, beams, ice walls, gravity well, spores, vines, tornadoes, orbs, rifts), phases at 65% / 30% with phase-3 combos. Docs: GAME_DESIGN.md §5, EXPANSION.md.
 - 2026-11-21 · product · EMBERLOOP ultimate meter charges from kills only (founder decision): 14 per kill, 50 per elite or boss stage, full on boss kill; an ultimate's own kills never recharge it. Docs: EXPANSION.md, GAME_DESIGN.md.
 - 2026-11-21 · product · EMBERLOOP expansion Stages 6–7: ultimates replace the Burst on release (founder decision) — Burst is the starting ultimate; Ascension unlocks Supernova / Absolute Zero / Void Collapse / Worldroot Rebirth / Storm Apocalypse / Celestial Ascendancy and evolves the phoenix's aura. All six verified in play. Docs: games/emberloop/EXPANSION.md.
 - 2026-11-20 · product · EMBERLOOP expansion Stage 4: the 12 Power Shards (founder art) replace the 21 upgrades — damage, slow (cap 48%), range, heart heal/regrow, speed, seeking bolts, armour, cooldowns (floor 72%), crit, shield, XP; Ascension held back until ultimates. Fixed panel top-clipping and tip-over-menu. Docs: games/emberloop/EXPANSION.md, GAME_DESIGN.md §8.
