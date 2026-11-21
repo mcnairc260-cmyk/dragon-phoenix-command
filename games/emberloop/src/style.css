@@ -284,6 +284,13 @@ body {
   filter: drop-shadow(0 0 10px rgba(255, 107, 44, 0.6));
 }
 
+.panel__note {
+  margin: -6px 0 2px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ash);
+}
+
 /* Power Shard crystal art (founder's art/power-shards.png). */
 .card__art {
   width: 60px;

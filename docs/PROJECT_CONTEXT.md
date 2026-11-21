@@ -274,6 +274,8 @@ Also applied from the Bible in the same pass: the player sprite was rebuilt as *
 
 **Expansion Stage 4 — Power Shards (2026-11-20).** Founder answered the open questions: **2a** shards replace the 21 upgrades (done), **3a** six faction bosses replace THE ASHBORN (next), **4a** heal = 1 heart (done, Nature Shard), **1b** ultimates powered by "something else" — not yet specified, still open. The level-up draft now offers the 12 Power Shards with the founder's crystal art; Ascension is held out of the draft until ultimates exist. Full detail and measured verification in `games/emberloop/EXPANSION.md`; shard table in `GAME_DESIGN.md` §8.
 
+**Expansion Stage 6–7 — Ultimates and evolution (2026-11-21).** Founder decision: **"Ultimates should replace burst so the release is the control."** This overrides the brief's request to keep the Phoenix Burst as a separate mechanic. The release now fires the equipped ultimate; every run starts with the Phoenix Burst as the innate ultimate, and the Ascension Shard (offered once an element shard is owned) trades it for one of six elemental ultimates, then powers it up (×1.35 / ×1.7) and evolves the phoenix's aura (Awakened / Radiant / Transcendent). Details, tuning, safety rules and measured results in `games/emberloop/EXPANSION.md`.
+
 ## 19. BREAKPOINT — 3D pool game, Phase 1 vertical slice (2026-08-29)
 
 A founder-directed session built **BREAKPOINT**, a physics-first 3D pool game, as a self-contained sub-application in `games/breakpoint/` — branch `claude/breakpoint-phase-1-pool-1sjmmi`. Full engineering record: `games/breakpoint/README.md`.

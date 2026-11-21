@@ -36,8 +36,10 @@ import { Tutorial } from '../systems/Tutorial';
 import { Hud } from '../ui/Hud';
 import { computeStats, UPGRADES_BY_ID, type PlayerStats, type UpgradeLevels } from '../upgrades/UpgradeDefs';
 import { draftUpgrades, takeUpgrade } from '../upgrades/UpgradeDraft';
-import { gameOverPanel, pausePanel, progressionPanel, upgradePanel } from '../ui/panels';
+import { gameOverPanel, pausePanel, progressionPanel, ultimatePanel, upgradePanel } from '../ui/panels';
 import { FACTIONS, KIND_ROLE, pickSpecies, type FactionId } from '../config/factions';
+import { UltimateController } from './UltimateController';
+import { ULTIMATES_BY_ID, eligibleUltimates, evolutionStage, type UltimateId } from '../upgrades/Ultimates';
 
 const DEPTH = {
   arena: 0,
@@ -65,6 +67,7 @@ export class GameScene extends Phaser.Scene {
   private hud!: Hud;
   private player!: Player;
   private boss!: Boss;
+  private ultimates!: UltimateController;
 
   private enemyPool!: ObjectPool<Enemy>;
   private projectilePool!: ObjectPool<Projectile>;
@@ -143,6 +146,25 @@ export class GameScene extends Phaser.Scene {
     this.player.spawn(this.arena.cx, this.arena.cy);
 
     this.boss = new Boss(this, DEPTH.boss);
+    this.ultimates = new UltimateController({
+      scene: this,
+      fxDepth: DEPTH.fx,
+      fx: this.fx,
+      player: () => this.player,
+      stats: () => this.stats,
+      enemies: () => this.enemies,
+      boss: () => (this.bossActive && this.boss.active ? { x: this.boss.x, y: this.boss.y, radius: this.boss.radius } : null),
+      damageEnemy: (enemy, amount) => this.damageEnemy(enemy, amount, false),
+      damageBoss: (amount) => this.damageBoss(amount),
+      clearHostileBullets: (x, y, radius) => this.clearHostileBullets(x, y, radius),
+      healPlayer: (hearts) => this.healPlayer(hearts),
+      fireFriendly: (o) => {
+        const projectile = this.projectilePool.acquire();
+        projectile.spawn({ ...o, hostile: false, homing: false, radius: 5 });
+        this.projectiles.push(projectile);
+      },
+      slowMo: (scale, duration) => this.slowMo(scale, duration),
+    });
     this.hud = new Hud(this, DEPTH.hud, () => this.openPause());
     this.hud.layout(width, height);
 
@@ -385,6 +407,7 @@ export class GameScene extends Phaser.Scene {
     this.updateCollapses(dt, difficulty.collapseInterval);
     this.updateBossSchedule(dt, difficulty);
     this.updateEnemies(dt);
+    this.ultimates.update(dt);
     this.updateProjectiles(dt);
     this.updatePickups(dt);
     this.updateTrail(dt);
@@ -540,7 +563,8 @@ export class GameScene extends Phaser.Scene {
         this.removeEnemyAt(i);
         continue;
       }
-      enemy.update(ctx);
+      if (enemy.disabled) enemy.updateDisabled(enemyDt);
+      else enemy.update(ctx);
       // Anything that wanders far outside the caldera is recycled.
       if (this.arena.norm(enemy.x, enemy.y) > ARENA.cullRadius) {
         enemy.deactivate();
@@ -550,7 +574,8 @@ export class GameScene extends Phaser.Scene {
 
     if (this.bossActive && this.boss.active) {
       this.boss.update({
-        dt: dt * (1 - this.stats.enemySlow * 0.5),
+        // Frost Shard (half strength on bosses) and Absolute Zero's chill.
+        dt: dt * (1 - this.stats.enemySlow * 0.5) * (this.ultimates.bossSlowTimer > 0 ? 0.5 : 1),
         playerX: this.player.x,
         playerY: this.player.y,
         arena: this.arena,
@@ -731,13 +756,15 @@ export class GameScene extends Phaser.Scene {
       if (!enemy.active) continue;
       const dist = Math.hypot(enemy.x - px, enemy.y - py);
 
-      if (dist <= hitR + enemy.radius) {
+      if (dist <= hitR + enemy.radius && !enemy.disabled) {
         this.damagePlayer();
         // Shove the enemy off so a single contact cannot chain-hit.
         const angle = Math.atan2(enemy.y - py, enemy.x - px);
         enemy.x += Math.cos(angle) * 26;
         enemy.y += Math.sin(angle) * 26;
-      } else if (dist <= nearR + enemy.radius && enemy.nearMissTimer <= 0) {
+      } else if (dist <= nearR + enemy.radius && enemy.nearMissTimer <= 0 && !enemy.disabled) {
+        // Frozen or void-held enemies are harmless, so passing them is not a graze
+        // (otherwise an ultimate would refill its own charge).
         enemy.nearMissTimer = PLAYER.nearMissCooldown;
         this.registerNearMiss(enemy.x, enemy.y, enemy);
       }
@@ -776,10 +803,17 @@ export class GameScene extends Phaser.Scene {
       } else {
         let consumed = false;
         for (const enemy of this.enemies) {
-          if (!enemy.active) continue;
+          if (!enemy.active || enemy === projectile.lastHit) continue;
           if (Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y) <= projectile.radius + enemy.radius) {
             this.damageEnemy(enemy, projectile.damage, true);
-            consumed = true;
+            // Celestial bolts pass through a limited number of enemies.
+            if (projectile.pierce > 0) {
+              projectile.pierce -= 1;
+              projectile.lastHit = enemy;
+              this.fx.burstSparks(projectile.x, projectile.y, this.player.colors.accent, 3, 120);
+            } else {
+              consumed = true;
+            }
             break;
           }
         }
@@ -1102,9 +1136,20 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ── Phoenix Burst ─────────────────────────────────────────────────────────
+  /** Release: fires the equipped ultimate. Every run starts with the Phoenix Burst. */
   private doBurst(): void {
     this.player.consumeBurst();
     this.runBursts += 1;
+
+    if (this.ultimates.ultimate !== 'burst') {
+      const def = this.ultimates.def;
+      audio.burst();
+      haptics.play('burst');
+      // Timed ultimates must finish before the next one can start.
+      this.player.burstCooldown = Math.max(this.player.burstCooldown, def.duration + 0.4);
+      this.ultimates.cast();
+      return;
+    }
 
     const { x, y } = this.player;
     const radius = this.player.burstRadius;
@@ -1131,6 +1176,16 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    this.clearHostileBullets(x, y, radius);
+
+    if (this.bossActive && this.boss.active && Math.hypot(this.boss.x - x, this.boss.y - y) <= radius + this.boss.radius) {
+      this.damageBoss(damage);
+    }
+  }
+
+  /** Destroy enemy bullets inside a radius (Burst, Supernova, Void Collapse). */
+  private clearHostileBullets(x: number, y: number, radius: number): void {
+    const accent = this.player.colors.accent;
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const projectile = this.projectiles[i];
       if (!projectile.hostile) continue;
@@ -1138,10 +1193,6 @@ export class GameScene extends Phaser.Scene {
         this.fx.burstSparks(projectile.x, projectile.y, accent, 4, 120);
         this.releaseProjectile(i);
       }
-    }
-
-    if (this.bossActive && this.boss.active && Math.hypot(this.boss.x - x, this.boss.y - y) <= radius + this.boss.radius) {
-      this.damageBoss(damage);
     }
   }
 
@@ -1237,9 +1288,40 @@ export class GameScene extends Phaser.Scene {
         audio.upgradeSelect();
         haptics.play('levelUp');
         this.fx.shockwave(this.player.x, this.player.y, this.player.colors.accent, 300, 600);
+        if (id === 'ascension') {
+          this.ascend(this.build.ascension ?? 0);
+          // The first Ascension trades the Burst for an elemental ultimate.
+          if (this.ultimates.ultimate === 'burst') {
+            this.openUltimateChoice();
+            return;
+          }
+        }
         this.closeDraft();
       },
       skip: () => this.closeDraft(),
+    });
+  }
+
+  /** Ascension level → ultimate power and the phoenix's evolution stage. */
+  private ascend(level: number): void {
+    this.ultimates.ascension = level;
+    this.player.setEvolution(level);
+    session.ui.toast(`${evolutionStage(level)} phoenix`, 2400);
+    this.fx.shockwave(this.player.x, this.player.y, BRAND.rebirthGold, 360, 760, 1.4);
+  }
+
+  private openUltimateChoice(): void {
+    const options = eligibleUltimates(this.build);
+    session.ui.openPanel(ultimatePanel(options), {
+      ultimate: (dataset) => {
+        const id = dataset.id as UltimateId | undefined;
+        const def = id ? ULTIMATES_BY_ID.get(id) : undefined;
+        if (!def || !options.includes(def)) return;
+        this.ultimates.ultimate = def.id;
+        session.ui.toast(`${def.name} — release to unleash`, 2800);
+        this.fx.shockwave(this.player.x, this.player.y, def.color, 320, 700, 1.2);
+        this.closeDraft();
+      },
     });
   }
 
@@ -1403,6 +1485,8 @@ export class GameScene extends Phaser.Scene {
         level: this.levels.level,
         xpProgress: levelProgress(this.levels),
         burstFraction: this.player.burstFraction,
+        ultimateName: this.ultimates.def.name,
+        ultimateColor: this.ultimates.def.color,
         burstCharges: this.player.burstCharges,
         maxBurstCharges: this.player.maxBurstCharges,
         ...(this.bossActive && this.boss.active

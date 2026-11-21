@@ -91,8 +91,10 @@ export interface UpgradeDef {
   icon: string;
   /** Crystal artwork URL. */
   art: string;
-  /** False keeps a shard out of the draft (Ascension waits for ultimates). */
+  /** False keeps a shard out of the draft entirely. */
   available: boolean;
+  /** Extra draft condition on the current build (Ascension needs an element shard). */
+  requires?: (owned: UpgradeLevels) => boolean;
   /** Player-facing effect at a given owned level (1-based). */
   effect: (level: number) => string;
   /** Short player-facing text for the given (1-based) level being offered. */
@@ -153,6 +155,9 @@ function shard(def: Omit<UpgradeDef, 'describe'>): UpgradeDef {
   };
 }
 
+/** Shards that each unlock an elemental ultimate (mirrors upgrades/Ultimates.ts). */
+export const ELEMENT_SHARD_IDS = ['ember', 'frost', 'void', 'nature', 'storm', 'arcane'] as const;
+
 const REGEN_SECONDS = [0, 0, 45, 35, 25];
 const WARD_SECONDS = [0, 14, 11, 8];
 const ARCANE_INTERVAL = [0, 1.6, 1.4, 1.2];
@@ -193,9 +198,12 @@ export const UPGRADES: readonly UpgradeDef[] = [
   }),
   shard({
     id: 'ascension', name: 'Ascension Shard', family: 'utility', rarity: 'legendary', maxLevel: 3, icon: '🜂', art: ascensionArt,
-    // Unlocks ultimates and Phoenix evolution (Stages 6–7): kept out of the draft until those exist.
-    available: false,
-    effect: (l) => `Ultimate tier ${l}`,
+    // Turns the Burst into an elemental ultimate (upgrades/Ultimates.ts); only
+    // offered once the player owns an element shard to draw it from.
+    available: true,
+    requires: (owned) => ELEMENT_SHARD_IDS.some((id) => (owned[id] ?? 0) > 0),
+    effect: (l) =>
+      l <= 1 ? 'Awaken: trade the Burst for an elemental ultimate' : `${l === 2 ? 'Radiant' : 'Transcendent'}: ultimate +${(l - 1) * 35}% power`,
     apply: () => undefined,
   }),
   shard({

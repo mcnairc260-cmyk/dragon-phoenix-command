@@ -55,7 +55,7 @@ be tougher.
 
 | # | Question | Decision |
 |---|---|---|
-| 1 | What powers ultimates | **b — something else; founder to specify.** Open. Facts that constrain it: the ASCENSION bar is the XP bar (empties at every level-up), and release-to-Burst means any ultimate input must not need a finger lift. |
+| 1 | What powers ultimates | **Founder (2026-11-21): "Ultimates should replace burst so the release is the control."** This overrides the brief's "keep Phoenix Burst separate". Implemented: the Burst meter and release now fire the equipped ultimate; the Phoenix Burst is the innate ultimate every run starts with. Do not re-add a separate Burst. |
 | 2 | Shards vs the 21 upgrades | **a — shards replace them**; old effects return as synergies. Done (Stage 4). |
 | 3 | Bosses vs THE ASHBORN | **a — six faction bosses replace the Ashborn**, rotating by faction. Stage 3. |
 | 4 | Healing with 3 hearts | **a — "heal" = restore 1 heart**, with a cooldown. Done (Nature Shard). |
@@ -84,7 +84,51 @@ be tougher.
   top (now auto-margin centred), and the tutorial tip no longer sits on top of
   menus.
 
+## Stage 6 — Ultimates (done) and Stage 7 — Evolution (basic, done)
+
+How it works (founder decision 1, above):
+- Every run starts with the **Phoenix Burst** as the equipped ultimate (it
+  works exactly as before). Same meter, same charge sources, release to fire.
+- **Ascension Shard** is offered once the player owns any element shard. Level 1
+  opens "choose your ultimate", listing only the ultimates of element shards
+  owned. The choice replaces the Burst for the rest of the run (one per run).
+- Ascension levels 2 and 3: ultimate power ×1.35 / ×1.7.
+- Evolution stages from Ascension level: **Awakened** (gold aura ring),
+  **Radiant** (brighter ring, stronger flame trail), **Transcendent** (second
+  counter-rotating ring). Overlays sit behind the bird; the art is unchanged.
+- The bottom bar shows the equipped ultimate's name and colour.
+
+| Ultimate | Element | Effect (Ascension 1 values, ×power) | Duration |
+|---|---|---|---|
+| Phoenix Supernova | Ember | 260 px blast, 8 dmg (bosses half), burn 1.6 dps for 3 s, clears bullets, 0.9 s protection | 3 s |
+| Absolute Zero | Frost | Wave to 300 px over 0.6 s, 3 dmg, freezes 2.5 s (+0.5 s per tier), bosses slowed 50% for 4 s | 3 s |
+| Void Collapse | Void | Singularity on the nearest enemy group, ≥130 px from the phoenix; pulls 280 px, grinds 1.2 dmg / 0.25 s, implodes 6 dmg in 170 px; bosses not moved | 2.6 s |
+| Worldroot Rebirth | Nature | +1 heart (+2 at tier 3), shield up, roots 4 dmg in 220 px, +1 heart 4 s later; all capped at 3 hearts | 5 s |
+| Storm Apocalypse | Storm | 12 strikes, 0.25 s apart, 3 dmg; boss → elites → least-struck → nearest; chain to 2 at 60% / 36%; speed ×1.3 for 4 s | 3 s |
+| Celestial Ascendancy | Arcane | 3 bolts every 0.35 s at the nearest enemies, 1.5 dmg, pierce 2; magenta-gold aura; no invulnerability | 6 s |
+
+Radii scale with Void Shard range; damage with Ember. Code:
+`src/upgrades/Ultimates.ts` (data, unit-tested), `src/scenes/UltimateController.ts`
+(effects), `GameScene.doBurst` (dispatch; the Burst itself unchanged).
+
+Safety rules (brief §15): every lasting effect has a fixed duration and the
+next cast waits for it (cooldown = duration + 0.4 s); damage over time ticks
+4× per second, never per frame; nothing triggers on damage, so nothing can
+recurse; heals cap at max hearts; bosses are never frozen or pulled; frozen
+or void-held enemies are harmless **and do not count as grazes** (otherwise an
+ultimate refilled its own charge — found in testing).
+
+Verified in Playwright, through the real draft → ultimate choice → hold and
+release, then stepping exact game time, 6 tough enemies around the phoenix
+(damage to all 6 over 6 s): Supernova 86, Void Collapse 88 (all pulled to the
+singularity, phoenix unharmed), Celestial 73, Storm 57 (all 6 struck, speed
+1.3 → 1), Worldroot 24 (hearts 1 → 3, shield on), Absolute Zero 18 (all 6
+frozen at 1 s, thawed by 3 s). Zero console errors. Two design bugs found and
+fixed by these tests: the first Void Collapse opened on the phoenix and
+dragged enemies into the player; Storm kept striking the same three enemies.
+
 ## Not started
 
-Stage 3 bosses, Stage 5 synergies, Stage 6 ultimates, Stage 7
-evolution stages, Stage 8 full QA. Not tested on a real device.
+Stage 3 bosses (next), Stage 5 synergies, Stage 7 polish beyond the basic
+auras, Stage 8 full QA. Not tested on a real device. Ultimate balance needs
+real play.

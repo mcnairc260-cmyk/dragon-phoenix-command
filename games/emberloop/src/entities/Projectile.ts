@@ -24,6 +24,10 @@ export class Projectile {
   life = 0;
   /** Cooldown so a single bullet cannot chain near-misses every frame. */
   nearMissTimer = 0;
+  /** Extra enemies this shot passes through (Celestial Ascendancy). */
+  pierce = 0;
+  /** Last enemy hit, so a piercing shot cannot hit the same one twice in a row. */
+  lastHit: unknown = null;
 
   private readonly glow: Phaser.GameObjects.Image;
   private readonly body: Phaser.GameObjects.Image;
@@ -44,6 +48,7 @@ export class Projectile {
     damage?: number;
     radius?: number;
     life?: number;
+    pierce?: number;
   }): void {
     this.active = true;
     this.x = options.x;
@@ -56,6 +61,8 @@ export class Projectile {
     this.radius = options.radius ?? 6;
     this.life = options.life ?? 6;
     this.nearMissTimer = 0;
+    this.pierce = options.pierce ?? 0;
+    this.lastHit = null;
 
     this.glow.setVisible(true).setTint(options.color).setScale((this.radius / 32) * 2.4).setAlpha(0.85);
     this.body.setVisible(true).setTint(0xffffff).setDisplaySize(this.radius * 2.6, this.radius * 2.6);

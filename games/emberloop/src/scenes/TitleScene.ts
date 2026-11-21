@@ -223,7 +223,7 @@ export class TitleScene extends Phaser.Scene {
     this.best.setText(
       session.save.runs > 0
         ? `BEST ${Math.round(session.save.highScore).toLocaleString('en-US')}  ·  ${formatClock(session.save.longestSurvival)}`
-        : 'DRAG TO FLY · RELEASE TO BURST',
+        : 'DRAG TO FLY · RELEASE TO UNLEASH',
     );
   }
 

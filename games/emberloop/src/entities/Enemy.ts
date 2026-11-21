@@ -74,6 +74,13 @@ export class Enemy {
   orbitDir = 1;
   /** Marks near-miss cooldown so one pass cannot farm infinite Heat. */
   nearMissTimer = 0;
+  /** Absolute Zero: seconds left frozen (no movement, no attacks, no contact damage). */
+  frozenTimer = 0;
+  /** Phoenix Supernova burn: seconds left and damage per second. */
+  burnTimer = 0;
+  burnDps = 0;
+  /** Caught in a Void Collapse pull: no own movement, no attacks, no contact damage. */
+  heldTimer = 0;
 
   private readonly glow: Phaser.GameObjects.Image;
   private readonly body: Phaser.GameObjects.Image;
@@ -128,6 +135,10 @@ export class Enemy {
     this.vx = 0;
     this.vy = 0;
     this.nearMissTimer = 0;
+    this.frozenTimer = 0;
+    this.heldTimer = 0;
+    this.burnTimer = 0;
+    this.burnDps = 0;
     this.pulse = Math.random() * TAU;
 
     const childScale = this.isChild ? 0.6 : 1;
@@ -215,6 +226,39 @@ export class Enemy {
 
   get glowColor(): number {
     return this.species ? FACTION_BY_ID[this.species.faction].color : ENEMY_COLORS[this.kind][0];
+  }
+
+  get frozen(): boolean {
+    return this.frozenTimer > 0;
+  }
+
+  /** Freeze in place; bosses are a separate class and never call this. */
+  freeze(seconds: number): void {
+    this.frozenTimer = Math.max(this.frozenTimer, seconds);
+    this.vx = 0;
+    this.vy = 0;
+    this.telegraph.setVisible(false);
+    this.body.setTint(0x9fe9ff);
+    this.glow.setTint(BRAND.signalCyan).setAlpha(0.9);
+  }
+
+  /** Frozen or held: harmless and not acting on its own. */
+  get disabled(): boolean {
+    return this.frozenTimer > 0 || this.heldTimer > 0;
+  }
+
+  /** Called instead of update() while frozen or held: count down, keep sprites on the body. */
+  updateDisabled(dt: number): void {
+    if (this.heldTimer > 0) this.heldTimer = Math.max(0, this.heldTimer - dt);
+    this.render();
+    if (this.frozenTimer <= 0) return;
+    this.frozenTimer -= dt;
+    if (this.frozenTimer > 0) return;
+    this.frozenTimer = 0;
+    // Restore the normal look.
+    if (this.species) this.body.clearTint();
+    else this.body.setTint(this.isElite ? 0xffffff : ENEMY_COLORS[this.kind][1]);
+    this.glow.setTint(this.glowColor);
   }
 
   /** Returns true when the enemy died from this damage. */

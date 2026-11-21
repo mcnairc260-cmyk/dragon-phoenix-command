@@ -40,8 +40,8 @@ only where the target comes from differs.
 | Input | Effect |
 |---|---|
 | Press and drag anywhere | Steer per the mode above. Speed ramps with distance to the target, hitting full speed ~90 px out, so small nudges give fine control. |
-| Hold | Charge the Phoenix Burst meter (faster while moving; near-misses and kills add extra). |
-| Release | **Fire the Phoenix Burst** if a charge is stored. |
+| Hold | Charge the ultimate meter (faster while moving; near-misses and kills add extra). |
+| Release | **Fire your ultimate** if a charge is stored: the Phoenix Burst until the Ascension Shard swaps it for an elemental ultimate (see `EXPANSION.md`, Stage 6). |
 | Pause button (top-right) | Pause + settings. |
 | Desktop extras | Space = burst, Esc/P = pause. |
 
@@ -229,7 +229,7 @@ now → next, and `LV n / max`. Values live in `src/upgrades/UpgradeDefs.ts`.
 | Nature | Rare | 4 | Restore 1 heart on pick; from L2 regrow 1 heart every 45 / 35 / 25 s | never above 3 hearts |
 | Storm | Common | 5 | +8% flight speed | — |
 | Arcane | Legendary | 3 | Auto-fire 1 / 2 / 3 seeking bolts every 1.6 / 1.4 / 1.2 s | 3 bolts |
-| Ascension | Legendary | 3 | Ultimates + evolution — **not in the draft yet** (Stages 6–7) | — |
+| Ascension | Legendary | 3 | L1: trade the Burst for an elemental ultimate (needs an element shard); L2–L3: ultimate ×1.35 / ×1.7 and evolution | — |
 | Titan | Common | 4 | +7% chance to shrug off a hit | 28% |
 | Time | Common | 4 | All cooldowns 7% shorter (Burst, shield, regen, bolts) | 72% of base |
 | Hunter | Common | 4 | +6% crit chance (double damage + splash blast) | 24% |

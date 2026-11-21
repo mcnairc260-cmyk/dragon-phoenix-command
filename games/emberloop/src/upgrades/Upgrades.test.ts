@@ -42,8 +42,15 @@ describe('Power Shard catalogue', () => {
     expect(ember.describe(2)).toBe('+12% damage  →  +24% damage');
   });
 
-  it('keeps Ascension out of the draft until ultimates exist', () => {
-    expect(UPGRADES.find((u) => u.id === 'ascension')!.available).toBe(false);
+  it('only offers Ascension once an element shard is owned', () => {
+    const offered = (owned: UpgradeLevels) => {
+      const rng = createRng(11);
+      for (let i = 0; i < 400; i++) if (draftUpgrades(owned, rng).some((c) => c.def.id === 'ascension')) return true;
+      return false;
+    };
+    expect(offered({})).toBe(false);
+    expect(offered({ titan: 2, time: 1 })).toBe(false);
+    expect(offered({ frost: 1 })).toBe(true);
   });
 });
 
@@ -119,13 +126,13 @@ describe('draftUpgrades', () => {
     expect(a).toEqual(b);
   });
 
-  it('never offers a maxed shard or Ascension', () => {
-    const owned: UpgradeLevels = { ward: 3, arcane: 3 };
+  it('never offers a maxed shard, nor Ascension without an element', () => {
+    const owned: UpgradeLevels = { ward: 3, titan: 4 };
     const rng = createRng(7);
     for (let i = 0; i < 300; i++) {
       const ids = draftUpgrades(owned, rng).map((c) => c.def.id);
       expect(ids).not.toContain('ward');
-      expect(ids).not.toContain('arcane');
+      expect(ids).not.toContain('titan');
       expect(ids).not.toContain('ascension');
     }
   });
