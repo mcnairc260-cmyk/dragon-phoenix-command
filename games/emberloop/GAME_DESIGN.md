@@ -101,6 +101,11 @@ Tuning: `BOARD` in `src/config/GameConfig.ts`; maths: `src/systems/Difficulty.ts
 | Clear (2.2 s) | Remaining enemies and bullets dissolve, every ember flies to the phoenix |
 | Rest | Game paused: board cleared, 6-board progress track, score / time / level / kills, hearts, +1 heart, "next: a little harder". Continue starts the next board; after board 6, "Loop complete — Begin loop 2" |
 
+**The run's first board is an on-ramp** (`BOARD.firstBoard`, founder feedback
+2026-11-22): chasers only for 15 s, chargers from 15 s, shooters from 30 s,
+thinner spawns, enemies 15% slower, longer charger warnings, no arena
+collapses, elite at 40 s. Loop 2's first board is not eased.
+
 **Threat** = board × 0.45 + loop × 1.6 + (0 → 0.5 across the wave). Loop 1
 spans 0 → 2.75. Loop 2 starts at 1.6 — about board 4 of loop 1, so looping back
 is not a wall — and every loop-2 board is harder than its loop-1 twin. Boss HP

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { TEX } from '../effects/Textures';
+import { BRAND } from '../config/brand';
 
 export interface HomingTarget {
   x: number;
@@ -38,10 +39,13 @@ export class Projectile {
 
   private readonly glow: Phaser.GameObjects.Image;
   private readonly body: Phaser.GameObjects.Image;
+  private readonly rim: Phaser.GameObjects.Image;
 
   constructor(scene: Phaser.Scene, depth: number) {
     this.glow = scene.add.image(0, 0, TEX.glowTight).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth).setVisible(false);
     this.body = scene.add.image(0, 0, TEX.bullet).setDepth(depth + 1).setVisible(false);
+    // Enemy bullets wear a dark ring so danger never looks like the blue crystal loot.
+    this.rim = scene.add.image(0, 0, TEX.glowTight).setTint(BRAND.voidBlack).setDepth(depth - 0.5).setVisible(false);
   }
 
   spawn(options: {
@@ -79,12 +83,14 @@ export class Projectile {
 
     this.glow.setVisible(true).setTint(options.color).setScale((this.radius / 32) * 2.4).setAlpha(0.85);
     this.body.setVisible(true).setTint(0xffffff).setDisplaySize(this.radius * 2.6, this.radius * 2.6);
+    this.rim.setVisible(this.hostile).setScale((this.radius * 4) / 64).setAlpha(0.8);
   }
 
   deactivate(): void {
     this.active = false;
     this.glow.setVisible(false);
     this.body.setVisible(false);
+    this.rim.setVisible(false);
   }
 
   /** Reflect a hostile bullet back at its owners (Mirror Flame upgrade). */
@@ -95,6 +101,7 @@ export class Projectile {
     this.vy *= -1.25;
     this.life = Math.max(this.life, 3);
     this.glow.setTint(color);
+    this.rim.setVisible(false);
   }
 
   update(dt: number, findTarget: () => HomingTarget | null): boolean {
@@ -121,6 +128,7 @@ export class Projectile {
 
     const angle = Math.atan2(this.vy, this.vx);
     this.glow.setPosition(this.x, this.y);
+    this.rim.setPosition(this.x, this.y);
     this.body.setPosition(this.x, this.y).setRotation(angle);
     return true;
   }
@@ -128,5 +136,6 @@ export class Projectile {
   destroy(): void {
     this.glow.destroy();
     this.body.destroy();
+    this.rim.destroy();
   }
 }

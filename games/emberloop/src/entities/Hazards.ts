@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { TAU } from '../core/math';
+import { BRAND } from '../config/brand';
 
 /**
  * Boss attack hazards that are not plain bullets (bullets reuse Projectile, so
@@ -287,8 +288,10 @@ export class HazardField {
           g.fillStyle(h.color, warn ? 0.18 + 0.2 * blink : 0.65);
           g.fillRect(h.x1, top, Math.max(0, gapL - h.x1), h.r * 2);
           g.fillRect(gapR, top, Math.max(0, h.x2 - gapR), h.r * 2);
-          // The safe gap is outlined in white so it reads instantly.
-          g.lineStyle(2, 0xffffff, warn ? a : 0.8);
+          // The safe gap is filled blue (blue = safe, as with the crystals) and outlined in white.
+          g.fillStyle(BRAND.signalCyan, warn ? 0.22 + 0.18 * blink : 0.35);
+          g.fillRect(gapL, top, h.gapW, h.r * 2);
+          g.lineStyle(2, 0xffffff, warn ? a : 0.9);
           g.strokeRect(gapL, top, h.gapW, h.r * 2);
           break;
         }

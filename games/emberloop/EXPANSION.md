@@ -234,6 +234,38 @@ Fixes found while testing: trails at six blades with Infernal Cyclone merged
 into a solid bright ring — trails now cover at most 35% of the gap; bosses took
 ~34 dps from six cyclone blades — blades now deal half damage to bosses.
 
+## Founder feedback round (2026-11-22, done)
+
+Feedback: the start felt like "expert level 10"; shards were hard to tell from
+enemies; the "orange line with the clear box swiping down" was unexplained.
+
+Causes found in code: board 1 sent all three enemy types from second one (the
+old game had unlocked them at 0 / 14 / 30 s), arena collapses began at 12 s, an
+elite came at 25 s; shards used the gold palette colour on an all-orange board
+next to orange fireballs; the swiping line was Magmathar's Lava Wave with no
+explanation, and it was the first boss's opening attack. Every hit a test bot
+took came from enemy contact, and one chaser could hit again the moment
+invulnerability ended.
+
+Changes:
+- First board of a run (`BOARD.firstBoard`): chasers only for 15 s, chargers
+  from 15 s, shooters from 30 s; spawns ×1.4 slower, two fewer enemies at once;
+  enemies 15% slower; charger warning +0.3 s; no arena collapses; elite at 40 s.
+- Contact recoil (whole game): an enemy that touches the phoenix is pushed
+  40 px back and stunned (harmless) for 0.5 s (`PLAYER.contactKnockback/Stun`).
+- Shards are Signal Cyan crystals (the colour of the XP bar they fill), upright
+  and bobbing with a glint; enemy bullets have a dark ring. Tutorial says
+  "Collect the BLUE CRYSTALS".
+- Magmathar opens with Eruption Rings; Lava Wave is now its phase-3 attack.
+  Every boss attack shows a dodge tip under the boss bar ("LAVA WAVE — fly
+  through the blue gap"); the Lava Wave gap is filled blue.
+- Removed the unused old blade texture.
+
+Measured, same seeds and flight path, first 40 s of board 1, 3 runs each:
+a bot that never dodges took 11.3 hits before → 7.3 after; a simple bot that
+steers away from enemies and bullets took 2 / 2 / 5 hits before (5 = dead
+inside 40 s) → 0 / 0 / 1 after. Enemies on screen at 40 s: 7 → 3–5.
+
 ## Not started
 
 Stage 7 polish beyond the basic auras, Stage 8 full QA (next). Real-device play

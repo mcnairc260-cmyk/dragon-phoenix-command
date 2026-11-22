@@ -16,7 +16,6 @@ export const TEX = {
   ring: 'tex-ring',
   shard: 'tex-shard',
   bullet: 'tex-bullet',
-  blade: 'tex-blade',
   cinder: 'tex-cinder',
   dart: 'tex-dart',
   spitter: 'tex-spitter',
@@ -128,13 +127,6 @@ export function generateTextures(scene: Phaser.Scene): void {
     drawPolys(g, [{ points: [[18, 10], [6, 6], [6, 14]], color: 0xffffff, alpha: 0.85 }]);
   });
 
-  // Orbiting blade — a curved crescent.
-  bake(scene, TEX.blade, 40, 20, (g) => {
-    drawPolys(g, [
-      { points: [[0, 10], [22, 2], [40, 10], [22, 18]], color: 0xffffff },
-      { points: [[10, 10], [24, 6], [34, 10], [24, 14]], color: 0xffffff, alpha: 0.6 },
-    ]);
-  });
 
   // Cinder — a lumpy blob (slow, dumb, relentless).
   bake(scene, TEX.cinder, 36, 36, (g) => {

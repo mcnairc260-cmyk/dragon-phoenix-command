@@ -64,6 +64,13 @@ export const PLAYER = {
   invulnAfterHit: 1.25,
   /** Ring in which passing enemies/projectiles counts as a near-miss. */
   nearMissRadius: 46,
+  /**
+   * An enemy that touches the phoenix recoils: pushed back this far and stunned
+   * (harmless, not moving) for `contactStun` seconds, so the same chaser cannot
+   * land a second hit the moment invulnerability ends.
+   */
+  contactKnockback: 40,
+  contactStun: 0.5,
   /** Same danger object cannot re-trigger a near-miss faster than this. */
   nearMissCooldown: 0.5,
 } as const;
@@ -179,6 +186,20 @@ export const BOARD = {
   restHeal: 1,
   /** Seconds of clean-up (embers fly to you) between the boss falling and the rest screen. */
   clearSeconds: 2.2,
+  /**
+   * Onboarding for the very first board of a run (founder feedback 2026-11-22:
+   * "starting out on expert level 10"). Enemy types join one at a time, spawns
+   * are thinner, there are no arena collapses and the elite comes later.
+   */
+  firstBoard: {
+    unlockAt: { cinder: 0, dart: 15, spitter: 30 } as Record<string, number>,
+    spawnIntervalMul: 1.4,
+    maxEnemiesLess: 2,
+    eliteAt: 40,
+    /** Enemies 15% slower, and chargers show their line 0.3 s longer before dashing. */
+    enemySpeedMul: 0.85,
+    chargeTelegraphBonus: 0.3,
+  },
 } as const;
 
 export const ENEMY = {

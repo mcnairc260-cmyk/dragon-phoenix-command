@@ -84,8 +84,10 @@ export class Enemy {
   /** Phoenix Supernova burn: seconds left and damage per second. */
   burnTimer = 0;
   burnDps = 0;
-  /** Caught in a Void Collapse pull: no own movement, no attacks, no contact damage. */
+  /** Caught in a Void Collapse pull, or recoiling after hitting the phoenix: no movement, attacks or contact damage. */
   heldTimer = 0;
+  /** Seconds a charger shows its line before dashing (longer on the first board). */
+  telegraphTime: number = ENEMY.dart.telegraph;
   /** Frozen Barrage chill: slowed while > 0; enough hits freeze. */
   chillTimer = 0;
   chillHits = 0;
@@ -130,6 +132,7 @@ export class Enemy {
     elite?: boolean;
     child?: boolean;
     species?: Species | null;
+    telegraphBonus?: number;
   }): void {
     const base = ENEMY[options.kind];
     this.active = true;
@@ -138,6 +141,7 @@ export class Enemy {
     this.isChild = options.child === true;
     this.serial = nextSerial++;
     this.species = options.species ?? null;
+    this.telegraphTime = ENEMY.dart.telegraph + (options.telegraphBonus ?? 0);
     const sp = this.species;
     this.x = options.x;
     this.y = options.y;
@@ -325,7 +329,7 @@ export class Enemy {
       this.updateChase(ctx, 0.12);
       if (this.phaseTimer <= 0) {
         this.phase = 'telegraph';
-        this.phaseTimer = ENEMY.dart.telegraph;
+        this.phaseTimer = this.telegraphTime;
         this.lockedAngle = Math.atan2(ctx.playerY - this.y, ctx.playerX - this.x);
       }
     } else if (this.phase === 'telegraph') {
@@ -334,7 +338,7 @@ export class Enemy {
       // Keep tracking loosely during the wind-up so it stays threatening but dodgeable.
       const desired = Math.atan2(ctx.playerY - this.y, ctx.playerX - this.x);
       this.lockedAngle = Phaser.Math.Angle.RotateTo(this.lockedAngle, desired, 1.6 * ctx.dt);
-      this.showTelegraphLine(this.lockedAngle, 700, 5 + (1 - this.phaseTimer / ENEMY.dart.telegraph) * 7);
+      this.showTelegraphLine(this.lockedAngle, 700, 5 + (1 - this.phaseTimer / this.telegraphTime) * 7);
       if (this.phaseTimer <= 0) {
         this.phase = 'charge';
         this.phaseTimer = ENEMY.dart.chargeTime;

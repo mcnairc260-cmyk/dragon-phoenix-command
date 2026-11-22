@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BOARD, DIFFICULTY } from '../config/GameConfig';
-import { boardRef, boardTable, boardThreat, bossHpScale, bossStageHp, difficultyForBoard, elitesFor } from './Difficulty';
+import { boardRef, boardTable, boardThreat, bossHpScale, bossStageHp, collapsesOn, difficultyForBoard, elitesFor } from './Difficulty';
 
 const start = (index: number) => boardThreat(index, 0);
 const end = (index: number) => boardThreat(index, BOARD.waveSeconds);
@@ -81,5 +81,27 @@ describe('bosses and elites per board', () => {
     expect(elitesFor(0)).toHaveLength(1);
     expect(elitesFor(3)).toHaveLength(2);
     expect(elitesFor(6)).toHaveLength(2);
+  });
+});
+
+describe('first-board onboarding (founder feedback: the start was too hard)', () => {
+  it('brings enemy types in one at a time on the first board only', () => {
+    const kinds = (s: number) => difficultyForBoard(0, s).table.map((t) => t.kind);
+    expect(kinds(0)).toEqual(['cinder']);
+    expect(kinds(15)).toEqual(['cinder', 'dart']);
+    expect(kinds(30)).toEqual(['cinder', 'dart', 'spitter']);
+    expect(difficultyForBoard(1, 0).table.map((t) => t.kind)).toContain('spitter');
+  });
+
+  it('thins spawns, holds back collapses and delays the elite on the first board', () => {
+    expect(difficultyForBoard(0, 0).spawnInterval).toBeGreaterThan(difficultyForBoard(6, 0).spawnInterval);
+    expect(difficultyForBoard(0, 0).maxEnemies).toBeLessThan(DIFFICULTY.maxEnemiesStart);
+    expect(collapsesOn(0)).toBe(false);
+    expect(collapsesOn(1)).toBe(true);
+    expect(elitesFor(0)).toEqual([BOARD.firstBoard.eliteAt]);
+  });
+
+  it('does not ease loop 2 board 1', () => {
+    expect(difficultyForBoard(6, 0).table).toHaveLength(6);
   });
 });

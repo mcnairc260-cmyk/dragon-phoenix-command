@@ -32,7 +32,7 @@ const STEPS: Step[] = [
   },
   {
     id: 'collect',
-    html: 'Follow the glowing trail — <b>COLLECT 3 EMBERS</b>',
+    html: 'Collect the <b>BLUE CRYSTALS</b> — they fill your blue bar and level you up',
     done: (s) => s.embersCollected >= 3,
     timeout: 6,
   },

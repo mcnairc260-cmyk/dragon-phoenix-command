@@ -282,7 +282,7 @@ export class Hud {
   /** Name the attack the boss is starting (matches the Boss Roster art). */
   flashBossAttack(name: string): void {
     this.bossAttackLabel.setText(`▸ ${name.toUpperCase()}`);
-    this.bossAttackUntil = this.pulse + 1.8;
+    this.bossAttackUntil = this.pulse + 2.6;
   }
 
   /**

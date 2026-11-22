@@ -65,8 +65,10 @@ export const BOSSES: readonly BossDef[] = [
     url: magmatharArt,
     radius: 46,
     movement: 'drift',
-    attacks: ['lava-wave', 'meteor-rain', 'eruption-rings'],
-    attackNames: ['Lava Wave', 'Meteor Rain', 'Eruption Rings'],
+    // The run's first boss opens with its most readable attack (founder feedback
+    // 2026-11-22): the board-sweeping Lava Wave waits for the last phase.
+    attacks: ['eruption-rings', 'meteor-rain', 'lava-wave'],
+    attackNames: ['Eruption Rings', 'Meteor Rain', 'Lava Wave'],
   },
   {
     id: 'criotharis',
@@ -144,6 +146,28 @@ export const PHASE_SHARES = [0.35, 0.35, 0.3] as const;
 export function attacksForStage(def: BossDef, stage: number): BossAttackId[] {
   return def.attacks.slice(0, Math.max(1, Math.min(3, stage + 1)));
 }
+
+/** How to dodge each attack, shown under the boss bar with its name. */
+export const ATTACK_TIPS: Record<BossAttackId, string> = {
+  'lava-wave': 'fly through the blue gap',
+  'meteor-rain': 'leave the marked circles',
+  'eruption-rings': 'slip through the gaps',
+  'ice-shard-barrage': 'move sideways',
+  'frost-nova': 'find the gaps',
+  'ice-wall-prison': 'leave by the open side',
+  'void-beams': 'step off the lines',
+  'teleport-strike': 'leave the circle',
+  'gravity-well': 'fly away from the pull',
+  'vine-snare': 'leave the marks',
+  'toxic-spores': 'avoid the clouds',
+  'seed-swarm': 'keep moving',
+  'feather-storm': 'weave between feathers',
+  'dive-bomb': 'leave the marked spot',
+  'wind-tornadoes': 'dodge the tornadoes',
+  'orbiting-orbs': 'mind the orbit',
+  'arcane-laser-grid': 'stand in a safe square',
+  'reality-rift': 'avoid the pulsing rifts',
+};
 
 /** Seconds of recovery after each attack, before the next one may start. */
 export const ATTACK_RECOVERY: Record<BossAttackId, number> = {

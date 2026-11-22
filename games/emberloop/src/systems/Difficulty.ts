@@ -79,7 +79,22 @@ export function difficultyFromThreat(threat: number, table: { kind: EnemyKind; w
 }
 
 export function difficultyForBoard(index: number, secondsIntoWave: number): DifficultySnapshot {
-  return difficultyFromThreat(boardThreat(index, secondsIntoWave), boardTable(index));
+  const snapshot = difficultyFromThreat(boardThreat(index, secondsIntoWave), boardTable(index));
+  if (index !== 0) return snapshot;
+  // The run's first board eases the player in (BOARD.firstBoard).
+  const ease = BOARD.firstBoard;
+  return {
+    ...snapshot,
+    spawnInterval: snapshot.spawnInterval * ease.spawnIntervalMul,
+    speedMultiplier: snapshot.speedMultiplier * ease.enemySpeedMul,
+    maxEnemies: Math.max(3, snapshot.maxEnemies - ease.maxEnemiesLess),
+    table: snapshot.table.filter((t) => secondsIntoWave >= (ease.unlockAt[t.kind] ?? 0)),
+  };
+}
+
+/** Arena sector collapses are held back on the run's first board. */
+export function collapsesOn(index: number): boolean {
+  return index !== 0;
 }
 
 /** Boss HP multiplier: +15% per board, +60% per loop. */
@@ -96,6 +111,7 @@ export function bossStageHp(stageHp: readonly number[], index: number): number[]
 /** Seconds into a board's wave at which elites arrive. */
 export function elitesFor(index: number): number[] {
   const { loop, board } = boardRef(index);
+  if (index === 0) return [BOARD.firstBoard.eliteAt];
   const second = loop > 0 || board >= BOARD.secondEliteFromBoard;
   return second ? [...BOARD.eliteAt] : [BOARD.eliteAt[0]];
 }

@@ -15,7 +15,7 @@ import { Arena } from '../effects/Arena';
 import { Fx } from '../effects/Fx';
 import { TEX } from '../effects/Textures';
 import { audio } from '../systems/AudioEngine';
-import { boardRef, bossStageHp, difficultyForBoard, elitesFor, type DifficultySnapshot, type EnemyKind } from '../systems/Difficulty';
+import { boardRef, bossStageHp, collapsesOn, difficultyForBoard, elitesFor, type DifficultySnapshot, type EnemyKind } from '../systems/Difficulty';
 import { haptics } from '../systems/Haptics';
 import { addXp, createLevelState, levelProgress, type LevelState } from '../systems/Leveling';
 import { CONTROL_MODES, recordRun, type ControlMode } from '../systems/Progression';
@@ -464,7 +464,7 @@ export class GameScene extends Phaser.Scene {
     this.updateBlades(dt, prevX, prevY);
     if (fighting) {
       this.updateSpawning(dt, difficulty.spawnInterval, difficulty.maxEnemies, difficulty.hpMultiplier, difficulty.speedMultiplier, difficulty.table);
-      this.updateCollapses(dt, difficulty.collapseInterval);
+      if (collapsesOn(this.boardIndex)) this.updateCollapses(dt, difficulty.collapseInterval);
     }
     this.updateEnemies(dt);
     this.updateHazards(dt);
@@ -549,7 +549,8 @@ export class GameScene extends Phaser.Scene {
     // Chasers, chargers and shooters wear the species of this board's faction.
     const role = options.child ? undefined : KIND_ROLE[kind];
     const species = role ? speciesFor(role, factionForBoard(boardRef(this.boardIndex).board).id) : null;
-    enemy.spawn({ kind, x, y, hpMultiplier, speedMultiplier, species, ...options });
+    const telegraphBonus = this.boardIndex === 0 ? BOARD.firstBoard.chargeTelegraphBonus : 0;
+    enemy.spawn({ kind, x, y, hpMultiplier, speedMultiplier, species, telegraphBonus, ...options });
     this.enemies.push(enemy);
     if (options.elite) {
       this.fx.shockwave(x, y, enemy.glowColor, 180, 520);
@@ -865,8 +866,7 @@ export class GameScene extends Phaser.Scene {
 
   private spawnPickup(x: number, y: number, scatter: number): void {
     const pickup = this.pickupPool.acquire();
-    const palette = this.player.colors;
-    pickup.spawn(x, y, palette.glow, palette.accent, scatter);
+    pickup.spawn(x, y, scatter);
     this.pickups.push(pickup);
   }
 
@@ -977,10 +977,14 @@ export class GameScene extends Phaser.Scene {
 
       if (dist <= hitR + enemy.radius && !enemy.disabled) {
         this.damagePlayer();
-        // Shove the enemy off so a single contact cannot chain-hit.
+        // Recoil: shove the enemy off and stun it briefly, so one chaser cannot
+        // land a second hit the moment invulnerability ends.
         const angle = Math.atan2(enemy.y - py, enemy.x - px);
-        enemy.x += Math.cos(angle) * 26;
-        enemy.y += Math.sin(angle) * 26;
+        enemy.x += Math.cos(angle) * PLAYER.contactKnockback;
+        enemy.y += Math.sin(angle) * PLAYER.contactKnockback;
+        enemy.heldTimer = Math.max(enemy.heldTimer, PLAYER.contactStun);
+        enemy.vx = 0;
+        enemy.vy = 0;
       } else if (dist <= nearR + enemy.radius && enemy.nearMissTimer <= 0 && !enemy.disabled) {
         // Frozen or void-held enemies are harmless, so passing them is not a graze
         // (otherwise an ultimate would refill its own charge).

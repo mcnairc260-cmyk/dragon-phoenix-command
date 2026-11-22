@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BOSS } from './GameConfig';
-import { ATTACK_RECOVERY, BOSSES, PHASE_SHARES, attacksForStage, bossFor } from './bosses';
+import { ATTACK_RECOVERY, ATTACK_TIPS, BOSSES, PHASE_SHARES, attacksForStage, bossFor } from './bosses';
 import { FACTIONS } from './factions';
 
 describe('faction bosses', () => {
@@ -19,9 +19,9 @@ describe('faction bosses', () => {
 
   it('unlocks one more attack per phase', () => {
     const b = BOSSES[0];
-    expect(attacksForStage(b, 0)).toEqual(['lava-wave']);
-    expect(attacksForStage(b, 1)).toEqual(['lava-wave', 'meteor-rain']);
-    expect(attacksForStage(b, 2)).toEqual(['lava-wave', 'meteor-rain', 'eruption-rings']);
+    expect(attacksForStage(b, 0)).toEqual(['eruption-rings']);
+    expect(attacksForStage(b, 1)).toEqual(['eruption-rings', 'meteor-rain']);
+    expect(attacksForStage(b, 2)).toEqual(['eruption-rings', 'meteor-rain', 'lava-wave']);
   });
 
   it('splits HP so phase 2 starts below 65% and phase 3 below 30%', () => {
@@ -42,5 +42,16 @@ describe('faction bosses', () => {
       'magmathar',
       'criotharis',
     ]);
+  });
+});
+
+describe('attack tips', () => {
+  it('gives every attack a short dodge tip', () => {
+    for (const b of BOSSES) {
+      for (const id of b.attacks) {
+        expect(ATTACK_TIPS[id].length).toBeGreaterThan(0);
+        expect(ATTACK_TIPS[id].length).toBeLessThanOrEqual(24);
+      }
+    }
   });
 });

@@ -4,7 +4,7 @@ import { TAU } from '../core/math';
 import type { Arena } from '../effects/Arena';
 import { BRAND } from '../config/brand';
 import { TEX } from '../effects/Textures';
-import { ATTACK_RECOVERY, attacksForStage, bossTextureKey, type BossAttackId, type BossDef } from '../config/bosses';
+import { ATTACK_RECOVERY, ATTACK_TIPS, attacksForStage, bossTextureKey, type BossAttackId, type BossDef } from '../config/bosses';
 import { createAttack, type AttackCtx, type AttackScript } from './bossAttacks';
 import type { HazardField } from './Hazards';
 
@@ -238,7 +238,7 @@ export class Boss {
     }
     for (const id of started) {
       this.running.push(createAttack(id));
-      ctx.onAttack(def.attackNames[def.attacks.indexOf(id)]);
+      ctx.onAttack(`${def.attackNames[def.attacks.indexOf(id)]} — ${ATTACK_TIPS[id]}`);
     }
     const recovery = Math.max(...started.map((id) => ATTACK_RECOVERY[id]));
     // Later phases recover a little faster; a combo earns a longer breather.
