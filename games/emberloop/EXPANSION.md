@@ -261,6 +261,8 @@ Changes:
   through the blue gap"); the Lava Wave gap is filled blue.
 - Removed the unused old blade texture.
 
+**Founder confirmed (2026-11-23): the start "feels right" and the blue crystals are "a good look". Keep both.**
+
 Measured, same seeds and flight path, first 40 s of board 1, 3 runs each:
 a bot that never dodges took 11.3 hits before → 7.3 after; a simple bot that
 steers away from enemies and bullets took 2 / 2 / 5 hits before (5 = dead
