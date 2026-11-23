@@ -2,34 +2,20 @@ import Phaser from 'phaser';
 import { session } from '../core/Session';
 import { safeArea } from '../core/safeArea';
 import { applyCamera } from '../core/viewport';
-import { BRAND, BRAND_CSS } from '../config/brand';
-import { Arena } from '../effects/Arena';
-import { TEX } from '../effects/Textures';
+import { BRAND_CSS } from '../config/brand';
 import { audio } from '../systems/AudioEngine';
 import { haptics } from '../systems/Haptics';
-import { FONT_DISPLAY, FONT_MONO } from '../ui/fonts';
-import { howToPanel, progressionPanel } from '../ui/panels';
-import { PhoenixSprite } from '../entities/PhoenixSprite';
+import { CONTROL_MODES } from '../systems/Progression';
+import { MENU_ART, howToPanel, mainMenuPanel, progressionPanel, quitPanel, settingsPanel } from '../ui/panels';
+import menuArt from '../assets/ui/main-menu.gif';
 
 /**
- * Animated title screen. A demo phoenix loops around the live caldera behind
- * the logo, and a tap anywhere outside the small menu row starts a run — so the
- * game is always two taps from cold start (open → tap → playing).
+ * Main menu (founder art, 2026-11-23): the animated EmberLoop menu image fills
+ * the screen and its five drawn buttons are live — Play, How to Play,
+ * Progress, Settings, Quit. The menu is a DOM panel (so the GIF animates
+ * natively); this scene only drives it.
  */
 export class TitleScene extends Phaser.Scene {
-  private arena!: Arena;
-  private demo!: PhoenixSprite;
-  private demoX = 0;
-  private demoY = 0;
-  private demoGlow!: Phaser.GameObjects.Image;
-  private demoTrail!: Phaser.GameObjects.Particles.ParticleEmitter;
-  private title!: Phaser.GameObjects.Text;
-  private titleGlow!: Phaser.GameObjects.Image;
-  private subtitle!: Phaser.GameObjects.Text;
-  private prompt!: Phaser.GameObjects.Text;
-  private best!: Phaser.GameObjects.Text;
-  private menu: Phaser.GameObjects.Text[] = [];
-  private t = 0;
   private starting = false;
 
   constructor() {
@@ -38,120 +24,65 @@ export class TitleScene extends Phaser.Scene {
 
   create(): void {
     this.starting = false;
-    this.t = 0;
-    const { w: width, h: height } = applyCamera(this);
+    applyCamera(this);
+    this.cameras.main.setBackgroundColor(BRAND_CSS.voidBlack);
+    this.openMenu();
 
-    this.arena = new Arena(this, 0);
-    this.arena.reducedMotion = session.settings.reducedMotion;
-    this.arena.layout(width, height);
+    // Desktop convenience: Enter or Space plays.
+    this.input.keyboard?.on('keydown-ENTER', () => this.play());
+    this.input.keyboard?.on('keydown-SPACE', () => this.play());
 
-    const palette = session.palette;
-
-    this.demoTrail = this.add
-      .particles(0, 0, TEX.glowTight, {
-        lifespan: { min: 300, max: 800 },
-        speed: { min: 5, max: 40 },
-        scale: { start: 0.5, end: 0 },
-        alpha: { start: 0.7, end: 0 },
-        blendMode: Phaser.BlendModes.ADD,
-        frequency: 22,
-        tint: palette.glow,
-      })
-      .setDepth(9);
-    this.demoGlow = this.add.image(0, 0, TEX.glow).setBlendMode(Phaser.BlendModes.ADD).setTint(palette.glow).setDepth(10);
-    this.demo = new PhoenixSprite(this, 11).setSize(1.15);
-    this.demo.reducedMotion = session.settings.reducedMotion;
-
-    this.titleGlow = this.add
-      .image(width / 2, 0, TEX.glow)
-      .setBlendMode(Phaser.BlendModes.ADD)
-      .setTint(BRAND.emberOrange)
-      .setDepth(19)
-      .setScale(3.4, 1.1)
-      .setAlpha(0.5);
-
-    // Scale the wordmark to the viewport so the tracking never clips on a
-    // narrow phone (SE-class) or look lost on a wide one.
-    const titleSize = Math.round(Math.min(46, width * 0.104));
-    this.title = this.add
-      .text(width / 2, 0, 'EMBERLOOP', {
-        fontFamily: FONT_DISPLAY,
-        fontSize: `${titleSize}px`,
-        color: BRAND_CSS.ghostWhite,
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5)
-      .setDepth(20)
-      .setShadow(0, 0, BRAND_CSS.emberOrange, 22, true, true);
-    this.title.setLetterSpacing(5);
-
-    this.subtitle = this.add
-      .text(width / 2, 0, 'FIRE WITHIN · POWER UNLEASHED', {
-        fontFamily: FONT_MONO,
-        fontSize: '11px',
-        color: BRAND_CSS.rebirthGold,
-      })
-      .setOrigin(0.5)
-      .setDepth(20);
-    this.subtitle.setLetterSpacing(3);
-
-    this.prompt = this.add
-      .text(width / 2, 0, 'TAP TO RISE', {
-        fontFamily: FONT_DISPLAY,
-        fontSize: '20px',
-        color: BRAND_CSS.ghostWhite,
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5)
-      .setDepth(20);
-    this.prompt.setLetterSpacing(4);
-
-    this.best = this.add
-      .text(width / 2, 0, '', { fontFamily: FONT_MONO, fontSize: '12px', color: BRAND_CSS.steel })
-      .setOrigin(0.5)
-      .setDepth(20);
-
-    this.buildMenu();
-    this.layout(width, height);
-
-    // Tap anywhere (except the menu row) to start.
-    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer, objects: Phaser.GameObjects.GameObject[]) => {
-      this.unlockAudio();
-      if (objects.length > 0) return; // a menu item handled it
-      if (session.ui.panelOpen) return;
-      this.startGame(pointer);
-    });
-
-    this.scale.on(Phaser.Scale.Events.RESIZE, this.onResize, this);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.scale.off(Phaser.Scale.Events.RESIZE, this.onResize, this);
-      this.arena.destroy();
-    });
+    const onResize = () => {
+      applyCamera(this);
+      this.fitMenuArt();
+    };
+    this.scale.on(Phaser.Scale.Events.RESIZE, onResize);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off(Phaser.Scale.Events.RESIZE, onResize));
   }
 
-  private buildMenu(): void {
-    const items: { label: string; run: () => void }[] = [
-      { label: 'HOW TO PLAY', run: () => this.openHowTo() },
-      { label: 'PROGRESS', run: () => this.openProgress() },
-    ];
+  private bestLine(): string {
+    if (session.save.runs === 0) return '';
+    return `BEST ${Math.round(session.save.highScore).toLocaleString('en-US')}  ·  ${formatClock(session.save.longestSurvival)}`;
+  }
 
-    this.menu = items.map(({ label, run }) => {
-      const text = this.add
-        .text(0, 0, label, { fontFamily: FONT_MONO, fontSize: '12px', color: BRAND_CSS.steel })
-        .setOrigin(0.5)
-        .setDepth(21)
-        // Padded hit area keeps these comfortably tappable without visual bulk.
-        .setInteractive({ useHandCursor: true, hitArea: new Phaser.Geom.Rectangle(-30, -20, 160, 48), hitAreaCallback: Phaser.Geom.Rectangle.Contains });
-      text.setLetterSpacing(2);
-      text.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, event: Phaser.Types.Input.EventData) => {
-        event.stopPropagation();
-        this.unlockAudio();
-        audio.uiTap();
-        haptics.play('tap');
-        run();
-      });
-      return text;
+  private openMenu(): void {
+    session.ui.openPanel(mainMenuPanel(menuArt, this.bestLine()), {
+      play: () => this.play(),
+      how: () => this.tap(() => this.openHowTo()),
+      progress: () => this.tap(() => this.openProgress()),
+      settings: () => this.tap(() => this.openSettings()),
+      quit: () => this.tap(() => this.openQuit()),
     });
+    this.fitMenuArt();
+  }
+
+  /**
+   * Cover the screen with the art (cropping the sides on tall phones), kept
+   * below the notch / Dynamic Island so the logo is never under it. The tap
+   * areas are percentages of this box, so they stay on the drawn buttons.
+   */
+  private fitMenuArt(): void {
+    const art = document.getElementById('menu-art');
+    const host = art?.parentElement;
+    if (!art || !host) return;
+    const w = host.clientWidth;
+    const top = safeArea().top;
+    const h = host.clientHeight - top;
+    const scale = Math.max(w / MENU_ART.width, h / MENU_ART.height);
+    const width = MENU_ART.width * scale;
+    const height = MENU_ART.height * scale;
+    art.style.width = `${width}px`;
+    art.style.height = `${height}px`;
+    art.style.left = `${(w - width) / 2}px`;
+    art.style.top = `${top + (h - height) / 2}px`;
+  }
+
+  /** Every menu press: wake audio (first gesture), a click and a buzz. */
+  private tap(then: () => void): void {
+    this.unlockAudio();
+    audio.uiTap();
+    haptics.play('tap');
+    then();
   }
 
   private unlockAudio(): void {
@@ -160,22 +91,33 @@ export class TitleScene extends Phaser.Scene {
     audio.startMusic();
   }
 
-  private openHowTo(): void {
-    session.ui.openPanel(howToPanel(), {
-      close: () => session.ui.closePanel(),
+  private play(): void {
+    if (this.starting) return;
+    this.starting = true;
+    this.unlockAudio();
+    haptics.play('tap');
+    audio.uiTap();
+    session.ui.closePanel();
+    const { width, height } = this.scale;
+    this.cameras.main.fadeOut(180, 0, 0, 0);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+      this.scene.start('Game', { pointerX: width / 2, pointerY: height * 0.6 });
     });
+  }
+
+  private openHowTo(): void {
+    session.ui.openPanel(howToPanel(), { close: () => this.openMenu() });
   }
 
   private openProgress(): void {
     const render = () => {
       session.ui.openPanel(progressionPanel(session.save), {
-        close: () => session.ui.closePanel(),
+        close: () => this.openMenu(),
         palette: (dataset) => {
           const id = dataset.id;
           if (!id || !session.save.unlockedPalettes.includes(id)) return;
           session.selectPalette(id);
           audio.uiTap();
-          this.refreshPalette();
           render();
         },
       });
@@ -183,75 +125,34 @@ export class TitleScene extends Phaser.Scene {
     render();
   }
 
-  private refreshPalette(): void {
-    const palette = session.palette;
-    this.demoGlow.setTint(palette.glow);
-    this.demoTrail.setParticleTint(palette.glow);
+  private openSettings(): void {
+    const render = () => {
+      session.ui.openPanel(settingsPanel(session.settings), {
+        close: () => this.openMenu(),
+        control: () => {
+          const next = CONTROL_MODES[(CONTROL_MODES.indexOf(session.settings.controlMode) + 1) % CONTROL_MODES.length];
+          session.setSetting('controlMode', next);
+          audio.uiTap();
+          render();
+        },
+        toggle: (dataset) => {
+          const key = dataset.key as 'sound' | 'music' | 'haptics' | 'reducedMotion' | undefined;
+          if (!key) return;
+          session.setSetting(key, !session.settings[key]);
+          audio.uiTap();
+          render();
+        },
+      });
+    };
+    render();
   }
 
-  private startGame(pointer: Phaser.Input.Pointer): void {
-    if (this.starting) return;
-    this.starting = true;
-    haptics.play('tap');
-    audio.uiTap();
-    this.cameras.main.fadeOut(180, 0, 0, 0);
-    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-      this.scene.start('Game', { pointerX: pointer.worldX, pointerY: pointer.worldY });
-    });
-  }
-
-  private onResize(): void {
-    const { w, h } = applyCamera(this);
-    this.arena.layout(w, h);
-    this.layout(w, h);
-  }
-
-  private layout(width: number, height: number): void {
-    const inset = safeArea();
-    const centerY = height * 0.32;
-    this.title.setPosition(width / 2, centerY);
-    this.titleGlow.setPosition(width / 2, centerY);
-    this.subtitle.setPosition(width / 2, centerY + 38);
-    this.prompt.setPosition(width / 2, height * 0.74);
-    this.best.setPosition(width / 2, height * 0.74 + 30);
-
-    const menuY = height - inset.bottom - 34;
-    this.menu.forEach((item, i) => {
-      item.setPosition(width * (i === 0 ? 0.3 : 0.7), menuY);
-    });
-
-    this.best.setText(
-      session.save.runs > 0
-        ? `BEST ${Math.round(session.save.highScore).toLocaleString('en-US')}  ·  ${formatClock(session.save.longestSurvival)}`
-        : 'DRAG TO FLY · RELEASE TO UNLEASH',
-    );
-  }
-
-  override update(_time: number, delta: number): void {
-    const dt = Math.min(delta / 1000, 0.05);
-    this.t += dt;
-    this.arena.update(dt);
-
-    // Demo phoenix loops a lazy lissajous path around the caldera.
-    const x = this.arena.cx + Math.cos(this.t * 0.7) * this.arena.rx * 0.62;
-    const y = this.arena.cy + Math.sin(this.t * 1.1) * this.arena.ry * 0.5;
-    const vx = (x - this.demoX) / dt;
-    const vy = (y - this.demoY) / dt;
-    this.demoX = x;
-    this.demoY = y;
-    this.demo.reducedMotion = session.settings.reducedMotion;
-    this.demo.update(dt, x, y, vx, vy, 0.35);
-    this.demoGlow.setPosition(x, y).setScale(1.1 + Math.sin(this.t * 5) * 0.08);
-    this.demoTrail.setPosition(x, y);
-
-    const breathe = session.settings.reducedMotion ? 1 : 1 + Math.sin(this.t * 2) * 0.02;
-    this.title.setScale(breathe);
-    this.titleGlow.setAlpha(0.35 + Math.sin(this.t * 1.7) * 0.12);
-    this.prompt.setAlpha(session.settings.reducedMotion ? 1 : 0.55 + 0.45 * Math.abs(Math.sin(this.t * 2.2)));
+  private openQuit(): void {
+    session.ui.openPanel(quitPanel(), { close: () => this.openMenu() });
   }
 }
 
 function formatClock(seconds: number): string {
-  const total = Math.max(0, Math.floor(seconds));
-  return `${Math.floor(total / 60)}:${(total % 60).toString().padStart(2, '0')}`;
+  const s = Math.max(0, Math.floor(seconds));
+  return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 }

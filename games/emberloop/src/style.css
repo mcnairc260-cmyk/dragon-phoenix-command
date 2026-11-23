@@ -370,6 +370,61 @@ body {
   box-shadow: 0 0 16px rgba(255, 107, 44, 0.35);
 }
 
+/* ── Main menu (founder art, animated GIF) ───────────────────────────────── */
+.menu {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--void);
+  animation: fade-in 220ms ease-out;
+}
+
+/* Sized and placed by TitleScene.fitMenuArt() to cover the screen below the notch. */
+.menu__art {
+  position: absolute;
+}
+
+.menu__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.menu__hot {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 90ms ease-out, background-color 90ms ease-out;
+}
+
+.menu__hot:active,
+.menu__hot:focus-visible {
+  outline: none;
+  background: rgba(255, 179, 0, 0.14);
+  box-shadow: 0 0 0 2px var(--gold), 0 0 22px rgba(255, 179, 0, 0.55);
+}
+
+.menu__best {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--safe-bottom) + 12px);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--gold);
+  text-shadow: 0 1px 3px var(--void), 0 0 10px var(--void);
+  pointer-events: none;
+}
+
 /* Power Shard crystal art (founder's art/power-shards.png). */
 .card__art {
   width: 60px;

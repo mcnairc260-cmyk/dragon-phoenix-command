@@ -284,6 +284,8 @@ Also applied from the Bible in the same pass: the player sprite was rebuilt as *
 
 **Founder feedback round (2026-11-22).** Start too hard, shards confused with enemies, Lava Wave unexplained. Fixed: an eased first board (enemy types join at 0/15/30 s, thinner/slower spawns, no collapses, later elite), contact recoil game-wide (an enemy that hits you is knocked back and stunned 0.5 s), **shards are now blue crystals** (the XP-bar colour; no longer the palette colour) and enemy bullets are dark-ringed, every boss attack shows a dodge tip, Lava Wave's gap is blue and Magmathar now opens with Eruption Rings. Measured with seeded bots (see `games/emberloop/EXPANSION.md`): a dodging bot went from 3.0 to 0.3 hits in the first 40 s. **Founder approved both (2026-11-23): start feels right; blue crystals are a good look — do not revert.**
 
+**Main menu (2026-11-23, founder art).** The founder's animated menu image (`games/emberloop/art/main-menu.gif`) is now the title screen, with live Play / How to Play / Progress / Settings / Quit buttons laid over the drawn ones. Open items for the founder: the art is low-res (308 px wide; a ~3× version would be sharp), and Quit can only explain how to close on iPhone (Apple forbids apps closing themselves) — keep it or replace it before App Store submission. Details: `games/emberloop/EXPANSION.md`.
+
 ## 19. BREAKPOINT — 3D pool game, Phase 1 vertical slice (2026-08-29)
 
 A founder-directed session built **BREAKPOINT**, a physics-first 3D pool game, as a self-contained sub-application in `games/breakpoint/` — branch `claude/breakpoint-phase-1-pool-1sjmmi`. Full engineering record: `games/breakpoint/README.md`.

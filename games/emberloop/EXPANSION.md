@@ -268,6 +268,31 @@ a bot that never dodges took 11.3 hits before → 7.3 after; a simple bot that
 steers away from enemies and bullets took 2 / 2 / 5 hits before (5 = dead
 inside 40 s) → 0 / 0 / 1 after. Enemies on screen at 40 s: 7 → 3–5.
 
+## Main menu (founder art, 2026-11-23, done)
+
+`art/main-menu.gif` (308 × 551, 9 frames, a phoenix rising from an ember) is
+the main menu. It is a DOM panel (`mainMenuPanel` in `ui/panels.ts`, driven by
+`scenes/TitleScene.ts`) so the GIF animates natively; the five drawn buttons
+are tap areas placed in the art's pixel coordinates, so they stay on the
+buttons at any screen size. The art covers the screen below the notch
+(sides crop on tall phones). The old title (drawn wordmark, demo phoenix,
+"TAP TO RISE", tap-anywhere-to-start) is gone.
+
+- Play starts a run; How to Play and Progress open the existing screens;
+  Settings is new on the menu (controls, sound, music, haptics, reduced motion
+  — the same list as the pause menu, shared code).
+- **Quit cannot close the app:** Apple does not allow an iPhone app to close
+  itself and rejects apps that try, and a browser tab cannot close itself.
+  Quit explains how to close (swipe up). **Founder decision pending:** keep
+  Quit as that message, or swap it for something else (e.g. Credits) before
+  the App Store.
+- **The art is low resolution** (308 px wide vs ~1170 px needed for a sharp
+  iPhone 14 screen); it reads softly. A 3× version (≈ 924 × 1653 or larger)
+  would make it sharp; the tap areas would need no change.
+- Verified (Playwright, iPhone SE / 14 / 14 Pro Max): tap areas sit on the
+  drawn buttons on all three, do not overlap; every button's flow, Settings
+  persistence, Play → game, Pause → Title → menu; zero console errors.
+
 ## Not started
 
 Stage 7 polish beyond the basic auras, Stage 8 full QA (next). Real-device play

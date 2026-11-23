@@ -2,6 +2,7 @@
 
 One line per material change, newest first. Format: `date · scope · what` (PR # where applicable).
 
+- 2026-11-23 · product · EMBERLOOP main menu: founder's animated menu art with live Play / How to Play / Progress / Settings / Quit (Quit explains swipe-to-close; iPhone apps cannot close themselves). Settings now reachable from the menu. Docs: EXPANSION.md.
 - 2026-11-22 · product · EMBERLOOP founder feedback: eased first board (staggered enemy types, thinner/slower spawns, no collapses), contact recoil, blue crystal shards + dark-ringed enemy bullets, boss attack dodge tips, blue Lava Wave gap, Magmathar opens with Eruption Rings. Dodging-bot hits in first 40 s: 3.0 → 0.3. Docs: EXPANSION.md, GAME_DESIGN.md §4.
 - 2026-11-21 · product · EMBERLOOP boards: each faction + its boss is one board with a paused rest screen between boards; gentle per-board steps, harder second loop. Ember Blades weapon (6 levels, founder sword art, metal-only swept collision, cosmetic trails) + Infernal Cyclone synergy; Firestorm reworked to a fire-ring pulse (no blades). Docs: GAME_DESIGN.md §4/§8, EXPANSION.md.
 - 2026-11-21 · product · EMBERLOOP expansion Stage 5: the 10 shard synergies (Firestorm, Frozen Barrage, Shadow Execution, Phoenix Renewal, Thunder Tempest, Molten Armor, Temporal Echo, Celestial Harvest, Titan's Judgment, Celestial Barrage) with cooldowns and no recursion; card and pause-menu synergy hints; blade damage now per second. Docs: GAME_DESIGN.md §8, EXPANSION.md.

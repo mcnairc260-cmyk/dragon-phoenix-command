@@ -129,6 +129,18 @@ export function pausePanel(settings: Settings, build: UpgradeLevels): string {
     <div class="panel">
       <h1>Paused</h1>
       ${buildChips(build)}
+      ${settingsList(settings)}
+      <button class="btn btn--primary" data-action="resume">Resume</button>
+      <div class="btn-row">
+        <button class="btn btn--ghost" data-action="restart">Restart</button>
+        <button class="btn btn--ghost" data-action="quit">Title</button>
+      </div>
+    </div>`;
+}
+
+/** The settings toggles, shared by the pause menu and the main menu's Settings. */
+function settingsList(settings: Settings): string {
+  return `
       <div class="toggle-list">
         <button class="toggle" data-action="control">
           <span>Controls<span class="toggle__hint">${esc(CONTROL_HINT[settings.controlMode])}</span></span>
@@ -138,12 +150,63 @@ export function pausePanel(settings: Settings, build: UpgradeLevels): string {
         ${toggle('music', 'Music', settings.music)}
         ${toggle('haptics', 'Haptics', settings.haptics)}
         ${toggle('reducedMotion', 'Reduced motion', settings.reducedMotion)}
+      </div>`;
+}
+
+/** Settings from the main menu. */
+export function settingsPanel(settings: Settings): string {
+  return `
+    <div class="scrim"></div>
+    <div class="panel">
+      <h1>Settings</h1>
+      ${settingsList(settings)}
+      <button class="btn btn--primary" data-action="close">Back</button>
+    </div>`;
+}
+
+/**
+ * Main menu (founder art: art/main-menu.gif, 308 x 551, animated). The five
+ * buttons are drawn in the art; these are tap areas laid over them, placed in
+ * the art's own pixel coordinates so they line up at any screen size.
+ */
+export const MENU_ART = { width: 308, height: 551 } as const;
+const MENU_HOTSPOTS: { action: string; label: string; x: number; y: number; w: number; h: number }[] = [
+  // Each drawn button, grown into half the gap around it for an easier tap.
+  { action: 'play', label: 'Play', x: 73, y: 288, w: 167, h: 46 },
+  { action: 'how', label: 'How to play', x: 78, y: 336, w: 155, h: 36 },
+  { action: 'progress', label: 'Progress', x: 78, y: 372, w: 155, h: 34 },
+  { action: 'settings', label: 'Settings', x: 78, y: 406, w: 155, h: 34 },
+  { action: 'quit', label: 'Quit', x: 78, y: 440, w: 155, h: 34 },
+];
+
+export function mainMenuPanel(artUrl: string, bestLine: string): string {
+  const pct = (v: number, of: number) => `${((v / of) * 100).toFixed(3)}%`;
+  const hot = MENU_HOTSPOTS.map(
+    (h) =>
+      `<button class="menu__hot${h.action === 'play' ? ' menu__hot--play' : ''}" data-action="${h.action}" aria-label="${esc(h.label)}"
+        style="left:${pct(h.x, MENU_ART.width)};top:${pct(h.y, MENU_ART.height)};width:${pct(h.w, MENU_ART.width)};height:${pct(h.h, MENU_ART.height)}"></button>`,
+  ).join('');
+  return `
+    <div class="menu">
+      <div class="menu__art" id="menu-art">
+        <img class="menu__img" src="${esc(artUrl)}" alt="EmberLoop — Survive · Evolve · Ascend" draggable="false" />
+        ${hot}
       </div>
-      <button class="btn btn--primary" data-action="resume">Resume</button>
-      <div class="btn-row">
-        <button class="btn btn--ghost" data-action="restart">Restart</button>
-        <button class="btn btn--ghost" data-action="quit">Title</button>
-      </div>
+      ${bestLine ? `<div class="menu__best">${esc(bestLine)}</div>` : ''}
+    </div>`;
+}
+
+/**
+ * Quit. Apple does not let an iPhone app close itself (and rejects apps that
+ * try), and a browser tab cannot close itself either, so Quit explains how.
+ */
+export function quitPanel(): string {
+  return `
+    <div class="scrim"></div>
+    <div class="panel">
+      <h1>Leaving?</h1>
+      <p class="panel__note">Your progress is saved. To close EmberLoop, swipe up from the bottom of the screen (or close the browser tab).</p>
+      <button class="btn btn--primary" data-action="close">Back to the menu</button>
     </div>`;
 }
 
