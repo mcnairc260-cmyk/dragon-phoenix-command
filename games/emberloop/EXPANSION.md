@@ -278,6 +278,26 @@ buttons at any screen size. The art covers the screen below the notch
 (sides crop on tall phones). The old title (drawn wordmark, demo phoenix,
 "TAP TO RISE", tap-anywhere-to-start) is gone.
 
+**Fix 2026-11-25 (founder iPhone 17 Pro Max screenshot): title under the
+Dynamic Island, black band at the bottom.** Cause (inferred from the
+screenshot, not confirmed on a device): in the Home Screen app the page still
+draws under the status bar, but iOS reported a viewport one status bar
+(≈ 62 px) shorter than the screen and a top inset of 0. Public WebKit reports
+describe the same kind of iOS 26 regression; we could not read them from the
+session to confirm the details. Repair in `core/safeArea.ts`, applied only to
+an upright iPhone Home Screen web app (`navigator.standalone`) whose viewport
+is 1–80 px short of `screen.height` — never to Safari tabs or the native app:
+the game fills the full screen height (`stageHeight()`) and the top inset is at
+least the missing height (also written to `--safe-top` for the CSS layer).
+If Apple fixes the fault, the shortfall is 0 and the normal `env()` path runs.
+The menu now re-reads the insets every time it fits the art and re-fits when
+`main.ts` re-checks the viewport (load + 250 ms + 1 s, `pageshow`, resume,
+`visualViewport` resize). A 4% fade softens the art's top edge. Checked in
+Chromium with the fault reproduced (17 Pro Max: art 62 → 956 px, tap areas on
+the buttons, HUD below the status bar; iPhone 14: 47 px) and unchanged for a
+Safari tab, a healthy Home Screen app and an iPhone SE. Real-device check by
+the founder still needed.
+
 - Play starts a run; How to Play and Progress open the existing screens;
   Settings is new on the menu (controls, sound, music, haptics, reduced motion
   — the same list as the pause menu, shared code).

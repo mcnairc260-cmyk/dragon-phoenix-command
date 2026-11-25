@@ -286,6 +286,8 @@ Also applied from the Bible in the same pass: the player sprite was rebuilt as *
 
 **Main menu (2026-11-23, founder art).** The founder's animated menu image (`games/emberloop/art/main-menu.gif`) is now the title screen, with live Play / How to Play / Progress / Settings / Quit buttons laid over the drawn ones. Open items for the founder: the art is low-res (308 px wide; a ~3× version would be sharp), and Quit can only explain how to close on iPhone (Apple forbids apps closing themselves) — keep it or replace it before App Store submission. Details: `games/emberloop/EXPANSION.md`.
 
+**Main menu fix for iPhone Home Screen app (2026-11-25, founder screenshot).** On the founder's iPhone 17 Pro Max the menu title sat under the Dynamic Island and a black band filled the bottom. Inferred cause: iOS reported the Home Screen app's viewport ≈ 62 px (one status bar) short with a top inset of 0, while still drawing under the status bar. Repair (`games/emberloop/src/core/safeArea.ts`): only for an upright iPhone Home Screen web app with a 1–80 px shortfall, fill the full screen height and use the shortfall as the minimum top inset; Safari tabs and the native app are untouched. Assumption to confirm on a device: the cause above (the WebKit reports could not be read from the session). Details: `games/emberloop/EXPANSION.md` → Main menu.
+
 ## 19. BREAKPOINT — 3D pool game, Phase 1 vertical slice (2026-08-29)
 
 A founder-directed session built **BREAKPOINT**, a physics-first 3D pool game, as a self-contained sub-application in `games/breakpoint/` — branch `claude/breakpoint-phase-1-pool-1sjmmi`. Full engineering record: `games/breakpoint/README.md`.

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { session } from '../core/Session';
-import { safeArea } from '../core/safeArea';
+import { VIEWPORT_EVENT, measureSafeArea } from '../core/safeArea';
 import { applyCamera } from '../core/viewport';
 import { BRAND_CSS } from '../config/brand';
 import { audio } from '../systems/AudioEngine';
@@ -36,8 +36,15 @@ export class TitleScene extends Phaser.Scene {
       applyCamera(this);
       this.fitMenuArt();
     };
+    // The insets can change without a canvas resize (a Home Screen app reports
+    // them late), so the menu also re-fits on every viewport check.
+    const onViewport = () => this.fitMenuArt();
     this.scale.on(Phaser.Scale.Events.RESIZE, onResize);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.scale.off(Phaser.Scale.Events.RESIZE, onResize));
+    window.addEventListener(VIEWPORT_EVENT, onViewport);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off(Phaser.Scale.Events.RESIZE, onResize);
+      window.removeEventListener(VIEWPORT_EVENT, onViewport);
+    });
   }
 
   private bestLine(): string {
@@ -58,15 +65,16 @@ export class TitleScene extends Phaser.Scene {
 
   /**
    * Cover the screen with the art (cropping the sides on tall phones), kept
-   * below the notch / Dynamic Island so the logo is never under it. The tap
-   * areas are percentages of this box, so they stay on the drawn buttons.
+   * below the status bar / Dynamic Island so the logo is never under it. The
+   * tap areas are percentages of this box, so they stay on the drawn buttons.
+   * The insets are read fresh every time: a cached value can be stale.
    */
   private fitMenuArt(): void {
     const art = document.getElementById('menu-art');
     const host = art?.parentElement;
     if (!art || !host) return;
     const w = host.clientWidth;
-    const top = safeArea().top;
+    const top = measureSafeArea().top;
     const h = host.clientHeight - top;
     const scale = Math.max(w / MENU_ART.width, h / MENU_ART.height);
     const width = MENU_ART.width * scale;

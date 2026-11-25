@@ -3,7 +3,7 @@ import './style.css';
 import { session } from './core/Session';
 import { RENDER_SCALE } from './core/viewport';
 import { BRAND_CSS } from './config/brand';
-import { measureSafeArea } from './core/safeArea';
+import { VIEWPORT_EVENT, measureSafeArea, stageHeight } from './core/safeArea';
 import { BootScene } from './scenes/BootScene';
 import { GameScene } from './scenes/GameScene';
 import { TitleScene } from './scenes/TitleScene';
@@ -25,7 +25,8 @@ const uiRoot = document.getElementById('ui-root') as HTMLElement;
  */
 function computeViewport(): { width: number; height: number; landscapePhone: boolean } {
   const w = window.innerWidth;
-  const h = window.innerHeight;
+  // Normally innerHeight; the full screen on iPhone Home Screen apps that report a short viewport.
+  const h = stageHeight();
   const coarse = window.matchMedia('(pointer: coarse)').matches;
   const landscape = w > h;
 
@@ -53,6 +54,8 @@ function applyViewport(): void {
     game.scale.resize(width * RENDER_SCALE, height * RENDER_SCALE);
     game.scale.setZoom(1 / RENDER_SCALE);
   }
+  // DOM layouts that depend on the insets (the main menu art) re-fit on this.
+  window.dispatchEvent(new Event(VIEWPORT_EVENT));
 }
 
 const initial = computeViewport();
@@ -88,6 +91,13 @@ window.addEventListener('orientationchange', () => {
   // iOS reports stale dimensions immediately after the rotation event.
   window.setTimeout(applyViewport, 150);
 });
+// A Home Screen app can report its insets late, without a resize event, so
+// check again once the page has settled and whenever it comes back.
+window.visualViewport?.addEventListener('resize', applyViewport);
+window.addEventListener('pageshow', applyViewport);
+window.addEventListener('load', () => {
+  for (const delay of [250, 1000]) window.setTimeout(applyViewport, delay);
+});
 
 /* Belt-and-braces gesture blocking: CSS handles most of it, but iOS Safari
    still fires these for pinch-zoom and double-tap zoom. */
@@ -101,7 +111,10 @@ document.addEventListener('contextmenu', (event) => event.preventDefault());
 // Pause audio when the tab is hidden; the scenes handle pausing the run itself.
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) audio.suspend();
-  else if (!ui.panelOpen) audio.resume();
+  else {
+    if (!ui.panelOpen) audio.resume();
+    applyViewport();
+  }
 });
 
 if (session.debug) {

@@ -384,6 +384,18 @@ body {
   position: absolute;
 }
 
+/* A soft fade into the dark strip behind the status bar, so the art has no hard top edge. */
+.menu__art::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 4%;
+  background: linear-gradient(var(--void), transparent);
+  pointer-events: none;
+}
+
 .menu__img {
   display: block;
   width: 100%;
