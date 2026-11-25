@@ -169,14 +169,15 @@ export function settingsPanel(settings: Settings): string {
  * buttons are drawn in the art; these are tap areas laid over them, placed in
  * the art's own pixel coordinates so they line up at any screen size.
  */
-export const MENU_ART = { width: 308, height: 551 } as const;
+/** Founder menu art, v2 2026-11-25 (Quit redrawn as Save). Pixel size of art/main-menu.gif. */
+export const MENU_ART = { width: 309, height: 553 } as const;
 const MENU_HOTSPOTS: { action: string; label: string; x: number; y: number; w: number; h: number }[] = [
   // Each drawn button, grown into half the gap around it for an easier tap.
-  { action: 'play', label: 'Play', x: 73, y: 288, w: 167, h: 46 },
-  { action: 'how', label: 'How to play', x: 78, y: 336, w: 155, h: 36 },
-  { action: 'progress', label: 'Progress', x: 78, y: 372, w: 155, h: 34 },
-  { action: 'settings', label: 'Settings', x: 78, y: 406, w: 155, h: 34 },
-  { action: 'quit', label: 'Quit', x: 78, y: 440, w: 155, h: 34 },
+  { action: 'play', label: 'Play', x: 73, y: 288, w: 168, h: 49 },
+  { action: 'how', label: 'How to play', x: 78, y: 337, w: 156, h: 36 },
+  { action: 'progress', label: 'Progress', x: 78, y: 373, w: 156, h: 35 },
+  { action: 'settings', label: 'Settings', x: 78, y: 408, w: 156, h: 34 },
+  { action: 'save', label: 'Save', x: 78, y: 442, w: 156, h: 34 },
 ];
 
 export function mainMenuPanel(artUrl: string, bestLine: string): string {
@@ -197,15 +198,31 @@ export function mainMenuPanel(artUrl: string, bestLine: string): string {
 }
 
 /**
- * Quit. Apple does not let an iPhone app close itself (and rejects apps that
- * try), and a browser tab cannot close itself either, so Quit explains how.
+ * Save (founder art v2 replaced Quit with Save). The game already saves after
+ * every run and every settings change; this saves again at once and shows
+ * what is kept. It is honest about the two limits: a failed write (private
+ * browsing, full storage) and a run in progress, which is never saved.
  */
-export function quitPanel(): string {
+export function savePanel(save: SaveData, ok: boolean): string {
+  const stat = (label: string, value: string) =>
+    `<div class="stat"><div class="stat__label">${esc(label)}</div><div class="stat__value">${esc(value)}</div></div>`;
+  const body = ok
+    ? `<div class="stats">
+        ${stat('Best score', formatNumber(save.highScore))}
+        ${stat('Longest run', formatTime(save.longestSurvival))}
+        ${stat('Runs', formatNumber(save.runs))}
+        ${stat('Bosses slain', formatNumber(save.bossesDefeated))}
+        ${stat('Achievements', `${save.achievements.length}/${ACHIEVEMENTS.length}`)}
+        ${stat('Phoenix colours', `${save.unlockedPalettes.length}/${PALETTES.length}`)}
+      </div>
+      <p class="panel__note">Your scores, unlocks and settings are saved on this device. EmberLoop also saves by itself after every run. A run that is still going is not saved.</p>`
+    : `<p class="panel__note">This device did not let EmberLoop save. Private browsing or full storage can cause this. Your progress stays until you close the game.</p>`;
   return `
     <div class="scrim"></div>
     <div class="panel">
-      <h1>Leaving?</h1>
-      <p class="panel__note">Your progress is saved. To close EmberLoop, swipe up from the bottom of the screen (or close the browser tab).</p>
+      <div class="eyebrow">Save</div>
+      <h1>${ok ? 'Progress saved' : 'Could not save'}</h1>
+      ${body}
       <button class="btn btn--primary" data-action="close">Back to the menu</button>
     </div>`;
 }
@@ -306,7 +323,7 @@ export function progressionPanel(save: SaveData): string {
         <div class="stat"><div class="stat__label">Embers</div><div class="stat__value">${formatNumber(save.totalEmbers)}</div></div>
         <div class="stat"><div class="stat__label">Runs</div><div class="stat__value">${formatNumber(save.runs)}</div></div>
         <div class="stat"><div class="stat__label">Best combo</div><div class="stat__value">${formatNumber(save.bestCombo)}</div></div>
-        <div class="stat"><div class="stat__label">Ashborn slain</div><div class="stat__value">${formatNumber(save.bossesDefeated)}</div></div>
+        <div class="stat"><div class="stat__label">Bosses slain</div><div class="stat__value">${formatNumber(save.bossesDefeated)}</div></div>
       </div>
       <div class="section-title">Phoenix colours</div>
       <div class="swatches">${swatches}</div>

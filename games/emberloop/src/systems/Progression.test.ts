@@ -183,6 +183,13 @@ describe('save persistence', () => {
     expect(() => saveSave(null, createSave())).not.toThrow();
     expect(loadSave(null)).toEqual(createSave());
   });
+
+  it('reports whether the save was written (the menu SAVE button shows it)', () => {
+    expect(saveSave(storage, createSave())).toBe(true);
+    expect(saveSave(null, createSave())).toBe(false);
+    const full = { getItem: () => null, setItem: () => { throw new Error('QuotaExceededError'); } };
+    expect(saveSave(full, createSave())).toBe(false);
+  });
 });
 
 describe('recordRun', () => {

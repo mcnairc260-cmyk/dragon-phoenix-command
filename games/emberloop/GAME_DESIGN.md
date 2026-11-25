@@ -11,7 +11,8 @@ document and a value in that file disagree, the file is right.
 ## 1. The loop
 
 1. The **main menu** (founder art, animated) offers Play, How to Play,
-   Progress, Settings and Quit. Tap Play — you are already flying.
+   Progress, Settings and Save (saves now and shows what is kept; the game
+   also saves after every run). Tap Play — you are already flying.
 2. Drag anywhere; the phoenix mirrors your finger with slight momentum, so your
    thumb never has to sit on top of it.
 3. Sweep up **ember shards** (score + currency + XP) — fast, in clusters, for the

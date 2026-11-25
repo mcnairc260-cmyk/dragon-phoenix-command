@@ -270,7 +270,7 @@ inside 40 s) → 0 / 0 / 1 after. Enemies on screen at 40 s: 7 → 3–5.
 
 ## Main menu (founder art, 2026-11-23, done)
 
-`art/main-menu.gif` (308 × 551, 9 frames, a phoenix rising from an ember) is
+`art/main-menu.gif` (v2: 309 × 553, 9 frames, a phoenix rising from an ember) is
 the main menu. It is a DOM panel (`mainMenuPanel` in `ui/panels.ts`, driven by
 `scenes/TitleScene.ts`) so the GIF animates natively; the five drawn buttons
 are tap areas placed in the art's pixel coordinates, so they stay on the
@@ -301,17 +301,28 @@ the founder still needed.
 - Play starts a run; How to Play and Progress open the existing screens;
   Settings is new on the menu (controls, sound, music, haptics, reduced motion
   — the same list as the pause menu, shared code).
-- **Quit cannot close the app:** Apple does not allow an iPhone app to close
-  itself and rejects apps that try, and a browser tab cannot close itself.
-  Quit explains how to close (swipe up). **Founder decision pending:** keep
-  Quit as that message, or swap it for something else (e.g. Credits) before
-  the App Store.
-- **The art is low resolution** (308 px wide vs ~1170 px needed for a sharp
-  iPhone 14 screen); it reads softly. A 3× version (≈ 924 × 1653 or larger)
+- **Quit → Save (founder decision 2026-11-25, by new art).** Quit could not
+  close the app (Apple rejects apps that close themselves; a browser tab
+  cannot close itself), so the founder sent menu art v2 with the last button
+  drawn as SAVE. Save writes the save at once (`session.saveNow()`; it also
+  asks the browser to keep the data, best effort), then shows Best score,
+  Longest run, Runs, Bosses slain, Achievements and Phoenix colours. It is
+  honest about its limits: the game already saves after every run, a run in
+  progress is not saved, and if the write fails (private browsing, full
+  storage) it says "Could not save". `saveSave()` now returns whether the
+  save read back intact (unit-tested). The old Quit panel is removed. The
+  Progress screen's stale "Ashborn slain" label is now "Bosses slain".
+- **Art v2 (2026-11-25):** 309 × 553, 9 frames at 220 ms. Tap areas
+  re-measured from it (buttons sit 1–3 px lower than in v1).
+- **The art is low resolution** (309 px wide vs ~1170 px needed for a sharp
+  iPhone 14 screen); it reads softly. A 3× version (≈ 927 × 1659 or larger)
   would make it sharp; the tap areas would need no change.
 - Verified (Playwright, iPhone SE / 14 / 14 Pro Max): tap areas sit on the
   drawn buttons on all three, do not overlap; every button's flow, Settings
   persistence, Play → game, Pause → Title → menu; zero console errors.
+  Art v2 re-verified 2026-11-25 on the 17 Pro Max (fault reproduced) and SE:
+  tap areas on the buttons, Save writes and reads back, blocked storage shows
+  "Could not save", every other button and Play still work.
 
 ## Not started
 

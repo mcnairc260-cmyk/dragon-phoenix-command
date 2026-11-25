@@ -6,13 +6,13 @@ import { BRAND_CSS } from '../config/brand';
 import { audio } from '../systems/AudioEngine';
 import { haptics } from '../systems/Haptics';
 import { CONTROL_MODES } from '../systems/Progression';
-import { MENU_ART, howToPanel, mainMenuPanel, progressionPanel, quitPanel, settingsPanel } from '../ui/panels';
+import { MENU_ART, howToPanel, mainMenuPanel, progressionPanel, savePanel, settingsPanel } from '../ui/panels';
 import menuArt from '../assets/ui/main-menu.gif';
 
 /**
  * Main menu (founder art, 2026-11-23): the animated EmberLoop menu image fills
  * the screen and its five drawn buttons are live — Play, How to Play,
- * Progress, Settings, Quit. The menu is a DOM panel (so the GIF animates
+ * Progress, Settings, Save. The menu is a DOM panel (so the GIF animates
  * natively); this scene only drives it.
  */
 export class TitleScene extends Phaser.Scene {
@@ -58,7 +58,7 @@ export class TitleScene extends Phaser.Scene {
       how: () => this.tap(() => this.openHowTo()),
       progress: () => this.tap(() => this.openProgress()),
       settings: () => this.tap(() => this.openSettings()),
-      quit: () => this.tap(() => this.openQuit()),
+      save: () => this.tap(() => this.openSave()),
     });
     this.fitMenuArt();
   }
@@ -155,8 +155,9 @@ export class TitleScene extends Phaser.Scene {
     render();
   }
 
-  private openQuit(): void {
-    session.ui.openPanel(quitPanel(), { close: () => this.openMenu() });
+  private openSave(): void {
+    const ok = session.saveNow();
+    session.ui.openPanel(savePanel(session.save, ok), { close: () => this.openMenu() });
   }
 }
 

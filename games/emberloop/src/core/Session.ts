@@ -56,8 +56,23 @@ class Session {
     this.persist();
   }
 
-  persist(): void {
-    saveSave(browserStorage(), this.save);
+  persist(): boolean {
+    return saveSave(browserStorage(), this.save);
+  }
+
+  /**
+   * The menu's SAVE button: write now, and ask the browser to keep the data
+   * when it clears space (best effort; some browsers decide by themselves).
+   * Returns whether the write succeeded.
+   */
+  saveNow(): boolean {
+    const ok = this.persist();
+    try {
+      void navigator.storage?.persist?.().catch(() => undefined);
+    } catch {
+      // Not supported here; the save itself is what matters.
+    }
+    return ok;
   }
 
   reload(): void {

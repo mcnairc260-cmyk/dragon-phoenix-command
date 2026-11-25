@@ -288,6 +288,8 @@ Also applied from the Bible in the same pass: the player sprite was rebuilt as *
 
 **Main menu fix for iPhone Home Screen app (2026-11-25, founder screenshot).** On the founder's iPhone 17 Pro Max the menu title sat under the Dynamic Island and a black band filled the bottom. Inferred cause: iOS reported the Home Screen app's viewport ≈ 62 px (one status bar) short with a top inset of 0, while still drawing under the status bar. Repair (`games/emberloop/src/core/safeArea.ts`): only for an upright iPhone Home Screen web app with a 1–80 px shortfall, fill the full screen height and use the shortfall as the minimum top inset; Safari tabs and the native app are untouched. Assumption to confirm on a device: the cause above (the WebKit reports could not be read from the session). Details: `games/emberloop/EXPANSION.md` → Main menu.
 
+**Main menu v2 — Quit replaced by Save (2026-11-25, founder art).** Founder decision, made by sending new menu art: the last button is now SAVE, which resolves the open Quit question above. Save writes the save at once and shows what is kept; it states that the game also saves after every run, that a run in progress is not saved, and shows "Could not save" if the device refuses. Assumption: the founder wants Save for reassurance and control, not mid-run save-and-resume (a separate, larger feature — not built). Details: `games/emberloop/EXPANSION.md` → Main menu.
+
 ## 19. BREAKPOINT — 3D pool game, Phase 1 vertical slice (2026-08-29)
 
 A founder-directed session built **BREAKPOINT**, a physics-first 3D pool game, as a self-contained sub-application in `games/breakpoint/` — branch `claude/breakpoint-phase-1-pool-1sjmmi`. Full engineering record: `games/breakpoint/README.md`.
