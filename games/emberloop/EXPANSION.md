@@ -337,6 +337,39 @@ the founder still needed.
   tap areas on the buttons, Save writes and reads back, blocked storage shows
   "Could not save", every other button and Play still work.
 
+## Rest screen (founder mockup, 2026-11-26, done)
+
+The founder sent `art/rest-screen.png` (1368 × 1149): the board-cleared screen
+restyled as carved gold and lava, in two states ("Board 1 of 6 cleared" and
+"Board 6 of 6 cleared → Begin Loop 2"). It is a picture of the screen, with
+the score, time, boss name and hearts baked in, so it cannot be used as one
+image. Built instead (`restPanel` in `ui/panels.ts`, `.rest*` in `style.css`):
+
+- **Founder art, cut by `scripts/make-rest-art.py`:** the six faction badges
+  (icon, number and name are fixed, so they are real art; badges 1–5 from the
+  right half, Arcane from the left half resized ~14% shorter because that half
+  draws badges taller; overhanging icon parts such as the feather are kept).
+  From the founder's menu art: the EMBERLOOP logo, the lava-rock floor, and
+  the phoenix (shown under the button when a loop completes).
+- **Live, in the same style:** title "<BOSS> FALLS", the plates, score, the
+  four stat tiles with gold line icons, the message and the button, in
+  **Cinzel** (SIL OFL, bundled as two 15 KB font files in `assets/fonts/`)
+  — the carved face of the founder's art. The sky glows in the faction's
+  colour, and the defeated boss's art is faded behind the title. The board
+  just cleared glows; boards not yet reached are dimmed. Loop complete adds
+  laurels and the phoenix, and the button reads "Begin loop N".
+- **Changes from the mockup, on purpose:** the subtitle reads "You broke the
+  <faction>." (the mockup's "The Arcane Sentinels is broken" is ungrammatical
+  for plural names); hearts show once, as filled/empty hearts (the mockup
+  showed them twice); the mockup's "♦ 14" counter is left out (it matches
+  nothing in the game). Game messages (toasts) are hidden while the screen is
+  up, because one covered the button on an iPhone SE.
+- Verified in Chromium on 17 Pro Max (with the viewport fault), iPhone 14 and
+  SE, boards 1, 3, 4 and 6 (loop complete): everything fits without
+  scrolling, the longest boss names fit, Cinzel loads, Continue / Begin loop
+  resumes the run, zero console errors. Real-device check by the founder
+  still needed.
+
 ## Not started
 
 Stage 7 polish beyond the basic auras, Stage 8 full QA (next). Real-device play

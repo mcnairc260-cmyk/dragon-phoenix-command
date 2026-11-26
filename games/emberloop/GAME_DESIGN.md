@@ -21,7 +21,8 @@ document and a value in that file disagree, the file is right.
    multiplier.
 5. Level up → the game pauses and offers **three upgrade cards**; pick one.
 6. The run is a sequence of **boards** (§4): each faction's three enemies for
-   a 60 s wave, then its boss, a clean-up beat and a **rest screen**. Six
+   a 60 s wave, then its boss, a clean-up beat and a **rest screen** (styled
+   from the founder's mockup: "<BOSS> FALLS", faction badges, score and stats). Six
    boards make a loop; the loop then repeats, a step harder. Levelling never
    makes it harder.
 7. One elite per board (two from board 4 and in later loops).

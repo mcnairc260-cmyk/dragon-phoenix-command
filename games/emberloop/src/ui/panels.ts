@@ -6,6 +6,15 @@ import type { DraftedUpgrade } from '../upgrades/UpgradeDraft';
 import type { UltimateDef } from '../upgrades/Ultimates';
 import { activeSynergies, approachedBy, completedBy } from '../upgrades/Synergies';
 import { esc, formatNumber, formatTime } from './Ui';
+import badgeVolcanic from '../assets/ui/rest/badge-volcanic.png';
+import badgeFrostborn from '../assets/ui/rest/badge-frostborn.png';
+import badgeShadow from '../assets/ui/rest/badge-shadow.png';
+import badgeNature from '../assets/ui/rest/badge-nature.png';
+import badgeAerial from '../assets/ui/rest/badge-aerial.png';
+import badgeArcane from '../assets/ui/rest/badge-arcane.png';
+import restFloor from '../assets/ui/rest/floor.webp';
+import restLogo from '../assets/ui/rest/logo.png';
+import restPhoenix from '../assets/ui/rest/phoenix.png';
 
 /** Level-up draft: three cards, one tap. */
 export function upgradePanel(cards: DraftedUpgrade[], level: number, build: UpgradeLevels = {}): string {
@@ -73,8 +82,12 @@ export function ultimatePanel(options: UltimateDef[]): string {
 export interface RestData {
   board: number;
   loop: number;
+  /** Faction id of the board just cleared (picks the badge glow and the sky colour). */
+  factionId: string;
   faction: string;
   boss: string;
+  /** The defeated boss's art, shown faded behind the title. */
+  bossArt: string;
   nextBoard: number;
   nextLoop: number;
   nextFaction: string;
@@ -84,41 +97,102 @@ export interface RestData {
   kills: number;
   health: number;
   healed: number;
+  maxHealth: number;
 }
 
-/** Faction names in board order, for the progress track. */
-const BOARD_NAMES = ['Volcanic', 'Frostborn', 'Shadow', 'Nature', 'Aerial', 'Arcane'];
+/**
+ * The six faction badges in board order: the founder's art, cut from the
+ * rest-screen mockup by scripts/make-rest-art.py (icon, number and name are
+ * part of each picture).
+ */
+const BADGES: readonly { id: string; name: string; url: string }[] = [
+  { id: 'volcanic', name: 'Volcanic', url: badgeVolcanic },
+  { id: 'frostborn', name: 'Frostborn', url: badgeFrostborn },
+  { id: 'shadow', name: 'Shadow', url: badgeShadow },
+  { id: 'nature', name: 'Nature', url: badgeNature },
+  { id: 'aerial', name: 'Aerial', url: badgeAerial },
+  { id: 'arcane', name: 'Arcane', url: badgeArcane },
+];
+
+/** Small gold line icons for the stat tiles (currentColor, so CSS sets the colour). */
+const ICON = {
+  time: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h12M6 22h12M7 2c0 5 4 6.5 4 10s-4 5-4 10M17 2c0 5-4 6.5-4 10s4 5 4 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M9 19.5c1-1.6 2-2.3 3-2.3s2 .7 3 2.3z" fill="currentColor"/></svg>',
+  level: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21l8-6 8 6M4 15l8-6 8 6M4 9l8-6 8 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></svg>',
+  kills: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l11.5 11.5M21 3L9.5 14.5M12.5 17.5l5-5M6.5 12.5l5 5M17 17l3.5 3.5M7 17l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  heart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.4-4.6-9.6-9C.9 8.8 2.9 4.5 6.7 4.5c2.3 0 3.9 1.4 5.3 3.3 1.4-1.9 3-3.3 5.3-3.3 3.8 0 5.8 4.3 4.3 7.5-2.2 4.4-9.6 9-9.6 9z" fill="currentColor"/></svg>',
+};
+
+/** A laurel branch (left side; CSS mirrors it for the right): paired leaves along an arc. */
+function laurel(): string {
+  const leaves: string[] = [];
+  const pairs = 7;
+  for (let i = 0; i < pairs; i++) {
+    const theta = ((112 + (i * 128) / (pairs - 1)) * Math.PI) / 180;
+    const x = 60 + Math.cos(theta) * 46;
+    const y = 50 + Math.sin(theta) * 46;
+    const tangent = (Math.atan2(Math.cos(theta), -Math.sin(theta)) * 180) / Math.PI;
+    const scale = 1 - i * 0.07;
+    for (const side of [1, -1]) {
+      const ox = x + Math.cos(theta) * side * 5;
+      const oy = y + Math.sin(theta) * side * 5;
+      leaves.push(
+        `<ellipse cx="${ox.toFixed(1)}" cy="${oy.toFixed(1)}" rx="${(9 * scale).toFixed(1)}" ry="${(3.6 * scale).toFixed(1)}" transform="rotate(${(tangent - side * 42).toFixed(0)} ${ox.toFixed(1)} ${oy.toFixed(1)})"/>`,
+      );
+    }
+  }
+  return `<svg class="rest__laurel" viewBox="0 0 64 100" aria-hidden="true"><path d="M43 93 A46 46 0 0 1 32 8" fill="none" stroke="currentColor" stroke-width="2"/><g fill="currentColor">${leaves.join('')}</g></svg>`;
+}
 
 /**
- * The rest point between boards: where you are in the loop, how the run is
- * going, a heart back, and what comes next. Nothing moves until you continue.
+ * The rest point between boards, styled from the founder's mockup
+ * (art/rest-screen.png, 2026-11-26): faction badges are the founder's art;
+ * the rest (title, plates, tiles, button) is live text in the same style,
+ * because the boss, score and stats change every run.
  */
 export function restPanel(d: RestData): string {
   const loopDone = d.nextLoop > d.loop;
-  const track = BOARD_NAMES.map((name, i) => {
-    const state = loopDone || i <= d.board ? 'done' : i === d.nextBoard ? 'next' : 'todo';
-    return `<div class="board-pip board-pip--${state}"><span>${i + 1}</span><small>${esc(name)}</small></div>`;
+  const badges = BADGES.map((b, i) => {
+    const state = i === d.board ? 'current' : loopDone || i < d.board ? 'done' : i === d.nextBoard ? 'next' : 'todo';
+    return `<img class="rest__badge rest__badge--${state}" src="${esc(b.url)}" alt="${i + 1} ${esc(b.name)}${state === 'current' ? ' (cleared now)' : ''}" draggable="false" />`;
   }).join('');
+  const hearts = Math.min(d.maxHealth, d.health + d.healed);
+  const heartRow = Array.from({ length: d.maxHealth }, (_, i) => `<span class="rest__pip${i < hearts ? '' : ' rest__pip--empty'}">${ICON.heart}</span>`).join('');
+  const tile = (icon: string, label: string, value: string) => `
+        <div class="rest__frame rest__tile">
+          <span class="rest__icon">${icon}</span>
+          <span class="rest__tile-text"><span class="rest__label">${esc(label)}</span><span class="rest__value">${value}</span></span>
+        </div>`;
+  const [bossWord] = d.boss.split(' ');
   return `
-    <div class="scrim"></div>
-    <div class="panel">
-      <div class="eyebrow">Board ${d.board + 1} of 6 cleared${d.loop > 0 ? ` · Loop ${d.loop + 1}` : ''}</div>
-      <h1>${esc(d.boss)} falls</h1>
-      <p class="panel__note">${esc(d.faction)} defeated. Catch your breath.</p>
-      <div class="board-track">${track}</div>
-      <div class="stats">
-        <div class="stat stat--wide stat--hero"><div class="stat__label">Score</div><div class="stat__value">${formatNumber(d.score)}</div></div>
-        <div class="stat"><div class="stat__label">Time</div><div class="stat__value">${formatTime(d.elapsed)}</div></div>
-        <div class="stat"><div class="stat__label">Level</div><div class="stat__value">${formatNumber(d.level)}</div></div>
-        <div class="stat"><div class="stat__label">Kills this board</div><div class="stat__value">${formatNumber(d.kills)}</div></div>
-        <div class="stat"><div class="stat__label">Hearts</div><div class="stat__value">${'♥'.repeat(Math.min(3, d.health + d.healed))}</div></div>
+    <div class="rest rest--${esc(d.factionId)}${loopDone ? ' rest--loop' : ''}">
+      <div class="rest__sky"></div>
+      <img class="rest__boss" src="${esc(d.bossArt)}" alt="" draggable="false" />
+      <img class="rest__floor" src="${esc(restFloor)}" alt="" draggable="false" />
+      ${loopDone ? `<img class="rest__phoenix" src="${esc(restPhoenix)}" alt="" draggable="false" />` : ''}
+      <div class="rest__body">
+        <img class="rest__logo" src="${esc(restLogo)}" alt="EmberLoop" draggable="false" />
+        <div class="rest__frame rest__eyebrow"><span class="rest__gem">◆</span> Board ${d.board + 1} of 6 cleared${d.loop > 0 ? ` · Loop ${d.loop + 1}` : ''} <span class="rest__gem">◆</span></div>
+        <h1 class="rest__title"><span>${esc(bossWord)}</span><span>Falls</span></h1>
+        <p class="rest__frame rest__tale">You broke the ${esc(d.faction)}. Catch your breath.</p>
+        <div class="rest__badges">${badges}</div>
+        <div class="rest__score-row">
+          ${loopDone ? laurel() : ''}
+          <div class="rest__frame rest__score"><span class="rest__label">Score</span><span class="rest__score-value">${formatNumber(d.score)}</span></div>
+          ${loopDone ? laurel().replace('rest__laurel', 'rest__laurel rest__laurel--right') : ''}
+        </div>
+        <div class="rest__tiles">
+          ${tile(ICON.time, 'Time', formatTime(d.elapsed))}
+          ${tile(ICON.level, 'Level', formatNumber(d.level))}
+          ${tile(ICON.kills, 'Kills this board', formatNumber(d.kills))}
+          ${tile(ICON.heart, 'Hearts', `<span class="rest__hearts">${heartRow}</span>`)}
+        </div>
+        <p class="rest__frame rest__msg">${d.healed > 0 ? `Resting restores ${d.healed} heart${d.healed > 1 ? 's' : ''}.` : 'Hearts full.'} ${
+          loopDone
+            ? `<b>Loop ${d.loop + 1} complete!</b> The six boards begin again, a step harder.`
+            : `Next: Board ${d.nextBoard + 1}, ${esc(d.nextFaction)} — a little harder.`
+        }</p>
+        <div class="rest__cta-glow"><button class="rest__frame rest__cta" data-action="continue"><span>${loopDone ? `Begin loop ${d.nextLoop + 1}` : 'Continue'}</span></button></div>
       </div>
-      <p class="panel__note">${d.healed > 0 ? `Resting restores ${d.healed} heart.` : 'Hearts full.'} ${
-        loopDone
-          ? `<b>Loop ${d.loop + 1} complete!</b> The six boards begin again, a step harder.`
-          : `Next: Board ${d.nextBoard + 1}, ${esc(d.nextFaction)} — a little harder.`
-      }</p>
-      <button class="btn btn--primary" data-action="continue">${loopDone ? `Begin loop ${d.nextLoop + 1}` : 'Continue'}</button>
     </div>`;
 }
 

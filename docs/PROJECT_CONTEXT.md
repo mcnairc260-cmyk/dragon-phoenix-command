@@ -292,6 +292,8 @@ Also applied from the Bible in the same pass: the player sprite was rebuilt as *
 
 **Main menu HD art (2026-11-26, founder).** The founder supplied a 3× menu (927 × 1659) as an animated GIF plus a PNG of the final phoenix pose, with the intent "play the animation once and hold the final frame". The GIF as received loops for ever and is 8 MB, so the game ships WebP frames (2.35 MB total) and plays them once per launch, then holds the full-colour PNG pose; later menus and Reduced Motion show the pose at once. This closes the "menu art is low-res" open item. Assumption: replay once per app launch, not on every return to the menu. Details: `games/emberloop/EXPANSION.md` → Main menu.
 
+**Rest screen restyled from founder mockup (2026-11-26).** The founder sent a mockup of the board-cleared screen ("Use this also"). The faction badges are cut from it as real art; everything that changes per run is live text styled to match. **Founder-directed brand deviation, game surface only:** the mockup (like the founder's menu art) uses a carved serif, so EMBERLOOP now bundles **Cinzel** (SIL OFL 1.1, local font files, no package dependency) for this screen, instead of the Brand Bible's squared sans. Same pattern as the earlier phoenix-creature override; the website is untouched. Deliberate departures from the mockup (grammar, duplicate hearts, an unexplained "♦ 14" counter) are listed in `games/emberloop/EXPANSION.md` → Rest screen.
+
 ## 19. BREAKPOINT — 3D pool game, Phase 1 vertical slice (2026-08-29)
 
 A founder-directed session built **BREAKPOINT**, a physics-first 3D pool game, as a self-contained sub-application in `games/breakpoint/` — branch `claude/breakpoint-phase-1-pool-1sjmmi`. Full engineering record: `games/breakpoint/README.md`.

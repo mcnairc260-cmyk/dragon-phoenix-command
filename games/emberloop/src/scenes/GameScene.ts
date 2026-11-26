@@ -672,8 +672,10 @@ export class GameScene extends Phaser.Scene {
       restPanel({
         board: ref.board,
         loop: ref.loop,
+        factionId: factionForBoard(ref.board).id,
         faction: factionForBoard(ref.board).name,
         boss: bossFor(ref.board).name,
+        bossArt: bossFor(ref.board).url,
         nextBoard: next.board,
         nextLoop: next.loop,
         nextFaction: factionForBoard(next.board).name,
@@ -683,6 +685,7 @@ export class GameScene extends Phaser.Scene {
         kills: this.boardKills,
         health: this.player.health,
         healed,
+        maxHealth: PLAYER.maxHealth,
       }),
       {
         continue: () => {
