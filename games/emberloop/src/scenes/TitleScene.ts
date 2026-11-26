@@ -7,13 +7,14 @@ import { audio } from '../systems/AudioEngine';
 import { haptics } from '../systems/Haptics';
 import { CONTROL_MODES } from '../systems/Progression';
 import { MENU_ART, howToPanel, mainMenuPanel, progressionPanel, savePanel, settingsPanel } from '../ui/panels';
-import menuArt from '../assets/ui/main-menu.gif';
+import { menuOpeningFrame, runMenuIntro, stopMenuIntro } from '../ui/menuIntro';
 
 /**
- * Main menu (founder art, 2026-11-23): the animated EmberLoop menu image fills
+ * Main menu (founder art, HD v3 2026-11-26): the EmberLoop menu image fills
  * the screen and its five drawn buttons are live — Play, How to Play,
- * Progress, Settings, Save. The menu is a DOM panel (so the GIF animates
- * natively); this scene only drives it.
+ * Progress, Settings, Save. An ember-to-phoenix intro plays once per launch,
+ * then the final pose holds (ui/menuIntro.ts). The menu is a DOM panel; this
+ * scene only drives it.
  */
 export class TitleScene extends Phaser.Scene {
   private starting = false;
@@ -42,6 +43,7 @@ export class TitleScene extends Phaser.Scene {
     this.scale.on(Phaser.Scale.Events.RESIZE, onResize);
     window.addEventListener(VIEWPORT_EVENT, onViewport);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      stopMenuIntro();
       this.scale.off(Phaser.Scale.Events.RESIZE, onResize);
       window.removeEventListener(VIEWPORT_EVENT, onViewport);
     });
@@ -53,7 +55,8 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private openMenu(): void {
-    session.ui.openPanel(mainMenuPanel(menuArt, this.bestLine()), {
+    const reduced = session.settings.reducedMotion;
+    session.ui.openPanel(mainMenuPanel(menuOpeningFrame(reduced), this.bestLine()), {
       play: () => this.play(),
       how: () => this.tap(() => this.openHowTo()),
       progress: () => this.tap(() => this.openProgress()),
@@ -61,6 +64,9 @@ export class TitleScene extends Phaser.Scene {
       save: () => this.tap(() => this.openSave()),
     });
     this.fitMenuArt();
+    // The ember-to-phoenix intro plays once per launch, then the pose holds.
+    const img = document.getElementById('menu-img');
+    if (img instanceof HTMLImageElement) runMenuIntro(img, reduced);
   }
 
   /**

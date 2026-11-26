@@ -2,6 +2,7 @@
 
 One line per material change, newest first. Format: `date · scope · what` (PR # where applicable).
 
+- 2026-11-26 · product · EMBERLOOP main menu HD art v3 (founder, 927 × 1659): ember-to-phoenix intro plays once per launch then holds the sharp final pose (founder GIF looped for ever at 8 MB → 9 WebP files, 2.35 MB); later menus and Reduced Motion open on the pose; slow loads skip to it after 4 s. Tap areas scaled ×3. Docs: EXPANSION.md (Main menu).
 - 2026-11-25 · product · EMBERLOOP main menu art v2 (founder): Quit replaced by Save — saves at once, shows best score / runs / bosses / achievements / colours, says plainly that a run in progress is not saved and when the device refuses to save. Tap areas re-measured; "Ashborn slain" label → "Bosses slain". Docs: EXPANSION.md (Main menu), GAME_DESIGN.md §1.
 - 2026-11-25 · fix · EMBERLOOP iPhone Home Screen app: title no longer under the Dynamic Island and no black band at the bottom — when iOS reports a viewport one status bar short (and a top inset of 0), the game fills the full screen and treats the missing height as the top inset; menu re-reads insets on every fit. Safari tabs and native app unchanged. Docs: EXPANSION.md (Main menu), PROJECT_CONTEXT §18.
 - 2026-11-23 · product · EMBERLOOP main menu: founder's animated menu art with live Play / How to Play / Progress / Settings / Quit (Quit explains swipe-to-close; iPhone apps cannot close themselves). Settings now reachable from the menu. Docs: EXPANSION.md.

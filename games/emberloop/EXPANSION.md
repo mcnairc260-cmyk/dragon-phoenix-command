@@ -270,7 +270,7 @@ inside 40 s) → 0 / 0 / 1 after. Enemies on screen at 40 s: 7 → 3–5.
 
 ## Main menu (founder art, 2026-11-23, done)
 
-`art/main-menu.gif` (v2: 309 × 553, 9 frames, a phoenix rising from an ember) is
+The founder's menu art (now HD v3, see below; a phoenix rising from an ember) is
 the main menu. It is a DOM panel (`mainMenuPanel` in `ui/panels.ts`, driven by
 `scenes/TitleScene.ts`) so the GIF animates natively; the five drawn buttons
 are tap areas placed in the art's pixel coordinates, so they stay on the
@@ -314,9 +314,22 @@ the founder still needed.
   Progress screen's stale "Ashborn slain" label is now "Bosses slain".
 - **Art v2 (2026-11-25):** 309 × 553, 9 frames at 220 ms. Tap areas
   re-measured from it (buttons sit 1–3 px lower than in v1).
-- **The art is low resolution** (309 px wide vs ~1170 px needed for a sharp
-  iPhone 14 screen); it reads softly. A 3× version (≈ 927 × 1659 or larger)
-  would make it sharp; the tap areas would need no change.
+- **Art v3 HD (2026-11-26, founder):** `art/main-menu.gif` (927 × 1659, 9
+  frames at 220 ms, 8 MB) and `art/main-menu-final.png` (the final phoenix
+  pose, full colour). Founder intent: "plays the animation once and holds the
+  final frame"; the PNG is "best for the permanent menu screen". Fact found on
+  receipt: the GIF's loop flag is set to repeat for ever, so it is not used
+  directly. `scripts/make-menu-frames.py` turns frames 0–7 into WebP
+  (quality 80) and the PNG into `final.webp` (quality 92) in
+  `src/assets/ui/menu/` — 2.35 MB in all. `ui/menuIntro.ts` swaps them on the
+  menu's `<img>`: the intro plays once per launch (frames decoded first; after
+  4 s of loading it skips to the final pose), then the PNG pose holds. Every
+  later menu, and Reduced Motion, opens on the final pose. Exactly 3× v2 with
+  the buttons in the same places, so the v2 tap areas are scaled ×3 (checked
+  on the art and in the browser). The low-resolution open item is closed.
+  Verified in Chromium (17 Pro Max with the viewport fault, iPhone SE): frame
+  times, hold, no replay on return from a screen or a run, Reduced Motion,
+  slow-network skip, Play during the intro, zero console errors.
 - Verified (Playwright, iPhone SE / 14 / 14 Pro Max): tap areas sit on the
   drawn buttons on all three, do not overlap; every button's flow, Settings
   persistence, Play → game, Pause → Title → menu; zero console errors.

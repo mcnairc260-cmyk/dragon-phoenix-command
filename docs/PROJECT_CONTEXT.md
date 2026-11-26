@@ -290,6 +290,8 @@ Also applied from the Bible in the same pass: the player sprite was rebuilt as *
 
 **Main menu v2 — Quit replaced by Save (2026-11-25, founder art).** Founder decision, made by sending new menu art: the last button is now SAVE, which resolves the open Quit question above. Save writes the save at once and shows what is kept; it states that the game also saves after every run, that a run in progress is not saved, and shows "Could not save" if the device refuses. Assumption: the founder wants Save for reassurance and control, not mid-run save-and-resume (a separate, larger feature — not built). Details: `games/emberloop/EXPANSION.md` → Main menu.
 
+**Main menu HD art (2026-11-26, founder).** The founder supplied a 3× menu (927 × 1659) as an animated GIF plus a PNG of the final phoenix pose, with the intent "play the animation once and hold the final frame". The GIF as received loops for ever and is 8 MB, so the game ships WebP frames (2.35 MB total) and plays them once per launch, then holds the full-colour PNG pose; later menus and Reduced Motion show the pose at once. This closes the "menu art is low-res" open item. Assumption: replay once per app launch, not on every return to the menu. Details: `games/emberloop/EXPANSION.md` → Main menu.
+
 ## 19. BREAKPOINT — 3D pool game, Phase 1 vertical slice (2026-08-29)
 
 A founder-directed session built **BREAKPOINT**, a physics-first 3D pool game, as a self-contained sub-application in `games/breakpoint/` — branch `claude/breakpoint-phase-1-pool-1sjmmi`. Full engineering record: `games/breakpoint/README.md`.

@@ -165,20 +165,25 @@ export function settingsPanel(settings: Settings): string {
 }
 
 /**
- * Main menu (founder art: art/main-menu.gif, 308 x 551, animated). The five
- * buttons are drawn in the art; these are tap areas laid over them, placed in
- * the art's own pixel coordinates so they line up at any screen size.
+ * Main menu (founder art). The five buttons are drawn in the art; these are
+ * tap areas laid over them, placed in the art's own pixel coordinates so they
+ * line up at any screen size.
  */
-/** Founder menu art, v2 2026-11-25 (Quit redrawn as Save). Pixel size of art/main-menu.gif. */
-export const MENU_ART = { width: 309, height: 553 } as const;
+/**
+ * Pixel size of the menu art: HD v3 2026-11-26 (art/main-menu.gif and
+ * art/main-menu-final.png, 927 x 1659, exactly 3x v2 with the buttons in the
+ * same places — so the v2 tap areas below are scaled by ART_SCALE).
+ */
+const ART_SCALE = 3;
+export const MENU_ART = { width: 309 * ART_SCALE, height: 553 * ART_SCALE } as const;
 const MENU_HOTSPOTS: { action: string; label: string; x: number; y: number; w: number; h: number }[] = [
-  // Each drawn button, grown into half the gap around it for an easier tap.
+  // Each drawn button (v2 pixels), grown into half the gap around it for an easier tap.
   { action: 'play', label: 'Play', x: 73, y: 288, w: 168, h: 49 },
   { action: 'how', label: 'How to play', x: 78, y: 337, w: 156, h: 36 },
   { action: 'progress', label: 'Progress', x: 78, y: 373, w: 156, h: 35 },
   { action: 'settings', label: 'Settings', x: 78, y: 408, w: 156, h: 34 },
   { action: 'save', label: 'Save', x: 78, y: 442, w: 156, h: 34 },
-];
+].map((h) => ({ ...h, x: h.x * ART_SCALE, y: h.y * ART_SCALE, w: h.w * ART_SCALE, h: h.h * ART_SCALE }));
 
 export function mainMenuPanel(artUrl: string, bestLine: string): string {
   const pct = (v: number, of: number) => `${((v / of) * 100).toFixed(3)}%`;
@@ -190,7 +195,7 @@ export function mainMenuPanel(artUrl: string, bestLine: string): string {
   return `
     <div class="menu">
       <div class="menu__art" id="menu-art">
-        <img class="menu__img" src="${esc(artUrl)}" alt="EmberLoop — Survive · Evolve · Ascend" draggable="false" />
+        <img class="menu__img" id="menu-img" src="${esc(artUrl)}" alt="EmberLoop — Survive · Evolve · Ascend" draggable="false" />
         ${hot}
       </div>
       ${bestLine ? `<div class="menu__best">${esc(bestLine)}</div>` : ''}
