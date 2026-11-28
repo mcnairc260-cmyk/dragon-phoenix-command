@@ -370,6 +370,45 @@ image. Built instead (`restPanel` in `ui/panels.ts`, `.rest*` in `style.css`):
   resumes the run, zero console errors. Real-device check by the founder
   still needed.
 
+## Phoenix Fire — the phoenix's own shot (founder request, 2026-11-28, done)
+
+Founder: "there should be some kind of projectile your phoenix can shoot to
+help attack the enemies". Fact found first: at the start of a run the phoenix
+only did damage through graze shots (near-misses) and the ultimate; the only
+auto-fire was the legendary Arcane Shard. Built:
+
+- **Phoenix Fire** (`PHOENIX_FIRE` in `config/GameConfig.ts`,
+  `updatePhoenixFire` in `GameScene.ts`, rate maths in
+  `systems/PhoenixFire.ts`, unit-tested): from the first second, a gold fire
+  bolt every 0.8 s at the nearest enemy within 300 px, damage 1. Heat makes it
+  fire faster (+10% per multiplier step, up to +60%), so grazing still pays.
+  Ember, Hunter, Void and Time Shards improve it. Drawn as a long gold dart
+  with an ember streak (`TEX.firebolt`), so it never looks like a round enemy
+  bullet. How to Play and the graze hint now mention it.
+- **Crash fixed on the way:** when a friendly shot broke a boss stage or killed
+  the boss, the game cleared enemy bullets in the middle of the hit loop and
+  then read a missing bullet, freezing the game. Rare before (only a graze
+  shot could do it); certain with Phoenix Fire. The loop now works on a
+  snapshot and releases shots by reference. Verified: bolts broke two boss
+  stages and landed the kill, the rest screen opened, zero errors.
+- **Measured** (seeded careful bot on iPhone 14, 150 s, never releases the
+  ultimate, 3 seeds each, old build vs new):
+
+  | | Old | New |
+  |---|---|---|
+  | Kills in first 60 s | 1–2 | 22–27 |
+  | Hits taken in first 60 s | 1–2 | 0 |
+  | Kills in 150 s | 22–28 | 50–54 |
+  | Level at 150 s | 4–5 | 6–7 |
+  | First boss health left after 88 s of fighting | not measured | 31–47% |
+
+  A lighter setting (1.1 s, 260 px) gave almost the same kills (22–26 in the
+  first minute): first-board enemies die in one hit, so kills are limited by
+  how many spawn, not by fire rate. So the stronger, better-feeling setting
+  is kept. **Open for the founder:** the first board is clearly easier now;
+  if it feels too easy, the lever is the board difficulty (spawns, enemy
+  health), not this weapon.
+
 ## Not started
 
 Stage 7 polish beyond the basic auras, Stage 8 full QA (next). Real-device play

@@ -16,6 +16,7 @@ export const TEX = {
   ring: 'tex-ring',
   shard: 'tex-shard',
   bullet: 'tex-bullet',
+  firebolt: 'tex-firebolt',
   cinder: 'tex-cinder',
   dart: 'tex-dart',
   spitter: 'tex-spitter',
@@ -125,6 +126,18 @@ export function generateTextures(scene: Phaser.Scene): void {
     g.fillStyle(0xffffff, 1);
     g.fillCircle(8, 10, 5);
     drawPolys(g, [{ points: [[18, 10], [6, 6], [6, 14]], color: 0xffffff, alpha: 0.85 }]);
+  });
+
+  // Phoenix Fire — a long flame dart, bright head pointing right, tail fading
+  // behind. Long and pointed, so it never reads as a round enemy bullet.
+  bake(scene, TEX.firebolt, 48, 16, (g) => {
+    drawPolys(g, [
+      { points: [[0, 8], [20, 3], [36, 2.5], [46, 8], [36, 13.5], [20, 13]], color: 0xffffff, alpha: 0.3 },
+      { points: [[12, 8], [26, 4], [38, 4], [46, 8], [38, 12], [26, 12]], color: 0xffffff, alpha: 0.6 },
+      { points: [[24, 8], [32, 5.2], [40, 5.2], [46, 8], [40, 10.8], [32, 10.8]], color: 0xffffff, alpha: 0.9 },
+    ]);
+    g.fillStyle(0xffffff, 1);
+    g.fillEllipse(39, 8, 12, 6.5);
   });
 
 

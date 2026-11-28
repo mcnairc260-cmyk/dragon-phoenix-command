@@ -42,6 +42,32 @@ export const GRAZE_SHOT = {
   bulletGrazeRange: 260,
 } as const;
 
+/**
+ * Phoenix Fire — the phoenix's own shot, from the first second of every run
+ * (founder request 2026-11-28: "some kind of projectile your phoenix can
+ * shoot"). A fire bolt at the nearest enemy in range; Heat makes it fire
+ * faster, so grazing still pays. Ember (damage), Hunter (crit), Void (range)
+ * and Time (cooldown) Shards all improve it.
+ */
+export const PHOENIX_FIRE = {
+  /** Seconds between shots at Heat x1. */
+  interval: 0.8,
+  damage: 1,
+  speed: 640,
+  /** Hit radius (px); the bolt is drawn longer than this. */
+  radius: 5,
+  life: 0.75,
+  /** Only fires at an enemy this close (px, x Void range). */
+  range: 300,
+  /** Each Heat multiplier step (+0.5) fires this much faster ... */
+  heatRatePerStep: 0.1,
+  /** ... up to this much faster in all. */
+  heatRateMax: 0.6,
+  /** Light homing for the first moments, so it can follow a dodging target. */
+  homingTime: 0.35,
+  turnRate: 5,
+} as const;
+
 export const PLAYER = {
   maxHealth: 3,
   radius: 13,

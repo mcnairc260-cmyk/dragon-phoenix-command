@@ -17,16 +17,18 @@ document and a value in that file disagree, the file is right.
    thumb never has to sit on top of it.
 3. Sweep up **ember shards** (score + currency + XP) — fast, in clusters, for the
    Ember Chain bonus.
-4. Pass *close* to enemies and bullets to bank **Heat**, which raises the score
-   multiplier.
-5. Level up → the game pauses and offers **three upgrade cards**; pick one.
-6. The run is a sequence of **boards** (§4): each faction's three enemies for
+4. **Phoenix Fire:** the phoenix shoots a gold fire bolt at the nearest enemy
+   on its own (founder request 2026-11-28) — you aim by where you fly.
+5. Pass *close* to enemies and bullets to bank **Heat**, which raises the score
+   multiplier and makes Phoenix Fire shoot faster.
+6. Level up → the game pauses and offers **three upgrade cards**; pick one.
+7. The run is a sequence of **boards** (§4): each faction's three enemies for
    a 60 s wave, then its boss, a clean-up beat and a **rest screen** (styled
    from the founder's mockup: "<BOSS> FALLS", faction badges, score and stats). Six
    boards make a loop; the loop then repeats, a step harder. Levelling never
    makes it harder.
-7. One elite per board (two from board 4 and in later loops).
-8. Three hits and the run ends. Results screen → **one tap to run again.**
+8. One elite per board (two from board 4 and in later loops).
+9. Three hits and the run ends. Results screen → **one tap to run again.**
 
 The core tension: Heat only comes from being near things that kill you, and a
 single hit wipes the whole combo.
@@ -209,6 +211,12 @@ expensive.
   larger than the space that kills you.
 - **Near-miss cooldown** of 0.5 s per object, so one enemy cannot be farmed by
   hovering next to it.
+- **Phoenix Fire** (`PHOENIX_FIRE`, `systems/PhoenixFire.ts`): one gold bolt
+  every 0.8 s at the nearest enemy within 300 px (boss included); damage 1,
+  speed 640 px/s, light homing for its first 0.35 s. Each Heat step (+0.5
+  multiplier) fires 10% faster, up to +60%. Ember (damage), Hunter (crit),
+  Void (range) and Time (cooldown) Shards apply. Its kills charge the ultimate
+  like any kill. A soft, quiet flame sound, as it repeats.
 - **Ultimate energy** from kills only (founder decision 2026-11-21): 14 per kill
   (~7 kills per charge), 50 per elite, 50 per boss stage broken, full on a boss
   kill. Holding, flying and grazing do not charge it, and kills made by the
@@ -225,9 +233,9 @@ now → next, and `LV n / max`. Values live in `src/upgrades/UpgradeDefs.ts`.
 
 | Shard | Rarity | Max | Effect per level | Hard limit |
 |---|---|---|---|---|
-| Ember | Common | 5 | +12% damage (graze shots, Burst, bolts, crit splash, bosses) | — |
+| Ember | Common | 5 | +12% damage (Phoenix Fire, graze shots, Burst, bolts, crit splash, bosses) | — |
 | Frost | Common | 4 | Enemies run 12% slower (movement and wind-ups); bosses half | 48% |
-| Void | Common | 5 | +10% range: graze ring, graze-shot reach, Burst radius | — |
+| Void | Common | 5 | +10% range: graze ring, graze-shot and Phoenix Fire reach, Burst radius | — |
 | Nature | Rare | 4 | Restore 1 heart on pick; from L2 regrow 1 heart every 45 / 35 / 25 s | never above 3 hearts |
 | Storm | Common | 5 | +8% flight speed | — |
 | Arcane | Legendary | 3 | Auto-fire 1 / 2 / 3 seeking bolts every 1.6 / 1.4 / 1.2 s | 3 bolts |

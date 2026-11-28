@@ -36,6 +36,8 @@ export class Projectile {
   /** Seconds of homing left (Infinity = for its whole life) and turn rate in rad/s. */
   homingTime = Infinity;
   turnRate = 6;
+  /** Phoenix Fire bolts draw as a gold dart with an ember streak behind. */
+  private bolt = false;
 
   private readonly glow: Phaser.GameObjects.Image;
   private readonly body: Phaser.GameObjects.Image;
@@ -62,6 +64,8 @@ export class Projectile {
     pierce?: number;
     homingTime?: number;
     turnRate?: number;
+    /** 'bolt' draws the long Phoenix Fire dart instead of the round bullet. */
+    look?: 'bullet' | 'bolt';
   }): void {
     this.active = true;
     this.x = options.x;
@@ -82,7 +86,15 @@ export class Projectile {
     this.turnRate = options.turnRate ?? 6;
 
     this.glow.setVisible(true).setTint(options.color).setScale((this.radius / 32) * 2.4).setAlpha(0.85);
-    this.body.setVisible(true).setTint(0xffffff).setDisplaySize(this.radius * 2.6, this.radius * 2.6);
+    this.bolt = options.look === 'bolt';
+    if (this.bolt) {
+      // Pooled: the texture is set on every spawn, so a bolt never stays a bolt.
+      // Gold body + a long ember streak: clearly the phoenix's, never an enemy bullet.
+      this.body.setTexture(TEX.firebolt).setVisible(true).setTint(BRAND.rebirthGold).setDisplaySize(this.radius * 8, this.radius * 2.8);
+      this.glow.setScale((this.radius * 11) / 64, (this.radius * 3.2) / 64).setAlpha(0.95);
+    } else {
+      this.body.setTexture(TEX.bullet).setVisible(true).setTint(0xffffff).setDisplaySize(this.radius * 2.6, this.radius * 2.6);
+    }
     this.rim.setVisible(this.hostile).setScale((this.radius * 4) / 64).setAlpha(0.8);
   }
 
@@ -127,7 +139,12 @@ export class Projectile {
     this.y += this.vy * dt;
 
     const angle = Math.atan2(this.vy, this.vx);
-    this.glow.setPosition(this.x, this.y);
+    if (this.bolt) {
+      // The streak trails behind the head along the flight line.
+      this.glow.setPosition(this.x - Math.cos(angle) * this.radius * 3, this.y - Math.sin(angle) * this.radius * 3).setRotation(angle);
+    } else {
+      this.glow.setPosition(this.x, this.y).setRotation(0);
+    }
     this.rim.setPosition(this.x, this.y);
     this.body.setPosition(this.x, this.y).setRotation(angle);
     return true;

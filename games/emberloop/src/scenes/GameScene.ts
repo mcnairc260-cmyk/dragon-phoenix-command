@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ARENA, BOARD, BOSS, BURST, CONTROL, ELITE, ENEMY, GRAZE_SHOT, HAZARD, PICKUP, PLAYER, SCORING } from '../config/GameConfig';
+import { ARENA, BOARD, BOSS, BURST, CONTROL, ELITE, ENEMY, GRAZE_SHOT, HAZARD, PHOENIX_FIRE, PICKUP, PLAYER, SCORING } from '../config/GameConfig';
 import { ObjectPool } from '../core/ObjectPool';
 import { weightedIndex } from '../core/Rng';
 import { session } from '../core/Session';
@@ -10,6 +10,7 @@ import { Boss } from '../entities/Boss';
 import { Enemy } from '../entities/Enemy';
 import { Pickup } from '../entities/Pickup';
 import { Projectile } from '../entities/Projectile';
+import { phoenixFireInterval } from '../systems/PhoenixFire';
 import { Player } from '../entities/Player';
 import { Arena } from '../effects/Arena';
 import { Fx } from '../effects/Fx';
@@ -101,6 +102,8 @@ export class GameScene extends Phaser.Scene {
   private collapseTimer = 0;
   private ambientTimer = 0;
   private homingTimer = 0;
+  /** Seconds until the next Phoenix Fire bolt. */
+  private fireTimer = 0;
   private trailTimer = 0;
   private trailDamageTimer = 0;
   private hazardHitTimer = 0;
@@ -281,6 +284,7 @@ export class GameScene extends Phaser.Scene {
     this.collapseTimer = 12;
     this.ambientTimer = 0.4;
     this.homingTimer = 0;
+    this.fireTimer = 0.5;
     this.trailTimer = 0;
     this.trailDamageTimer = 0;
     this.hazardHitTimer = 0;
@@ -920,6 +924,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateAutoAttacks(dt: number): void {
+    this.updatePhoenixFire(dt);
     if (this.stats.homingShots <= 0) return;
     this.homingTimer -= dt;
     if (this.homingTimer > 0) return;
@@ -945,6 +950,44 @@ export class GameScene extends Phaser.Scene {
       });
       this.projectiles.push(projectile);
     }
+  }
+
+  /**
+   * Phoenix Fire (PHOENIX_FIRE): the phoenix's own bolt at the nearest enemy in
+   * range. Heat speeds it up; the Time Shard's cooldown and the Void Shard's
+   * range apply; damage and crits go through damageEnemy like every hit.
+   */
+  private updatePhoenixFire(dt: number): void {
+    this.fireTimer -= dt;
+    if (this.fireTimer > 0) return;
+    const px = this.player.x;
+    const py = this.player.y;
+    const target = this.nearestEnemy(px, py);
+    if (!target || (target === this.boss && this.boss.intangible) || Math.hypot(target.x - px, target.y - py) > PHOENIX_FIRE.range * this.stats.rangeMul) {
+      // Nothing in reach: check again soon, so the first shot is not late.
+      this.fireTimer = 0.1;
+      return;
+    }
+    this.fireTimer = phoenixFireInterval(this.score.multiplier, this.stats.cooldownMul);
+
+    const projectile = this.projectilePool.acquire();
+    projectile.spawn({
+      x: px,
+      y: py,
+      angle: Math.atan2(target.y - py, target.x - px),
+      speed: PHOENIX_FIRE.speed,
+      color: this.player.colors.accent,
+      hostile: false,
+      homing: true,
+      homingTime: PHOENIX_FIRE.homingTime,
+      turnRate: PHOENIX_FIRE.turnRate,
+      damage: PHOENIX_FIRE.damage,
+      radius: PHOENIX_FIRE.radius,
+      life: PHOENIX_FIRE.life,
+      look: 'bolt',
+    });
+    this.projectiles.push(projectile);
+    audio.phoenixFire();
   }
 
   /** Closest live enemy (boss included) to a point — used by homing shots. */
@@ -997,8 +1040,10 @@ export class GameScene extends Phaser.Scene {
 
     }
 
-    for (let i = this.projectiles.length - 1; i >= 0; i--) {
-      const projectile = this.projectiles[i];
+    // A snapshot, released by reference: a hit can clear bullets mid-loop (a
+    // boss stage break or the board clear), which reorders this.projectiles.
+    // Indexing the live array then read a missing entry and froze the game.
+    for (const projectile of [...this.projectiles]) {
       if (!projectile.active) continue;
 
       if (projectile.hostile) {
@@ -1010,7 +1055,7 @@ export class GameScene extends Phaser.Scene {
             audio.hitEnemy();
           } else {
             this.damagePlayer();
-            this.releaseProjectile(i);
+            this.releaseShot(projectile);
           }
           continue;
         }
@@ -1045,7 +1090,7 @@ export class GameScene extends Phaser.Scene {
         }
         if (consumed) {
           this.fx.burstSparks(projectile.x, projectile.y, this.player.colors.accent, 5, 150);
-          this.releaseProjectile(i);
+          this.releaseShot(projectile);
         }
       }
     }
@@ -1064,6 +1109,12 @@ export class GameScene extends Phaser.Scene {
       const dist = Math.hypot(this.boss.x - px, this.boss.y - py);
       if (dist <= hitR + this.boss.radius && !this.boss.intangible) this.damagePlayer();
     }
+  }
+
+  /** Release a projectile by reference (no-op if something already released it). */
+  private releaseShot(projectile: Projectile): void {
+    const index = this.projectiles.indexOf(projectile);
+    if (index >= 0) this.releaseProjectile(index);
   }
 
   private releaseProjectile(index: number): void {

@@ -38,7 +38,7 @@ const STEPS: Step[] = [
   },
   {
     id: 'graze',
-    html: '<b>GRAZE DANGER</b> — close calls build Heat and multiply your score',
+    html: '<b>GRAZE DANGER</b> — close calls build Heat: more score, faster fire',
     done: (s) => s.nearMisses >= 1,
     timeout: 6,
   },
