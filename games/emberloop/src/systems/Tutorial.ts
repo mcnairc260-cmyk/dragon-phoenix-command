@@ -32,19 +32,19 @@ const STEPS: Step[] = [
   },
   {
     id: 'collect',
-    html: 'Follow the glowing trail — <b>COLLECT 3 EMBERS</b>',
+    html: 'Collect the <b>BLUE CRYSTALS</b> — they fill your blue bar and level you up',
     done: (s) => s.embersCollected >= 3,
     timeout: 6,
   },
   {
     id: 'graze',
-    html: '<b>GRAZE DANGER</b> — close calls build Heat and multiply your score',
+    html: '<b>GRAZE DANGER</b> — close calls build Heat: more score, faster fire',
     done: (s) => s.nearMisses >= 1,
     timeout: 6,
   },
   {
     id: 'burst',
-    html: 'Burst charged — <b>RELEASE TO IGNITE</b>',
+    html: 'Ultimate charged — <b>RELEASE TO UNLEASH</b>',
     done: (s) => s.burstsUsed >= 1,
     ready: (s) => s.burstReady,
     timeout: 8,

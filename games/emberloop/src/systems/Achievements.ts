@@ -83,7 +83,7 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
   {
     id: 'burst-master',
     name: 'Burst Master',
-    description: 'Trigger 10 Phoenix Bursts in one run.',
+    description: 'Unleash your ultimate 10 times in one run.',
     icon: '☄',
     earned: (run) => run.bursts >= 10,
   },

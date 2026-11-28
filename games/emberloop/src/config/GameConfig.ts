@@ -9,32 +9,74 @@
 export const DESIGN = { width: 390, height: 844 } as const;
 
 /**
- * The arena is a circle in *normalised* space that is rendered as an ellipse so
- * it fills a tall portrait screen. All gameplay maths uses the normalised radius
- *   n = sqrt((dx/rx)^2 + (dy/ry)^2)
- * where n = 1 is the arena wall. This keeps "circular arena" logic (angular
- * wedges, orbits, radial spawns) while using the whole phone screen.
+ * The arena wall is a rounded rectangle (a superellipse) fitted to the frame of
+ * the board art; see effects/Arena.ts. All gameplay maths uses the normalised
+ * radius n, where n = 1 is the wall. This keeps "circular arena" logic (angular
+ * wedges, orbits, radial spawns) whatever the shape or screen size.
  */
 export const ARENA = {
-  /** Fraction of half-width used for the horizontal radius. */
-  radiusXFactor: 0.94,
-  /** Fraction of half-height used for the vertical radius. */
-  radiusYFactor: 0.9,
-  /** Vertical centre of the arena as a fraction of screen height (HUD sits above). */
-  centerYFactor: 0.52,
-  /** Radius used when drawing arena art in unit space before the ellipse scale. */
+  /** Radius used when drawing hazard wedges in unit space before the arena scale. */
   drawRadius: 1000,
   /** Enemies spawn at this normalised radius (just outside the wall/screen). */
   spawnRadius: 1.18,
   /** Enemies further out than this are culled. */
   cullRadius: 1.9,
-  /** Degrees per second the arena art slowly rotates. */
-  spinDegPerSec: 1.6,
+} as const;
+
+/**
+ * Graze shots (founder decision 2026-11-20, "option B"): every near-miss also
+ * fires a real ember from the phoenix. Grazing an enemy shoots that enemy;
+ * grazing a bullet shoots the nearest enemy. Close flying is now an attack as
+ * well as the Heat/Burst engine. Damage is deliberately small: the Burst stays
+ * the big hit.
+ */
+export const GRAZE_SHOT = {
+  /** Damage when you grazed the enemy itself. */
+  damageEnemyGraze: 1,
+  /** Damage when you grazed a bullet (shot goes to the nearest enemy). */
+  damageBulletGraze: 0.5,
+  speed: 560,
+  radius: 5,
+  life: 1.2,
+  /** Bullet grazes only fire if an enemy is this close (px). */
+  bulletGrazeRange: 260,
+} as const;
+
+/**
+ * Phoenix Fire — the phoenix's own shot, from the first second of every run
+ * (founder request 2026-11-28: "some kind of projectile your phoenix can
+ * shoot"). A fire bolt at the nearest enemy in range; Heat makes it fire
+ * faster, so grazing still pays. Ember (damage), Hunter (crit), Void (range)
+ * and Time (cooldown) Shards all improve it.
+ */
+export const PHOENIX_FIRE = {
+  /** Seconds between shots at Heat x1. */
+  interval: 0.8,
+  damage: 1,
+  speed: 640,
+  /** Hit radius (px); the bolt is drawn longer than this. */
+  radius: 5,
+  life: 0.75,
+  /** Only fires at an enemy this close (px, x Void range). */
+  range: 300,
+  /** Each Heat multiplier step (+0.5) fires this much faster ... */
+  heatRatePerStep: 0.1,
+  /** ... up to this much faster in all. */
+  heatRateMax: 0.6,
+  /** Light homing for the first moments, so it can follow a dodging target. */
+  homingTime: 0.35,
+  turnRate: 5,
 } as const;
 
 export const PLAYER = {
   maxHealth: 3,
   radius: 13,
+  /**
+   * On-screen wingspan of the phoenix art in CSS px. Kept small so the bird reads
+   * close to its hitbox, fits through gaps between enemies, and never hides the
+   * Emberblades orbiting at 44 px or shots leaving the body.
+   */
+  wingspan: 56,
   /** Hit radius is smaller than the visual — forgiving hitbox feels better on touch. */
   hitRadius: 9,
   /** Peak speed in px/sec at pointer-far distance. */
@@ -48,6 +90,13 @@ export const PLAYER = {
   invulnAfterHit: 1.25,
   /** Ring in which passing enemies/projectiles counts as a near-miss. */
   nearMissRadius: 46,
+  /**
+   * An enemy that touches the phoenix recoils: pushed back this far and stunned
+   * (harmless, not moving) for `contactStun` seconds, so the same chaser cannot
+   * land a second hit the moment invulnerability ends.
+   */
+  contactKnockback: 40,
+  contactStun: 0.5,
   /** Same danger object cannot re-trigger a near-miss faster than this. */
   nearMissCooldown: 0.5,
 } as const;
@@ -66,12 +115,16 @@ export const CONTROL = {
 
 export const BURST = {
   maxEnergy: 100,
-  /** Energy per second at full speed while the pointer is held. */
-  energyPerSecondMoving: 14,
-  /** Trickle even while idle so a stuck player still recovers. */
-  energyPerSecondIdle: 3.5,
-  energyPerNearMiss: 7,
-  energyPerKill: 2.2,
+  /**
+   * The ultimate meter charges from KILLS ONLY (founder decision 2026-11-21).
+   * Holding, flying and grazing no longer charge it. Kills made by an ultimate
+   * itself never charge it, so an ultimate cannot refill itself.
+   * ~7 ordinary kills per charge.
+   */
+  energyPerKill: 14,
+  energyPerEliteKill: 50,
+  /** Breaking a boss stage, and felling the boss (which fills the meter). */
+  energyPerBossStage: 50,
   radius: 190,
   damage: 4,
   cooldown: 1.1,
@@ -111,15 +164,10 @@ export const XP = {
 
 export const DIFFICULTY = {
   /**
-   * Threat rises with **elapsed time only**.
-   *
-   * It deliberately does NOT rise with player level. Levelling is driven by
-   * collecting shards, and tying enemy pressure to it punished the exact
-   * behaviour the game is built around: collect faster, get shot at more. Now
-   * the clock sets the pressure and levelling is pure upside — collecting fast
-   * means more upgrades against the same wave, which is the incentive we want.
+   * Pressure ("threat") comes from where the player is in the board sequence
+   * (see BOARD), never from player level: levelling is driven by collecting
+   * shards, and tying enemy pressure to it would punish the core verb.
    */
-  threatPerMinute: 1,
   spawnIntervalStart: 1.45,
   spawnIntervalDecay: 0.87,
   spawnIntervalMin: 0.32,
@@ -129,34 +177,56 @@ export const DIFFICULTY = {
   maxEnemiesStart: 6,
   maxEnemiesPerThreat: 2.0,
   maxEnemiesCap: 28,
-  /**
-   * Elites are on the clock too, for the same reason. They are as much a reward
-   * (a big ember payout) as a threat, so they must not arrive faster just
-   * because the player is collecting well.
-   */
-  eliteIntervalStart: 46,
-  eliteIntervalMin: 26,
-  /**
-   * Boss cadence. The first boss lands early enough that a typical run actually
-   * meets one — the old 170s meant most runs ended without ever seeing the
-   * headline encounter, which is a poor reason to stop playing.
-   */
-  firstBossAt: 80,
-  bossInterval: 100,
   /** Seconds between arena sector collapses (scales down with threat). */
   collapseIntervalStart: 24,
   collapseIntervalMin: 9,
 } as const;
 
-/** Seconds of elapsed run time before each enemy archetype joins the spawn table. */
-export const ENEMY_UNLOCK: Record<string, number> = {
-  cinder: 0,
-  dart: 14,
-  spitter: 30,
-  orbiter: 50,
-  splitter: 74,
-  mine: 96,
-};
+/**
+ * Boards (founder decision 2026-11-21). Each faction is one board: its three
+ * enemies for a wave, then its boss, then a rest screen. Six boards make a
+ * loop; after board 6 the loop starts again, harder.
+ *
+ * Threat = board × boardStep + loop × loopStep + (0 → inBoardRamp across the wave).
+ * Loop 1 runs 0 → 2.75; loop 2 starts at 1.6 (about board 4 of loop 1, so the
+ * restart is not a wall) and every loop-2 board is harder than its loop-1 twin.
+ */
+export const BOARD = {
+  count: 6,
+  waveSeconds: 60,
+  /** Short intro banner before enemies start. */
+  introSeconds: 2.2,
+  boardStep: 0.45,
+  loopStep: 1.6,
+  inBoardRamp: 0.5,
+  /** Boss HP multiplier: +15% per board, +60% per loop. */
+  bossHpPerBoard: 0.15,
+  bossHpPerLoop: 0.6,
+  /** The older procedural enemies join as occasional extras from these boards of loop 1. */
+  extrasFrom: { orbiter: 1, splitter: 2, mine: 3 } as Record<string, number>,
+  extrasWeightMul: 0.5,
+  /** Elites arrive at these seconds into a wave; the second one from board 4 or loop 2. */
+  eliteAt: [25, 48],
+  secondEliteFromBoard: 3,
+  /** Hearts restored at the rest point (on top of the boss kill's +1). */
+  restHeal: 1,
+  /** Seconds of clean-up (embers fly to you) between the boss falling and the rest screen. */
+  clearSeconds: 2.2,
+  /**
+   * Onboarding for the very first board of a run (founder feedback 2026-11-22:
+   * "starting out on expert level 10"). Enemy types join one at a time, spawns
+   * are thinner, there are no arena collapses and the elite comes later.
+   */
+  firstBoard: {
+    unlockAt: { cinder: 0, dart: 15, spitter: 30 } as Record<string, number>,
+    spawnIntervalMul: 1.4,
+    maxEnemiesLess: 2,
+    eliteAt: 40,
+    /** Enemies 15% slower, and chargers show their line 0.3 s longer before dashing. */
+    enemySpeedMul: 0.85,
+    chargeTelegraphBonus: 0.3,
+  },
+} as const;
 
 export const ENEMY = {
   cinder: { hp: 1, speed: 62, radius: 14, score: 20, xp: 1, weight: 34 },
@@ -175,9 +245,12 @@ export const ELITE = {
 } as const;
 
 export const BOSS = {
-  name: 'THE ASHBORN',
-  /** Hit points for each of the three stages (stage 1 → 3). */
-  stageHp: [44, 56, 68],
+  /**
+   * Hit points for each of the three stages: 35% / 35% / 30% of 168, so phase 2
+   * begins below 65% and phase 3 below 30% (founder brief). Which boss appears
+   * is config/bosses.ts.
+   */
+  stageHp: [59, 59, 50],
   radius: 54,
   warningTime: 3,
   emberDrop: 40,

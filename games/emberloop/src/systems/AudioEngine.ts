@@ -265,6 +265,11 @@ export class AudioEngine {
     this.tone({ type: 'sawtooth', freq: 190, endFreq: 42, duration: 0.4, gain: 0.3 });
   }
 
+  /** Phoenix Fire: a short breath of flame, kept quiet because it repeats. */
+  phoenixFire(): void {
+    this.noise({ duration: 0.07, gain: 0.045, filter: 'bandpass', freq: 1500, endFreq: 3400, q: 1.6 });
+  }
+
   hitEnemy(): void {
     this.noise({ duration: 0.09, gain: 0.14, filter: 'bandpass', freq: 2400, endFreq: 900, q: 2 });
   }

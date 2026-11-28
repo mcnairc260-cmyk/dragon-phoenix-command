@@ -1,10 +1,24 @@
 import Phaser from 'phaser';
 import { generateTextures } from '../effects/Textures';
+import { loadPhoenixTextures } from '../entities/PhoenixSprite';
+import { loadArenaTextures } from '../effects/Arena';
+import { SPECIES, speciesTextureKey } from '../config/factions';
+import { BOSSES, bossTextureKey } from '../config/bosses';
+import { BLADE_TEXTURE } from '../entities/EmberBlades';
+import bladeArt from '../assets/weapons/ember-blade.png';
 
-/** Generates every procedural texture, then hands off to the title screen. */
+/** Loads the phoenix art, generates every procedural texture, then hands off to the title screen. */
 export class BootScene extends Phaser.Scene {
   constructor() {
     super('Boot');
+  }
+
+  preload(): void {
+    loadPhoenixTextures(this);
+    loadArenaTextures(this);
+    for (const sp of SPECIES) this.load.image(speciesTextureKey(sp), sp.url);
+    for (const boss of BOSSES) this.load.image(bossTextureKey(boss), boss.url);
+    this.load.image(BLADE_TEXTURE, bladeArt);
   }
 
   create(): void {

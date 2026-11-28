@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { TEX } from '../effects/Textures';
+import { BRAND } from '../config/brand';
 
 export interface HomingTarget {
   x: number;
@@ -24,13 +25,29 @@ export class Projectile {
   life = 0;
   /** Cooldown so a single bullet cannot chain near-misses every frame. */
   nearMissTimer = 0;
+  /** Extra enemies this shot passes through (Celestial Ascendancy). */
+  pierce = 0;
+  /** Last enemy hit, so a piercing shot cannot hit the same one twice in a row. */
+  lastHit: unknown = null;
+  /** Fired by an ultimate: its kills do not charge the ultimate meter. */
+  fromUltimate = false;
+  /** Synergy shot type: 'ice' chills, 'echo' never echoes again, 'star' is Celestial Barrage. */
+  tag: '' | 'ice' | 'echo' | 'star' = '';
+  /** Seconds of homing left (Infinity = for its whole life) and turn rate in rad/s. */
+  homingTime = Infinity;
+  turnRate = 6;
+  /** Phoenix Fire bolts draw as a gold dart with an ember streak behind. */
+  private bolt = false;
 
   private readonly glow: Phaser.GameObjects.Image;
   private readonly body: Phaser.GameObjects.Image;
+  private readonly rim: Phaser.GameObjects.Image;
 
   constructor(scene: Phaser.Scene, depth: number) {
     this.glow = scene.add.image(0, 0, TEX.glowTight).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth).setVisible(false);
     this.body = scene.add.image(0, 0, TEX.bullet).setDepth(depth + 1).setVisible(false);
+    // Enemy bullets wear a dark ring so danger never looks like the blue crystal loot.
+    this.rim = scene.add.image(0, 0, TEX.glowTight).setTint(BRAND.voidBlack).setDepth(depth - 0.5).setVisible(false);
   }
 
   spawn(options: {
@@ -44,6 +61,11 @@ export class Projectile {
     damage?: number;
     radius?: number;
     life?: number;
+    pierce?: number;
+    homingTime?: number;
+    turnRate?: number;
+    /** 'bolt' draws the long Phoenix Fire dart instead of the round bullet. */
+    look?: 'bullet' | 'bolt';
   }): void {
     this.active = true;
     this.x = options.x;
@@ -56,15 +78,31 @@ export class Projectile {
     this.radius = options.radius ?? 6;
     this.life = options.life ?? 6;
     this.nearMissTimer = 0;
+    this.pierce = options.pierce ?? 0;
+    this.lastHit = null;
+    this.fromUltimate = false;
+    this.tag = '';
+    this.homingTime = options.homingTime ?? Infinity;
+    this.turnRate = options.turnRate ?? 6;
 
     this.glow.setVisible(true).setTint(options.color).setScale((this.radius / 32) * 2.4).setAlpha(0.85);
-    this.body.setVisible(true).setTint(0xffffff).setDisplaySize(this.radius * 2.6, this.radius * 2.6);
+    this.bolt = options.look === 'bolt';
+    if (this.bolt) {
+      // Pooled: the texture is set on every spawn, so a bolt never stays a bolt.
+      // Gold body + a long ember streak: clearly the phoenix's, never an enemy bullet.
+      this.body.setTexture(TEX.firebolt).setVisible(true).setTint(BRAND.rebirthGold).setDisplaySize(this.radius * 8, this.radius * 2.8);
+      this.glow.setScale((this.radius * 11) / 64, (this.radius * 3.2) / 64).setAlpha(0.95);
+    } else {
+      this.body.setTexture(TEX.bullet).setVisible(true).setTint(0xffffff).setDisplaySize(this.radius * 2.6, this.radius * 2.6);
+    }
+    this.rim.setVisible(this.hostile).setScale((this.radius * 4) / 64).setAlpha(0.8);
   }
 
   deactivate(): void {
     this.active = false;
     this.glow.setVisible(false);
     this.body.setVisible(false);
+    this.rim.setVisible(false);
   }
 
   /** Reflect a hostile bullet back at its owners (Mirror Flame upgrade). */
@@ -75,6 +113,7 @@ export class Projectile {
     this.vy *= -1.25;
     this.life = Math.max(this.life, 3);
     this.glow.setTint(color);
+    this.rim.setVisible(false);
   }
 
   update(dt: number, findTarget: () => HomingTarget | null): boolean {
@@ -82,13 +121,14 @@ export class Projectile {
     if (this.nearMissTimer > 0) this.nearMissTimer -= dt;
     if (this.life <= 0) return false;
 
-    if (this.homing) {
+    if (this.homing && this.homingTime > 0) {
+      this.homingTime -= dt;
       const target = findTarget();
       if (target) {
         const desired = Math.atan2(target.y - this.y, target.x - this.x);
         const current = Math.atan2(this.vy, this.vx);
         // Limited turn rate keeps homing shots readable rather than instant-hit.
-        const next = Phaser.Math.Angle.RotateTo(current, desired, 6 * dt);
+        const next = Phaser.Math.Angle.RotateTo(current, desired, this.turnRate * dt);
         const speed = Math.hypot(this.vx, this.vy);
         this.vx = Math.cos(next) * speed;
         this.vy = Math.sin(next) * speed;
@@ -99,7 +139,13 @@ export class Projectile {
     this.y += this.vy * dt;
 
     const angle = Math.atan2(this.vy, this.vx);
-    this.glow.setPosition(this.x, this.y);
+    if (this.bolt) {
+      // The streak trails behind the head along the flight line.
+      this.glow.setPosition(this.x - Math.cos(angle) * this.radius * 3, this.y - Math.sin(angle) * this.radius * 3).setRotation(angle);
+    } else {
+      this.glow.setPosition(this.x, this.y).setRotation(0);
+    }
+    this.rim.setPosition(this.x, this.y);
     this.body.setPosition(this.x, this.y).setRotation(angle);
     return true;
   }
@@ -107,5 +153,6 @@ export class Projectile {
   destroy(): void {
     this.glow.destroy();
     this.body.destroy();
+    this.rim.destroy();
   }
 }

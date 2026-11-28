@@ -16,9 +16,16 @@ export interface HudState {
   level: number;
   xpProgress: number;
   burstFraction: number;
+  /** "BOARD 2/6" (plus "· LOOP 2" from the second loop) and the board's faction colour. */
+  boardLabel: string;
+  boardColor: number;
+  /** Equipped ultimate (the Phoenix Burst until Ascension). */
+  ultimateName: string;
+  ultimateColor: number;
   burstCharges: number;
   maxBurstCharges: number;
   bossName?: string;
+  bossColor?: number;
   bossHp?: number;
   bossStage?: number;
   bossStages?: number;
@@ -36,6 +43,7 @@ export class Hud {
   private readonly scoreText: Phaser.GameObjects.Text;
   private readonly multText: Phaser.GameObjects.Text;
   private readonly timeText: Phaser.GameObjects.Text;
+  private readonly boardText: Phaser.GameObjects.Text;
   private readonly levelText: Phaser.GameObjects.Text;
   private readonly heatLabel: Phaser.GameObjects.Text;
   private readonly xpLabel: Phaser.GameObjects.Text;
@@ -44,6 +52,9 @@ export class Hud {
   private readonly hearts: Phaser.GameObjects.Image[] = [];
   private readonly burstPips: Phaser.GameObjects.Image[] = [];
   private readonly bossLabel: Phaser.GameObjects.Text;
+  /** The boss's current signature attack, shown briefly under its bar. */
+  private readonly bossAttackLabel: Phaser.GameObjects.Text;
+  private bossAttackUntil = 0;
   private readonly pauseButton: Phaser.GameObjects.Container;
   private readonly edgeMarkers: Phaser.GameObjects.Image[] = [];
 
@@ -67,6 +78,9 @@ export class Hud {
     this.timeText = scene.add
       .text(0, 0, '0:00', { fontFamily: FONT_MONO, fontSize: '14px', color: BRAND_CSS.steel })
       .setOrigin(1, 0);
+    this.boardText = scene.add
+      .text(0, 0, '', { fontFamily: FONT_MONO, fontSize: '10px', color: BRAND_CSS.steel })
+      .setOrigin(0, 0.5);
     this.levelText = scene.add
       .text(0, 0, 'LV 1', { fontFamily: FONT_MONO, fontSize: '12px', color: BRAND_CSS.signalCyan })
       .setOrigin(0, 0.5);
@@ -106,7 +120,11 @@ export class Hud {
 
     this.pauseButton = this.createPauseButton(onPause);
 
-    this.root.add([this.scoreText, this.multText, this.timeText, this.levelText, this.xpLabel, this.heatLabel, this.burstLabel, this.bossLabel, this.pauseButton]);
+    this.bossAttackLabel = scene.add
+      .text(0, 0, '', { fontFamily: FONT_MONO, fontSize: '10px', color: BRAND_CSS.ghostWhite })
+      .setOrigin(0.5)
+      .setVisible(false);
+    this.root.add([this.scoreText, this.multText, this.timeText, this.levelText, this.xpLabel, this.heatLabel, this.burstLabel, this.bossLabel, this.bossAttackLabel, this.boardText, this.pauseButton]);
   }
 
   private createPauseButton(onPause: () => void): Phaser.GameObjects.Container {
@@ -139,10 +157,13 @@ export class Hud {
     this.timeText.setPosition(width - inset.right - 16, top + 4);
     // Level sits beside the health pips, clear of the centred readout.
     this.levelText.setPosition(inset.left + 82, top + 14);
+    // Board progress sits under the hearts, above the gauge labels.
+    this.boardText.setPosition(inset.left + 18, top + 38);
     this.xpLabel.setPosition(inset.left + 18, top + 60);
     this.heatLabel.setPosition(inset.left + 18, top + 76);
     this.burstLabel.setPosition(width / 2, height - inset.bottom - 40);
     this.bossLabel.setPosition(width / 2, top + 88);
+    this.bossAttackLabel.setPosition(width / 2, top + 122);
     this.pauseButton.setPosition(width - inset.right - 30, top + 34);
 
     for (let i = 0; i < this.hearts.length; i++) {
@@ -156,6 +177,7 @@ export class Hud {
 
     this.scoreText.setText(Math.round(state.score).toLocaleString('en-US'));
     this.timeText.setText(formatClock(state.elapsed));
+    this.boardText.setText(state.boardLabel).setColor(`#${state.boardColor.toString(16).padStart(6, '0')}`);
     this.levelText.setText(`LV ${state.level}`);
 
     if (state.multiplier > 1 || state.combo > 0) {
@@ -189,6 +211,7 @@ export class Hud {
         .setAlpha(charged ? 1 : 0.6);
     }
 
+    this.burstLabel.setText(state.ultimateName.toUpperCase());
     this.drawBars(state);
   }
 
@@ -226,28 +249,40 @@ export class Hud {
     g.fillStyle(BRAND.carbon, 0.9);
     g.fillRoundedRect(margin, burstY, burstWidth, 9, 4.5);
     const full = state.burstCharges >= state.maxBurstCharges;
-    g.fillStyle(full ? BRAND.rebirthGold : BRAND.emberOrange, full ? 0.95 : 0.85);
+    g.fillStyle(full ? state.ultimateColor : BRAND.emberOrange, full ? 0.95 : 0.85);
     g.fillRoundedRect(margin, burstY, Math.max(3, burstWidth * clamp(state.burstFraction, 0, 1)), 9, 4.5);
     if (state.burstCharges > 0) {
       // A pulsing outline says "you can release now".
-      g.lineStyle(2, BRAND.rebirthGold, 0.5 + 0.4 * Math.sin(this.pulse * 7));
+      g.lineStyle(2, state.ultimateColor, 0.5 + 0.4 * Math.sin(this.pulse * 7));
       g.strokeRoundedRect(margin - 1, burstY - 1, burstWidth + 2, 11, 5.5);
     }
 
     // Boss health, when one is alive.
     if (state.bossHp !== undefined && state.bossName) {
       const bossY = top + 100;
-      this.bossLabel.setVisible(true).setText(`${state.bossName}   ${'◆'.repeat(state.bossStages ?? 1)}`.trim());
+      this.bossLabel
+        .setVisible(true)
+        .setText(`${state.bossName}   ${'◆'.repeat(state.bossStages ?? 1)}`.trim())
+        .setColor(`#${(state.bossColor ?? BRAND.emberOrange).toString(16).padStart(6, '0')}`);
       const bossWidth = this.width - margin * 2;
       g.fillStyle(BRAND.carbon, 0.95);
       g.fillRoundedRect(margin, bossY, bossWidth, 8, 4);
-      g.fillStyle(BRAND.emberOrange, 0.95);
+      g.fillStyle(state.bossColor ?? BRAND.emberOrange, 0.95);
       g.fillRoundedRect(margin, bossY, Math.max(2, bossWidth * clamp(state.bossHp, 0, 1)), 8, 4);
+      const left = this.bossAttackUntil - this.pulse;
+      this.bossAttackLabel.setVisible(left > 0).setAlpha(clamp(left, 0, 1));
       g.lineStyle(1, BRAND.rebirthGold, 0.7);
       g.strokeRoundedRect(margin, bossY, bossWidth, 8, 4);
     } else {
       this.bossLabel.setVisible(false);
+      this.bossAttackLabel.setVisible(false);
     }
+  }
+
+  /** Name the attack the boss is starting (matches the Boss Roster art). */
+  flashBossAttack(name: string): void {
+    this.bossAttackLabel.setText(`▸ ${name.toUpperCase()}`);
+    this.bossAttackUntil = this.pulse + 2.6;
   }
 
   /**

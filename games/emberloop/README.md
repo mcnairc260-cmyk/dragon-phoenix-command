@@ -93,6 +93,11 @@ converts the root deploy from "no build" to "build" for the whole site, which
 
 The game needs no environment variables, secrets, or serverless functions.
 
+## iPhone app
+
+A native iPhone build (Capacitor) lives in `ios/`. See [`IOS.md`](./IOS.md) for how to
+build it in Xcode and put it on a phone.
+
 ## Project structure
 
 ```
@@ -100,7 +105,7 @@ games/emberloop/
 ├── index.html                  # Shell: canvas mount + DOM overlay layer
 ├── public/
 │   ├── manifest.webmanifest    # PWA manifest (portrait, standalone)
-│   ├── sw.js                   # Offline cache: precache shell, cache-first runtime
+│   ├── sw.js                   # Offline cache: pages network-first, hashed assets cache-first
 │   └── icons/                  # Generated PNG/SVG icon set
 ├── scripts/make-icons.mjs      # Procedural icon generator (pure Node, no deps)
 └── src/
@@ -133,17 +138,25 @@ Phaser only appears in `entities/`, `effects/`, `scenes/`, `ui/Hud.ts` and
   told apart at a glance with three colours and readable telegraphs are a hard
   gameplay requirement. The root site is unchanged, so the wider two-palette
   question in `docs/AI_ONBOARDING.md` §8.1 stays open.
-- **The phoenix is elemental energy, not a creature.** The Bible's imagery
-  direction asks for the Phoenix "rendered as elemental energy (fire, light,
-  smoke) rather than cartoon creatures", so the player sprite is a bundle of
-  tapered flame strokes with a single hot core, not a bird silhouette.
-- **Everything is procedural.** Textures are drawn with Phaser `Graphics` and
-  canvas gradients at boot (`effects/Textures.ts`); audio is synthesised from
-  oscillators and a noise buffer (`systems/AudioEngine.ts`). No third-party art
-  or sound ships with the game, so there are no licences to track.
-- **The arena is a circle rendered as an ellipse.** Gameplay maths uses a
-  normalised radius where `1.0` is the wall, so angular wedges, orbits and radial
-  spawns behave circularly while the caldera fills a tall portrait screen.
+- **The phoenix is founder-supplied art (2026-11-20).** The founder chose an
+  illustrated phoenix creature (`art/phoenix-source.png`, made by the founder
+  with ChatGPT) over the earlier flame-stroke sprite. This overrides the Brand
+  Bible's "elemental energy, not cartoon creatures" imagery direction for this
+  game only. `scripts/make-phoenix-layers.py` (needs Pillow) cuts it into body +
+  two wing layers in `src/assets/`; `entities/PhoenixSprite.ts` beats the wings
+  around the shoulders, mirrors to face the direction of travel and banks into
+  turns. The art is a three-quarter view, so it never spins upside down.
+  Palettes recolour the glow and trail, not the bird.
+- **Everything else is procedural.** Other textures are drawn with Phaser
+  `Graphics` and canvas gradients at boot (`effects/Textures.ts`); audio is
+  synthesised from oscillators and a noise buffer (`systems/AudioEngine.ts`).
+- **The board is founder-supplied art (2026-11-20).** `art/board-source.png`
+  is sliced at runtime (`effects/Arena.ts`): top scenery, centre emblem band and
+  bottom scenery are drawn as is, and plain tile rows repeat between them, so
+  it fits any phone height without distortion. A dark scrim keeps enemies and
+  HUD text readable. The wall is a rounded rectangle (superellipse, power 8) on
+  the frame's inner edge; gameplay maths still uses a normalised radius where
+  `1.0` is the wall, so wedges, orbits and radial spawns work unchanged.
 - **Retina rendering.** The canvas backing store runs at `min(devicePixelRatio, 2)`
   and the camera is zoomed to match, so gameplay code stays in CSS-pixel space
   (`core/viewport.ts`). Use `viewSize(scene)` and `pointer.worldX/worldY`, never

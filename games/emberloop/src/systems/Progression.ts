@@ -142,12 +142,16 @@ export function loadSave(storage: StorageLike | null | undefined): SaveData {
   return merged;
 }
 
-export function saveSave(storage: StorageLike | null | undefined, data: SaveData): void {
-  if (!storage) return;
+/** Write the save. Returns true only when it reads back intact. */
+export function saveSave(storage: StorageLike | null | undefined, data: SaveData): boolean {
+  if (!storage) return false;
   try {
-    storage.setItem(STORAGE_KEY, JSON.stringify(data));
+    const json = JSON.stringify(data);
+    storage.setItem(STORAGE_KEY, json);
+    return storage.getItem(STORAGE_KEY) === json;
   } catch {
     // Quota or private mode — progression is a nicety, never a hard failure.
+    return false;
   }
 }
 

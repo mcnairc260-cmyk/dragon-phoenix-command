@@ -1,131 +1,107 @@
 import { describe, expect, it } from 'vitest';
-import { DIFFICULTY, ENEMY_UNLOCK } from '../config/GameConfig';
-import { bossPhaseAt, bossStageHp, bossTimeFor, difficultyAt, eliteIntervalAt, threatAt } from './Difficulty';
+import { BOARD, DIFFICULTY } from '../config/GameConfig';
+import { boardRef, boardTable, boardThreat, bossHpScale, bossStageHp, collapsesOn, difficultyForBoard, elitesFor } from './Difficulty';
 
-describe('threatAt', () => {
-  it('is zero at the start of a run', () => {
-    expect(threatAt(0)).toBe(0);
+const start = (index: number) => boardThreat(index, 0);
+const end = (index: number) => boardThreat(index, BOARD.waveSeconds);
+
+describe('boards', () => {
+  it('numbers boards 0–5 within loops', () => {
+    expect(boardRef(0)).toEqual({ index: 0, loop: 0, board: 0 });
+    expect(boardRef(5)).toEqual({ index: 5, loop: 0, board: 5 });
+    expect(boardRef(6)).toEqual({ index: 6, loop: 1, board: 0 });
+    expect(boardRef(13)).toEqual({ index: 13, loop: 2, board: 1 });
   });
 
-  it('rises with elapsed time', () => {
-    expect(threatAt(60)).toBeCloseTo(1);
-    expect(threatAt(120)).toBeCloseTo(2);
+  it('makes each board a little harder than the last within a loop', () => {
+    for (let i = 1; i < 6; i++) {
+      expect(start(i)).toBeGreaterThan(start(i - 1));
+      expect(start(i) - start(i - 1)).toBeLessThanOrEqual(0.5); // "not a lot"
+    }
   });
 
-  it('never goes negative', () => {
-    expect(threatAt(-30)).toBe(0);
+  it('ramps gently across a single board', () => {
+    expect(end(0) - start(0)).toBeCloseTo(BOARD.inBoardRamp);
+    expect(boardThreat(0, 9999)).toBeCloseTo(end(0));
+  });
+
+  it('makes every loop-2 board harder than its loop-1 twin', () => {
+    for (let b = 0; b < 6; b++) expect(start(6 + b)).toBeGreaterThan(start(b));
+  });
+
+  it('lets loop 2 start below where loop 1 ended, so looping back is not a wall', () => {
+    expect(start(6)).toBeLessThan(start(5));
+    expect(start(6)).toBeGreaterThan(start(2));
+  });
+
+  it('depends only on the board and the seconds into it (never player level)', () => {
+    expect(boardThreat.length).toBe(2);
+    expect(difficultyForBoard(4, 30)).toEqual(difficultyForBoard(4, 30));
   });
 });
 
-/**
- * The central design rule, and the reason this file exists: collecting shards
- * quickly must never make the game harder. Difficulty is a function of the
- * clock alone, so levelling is pure upside.
- */
-describe('difficulty is independent of player progress', () => {
-  it('depends only on elapsed time', () => {
-    // Same instant, and there is no other input that could change the answer.
-    expect(difficultyAt(90)).toEqual(difficultyAt(90));
+describe('board spawn tables', () => {
+  it('opens with only the faction behaviours', () => {
+    expect(boardTable(0).map((t) => t.kind)).toEqual(['cinder', 'dart', 'spitter']);
   });
 
-  it('takes no player-level argument at all', () => {
-    expect(threatAt.length).toBe(1);
-    expect(difficultyAt.length).toBe(1);
-  });
-
-  it('gives identical pressure at a given time regardless of how the run went', () => {
-    const at120 = difficultyAt(120);
-    expect(at120.spawnInterval).toBe(difficultyAt(120).spawnInterval);
-    expect(at120.maxEnemies).toBe(difficultyAt(120).maxEnemies);
-    expect(at120.speedMultiplier).toBe(difficultyAt(120).speedMultiplier);
+  it('adds the older enemies as extras, one board at a time, at reduced weight', () => {
+    expect(boardTable(1).map((t) => t.kind)).toContain('orbiter');
+    expect(boardTable(1).map((t) => t.kind)).not.toContain('splitter');
+    expect(boardTable(3).map((t) => t.kind)).toEqual(['cinder', 'dart', 'spitter', 'orbiter', 'splitter', 'mine']);
+    expect(boardTable(6)).toHaveLength(6); // loop 2 keeps them all
   });
 });
 
-describe('difficultyAt', () => {
-  it('spawns slower at the start than later', () => {
-    expect(difficultyAt(180).spawnInterval).toBeLessThan(difficultyAt(0).spawnInterval);
-  });
-
-  it('never drops below the minimum spawn interval', () => {
-    expect(difficultyAt(3600).spawnInterval).toBeGreaterThanOrEqual(DIFFICULTY.spawnIntervalMin);
-  });
-
-  it('caps enemy speed and enemy count', () => {
-    const extreme = difficultyAt(3600);
+describe('pressure numbers', () => {
+  it('respects every floor and cap even far into the loops', () => {
+    const extreme = difficultyForBoard(60, 60);
+    expect(extreme.spawnInterval).toBeGreaterThanOrEqual(DIFFICULTY.spawnIntervalMin);
     expect(extreme.speedMultiplier).toBeLessThanOrEqual(DIFFICULTY.speedMax);
     expect(extreme.maxEnemies).toBeLessThanOrEqual(DIFFICULTY.maxEnemiesCap);
+    expect(extreme.collapseInterval).toBeGreaterThanOrEqual(DIFFICULTY.collapseIntervalMin);
   });
 
-  it('increases monotonically in pressure over a run', () => {
-    let previousEnemies = 0;
-    let previousInterval = Infinity;
-    for (let t = 0; t <= 300; t += 30) {
-      const d = difficultyAt(t);
-      expect(d.maxEnemies).toBeGreaterThanOrEqual(previousEnemies);
-      expect(d.spawnInterval).toBeLessThanOrEqual(previousInterval);
-      previousEnemies = d.maxEnemies;
-      previousInterval = d.spawnInterval;
-    }
-  });
-
-  it('only offers cinders in the opening seconds', () => {
-    expect(difficultyAt(0).table.map((t) => t.kind)).toEqual(['cinder']);
-  });
-
-  it('unlocks each archetype at its configured time', () => {
-    for (const [kind, unlockAt] of Object.entries(ENEMY_UNLOCK)) {
-      const before = difficultyAt(Math.max(0, unlockAt - 1)).table.map((t) => t.kind);
-      const after = difficultyAt(unlockAt).table.map((t) => t.kind);
-      if (unlockAt > 0) expect(before).not.toContain(kind);
-      expect(after).toContain(kind);
-    }
-  });
-
-  it('unlocks all six archetypes by 100 seconds', () => {
-    expect(difficultyAt(100).table).toHaveLength(6);
-  });
-
-  it('shortens the arena collapse interval but respects its floor', () => {
-    expect(difficultyAt(0).collapseInterval).toBe(DIFFICULTY.collapseIntervalStart);
-    expect(difficultyAt(600).collapseInterval).toBe(DIFFICULTY.collapseIntervalMin);
+  it('spawns faster and allows more enemies on later boards', () => {
+    expect(difficultyForBoard(5, 0).spawnInterval).toBeLessThan(difficultyForBoard(0, 0).spawnInterval);
+    expect(difficultyForBoard(5, 0).maxEnemies).toBeGreaterThan(difficultyForBoard(0, 0).maxEnemies);
   });
 });
 
-describe('elite scheduling', () => {
-  it('is time-based, so collecting fast never summons elites sooner', () => {
-    expect(eliteIntervalAt.length).toBe(1);
-    expect(eliteIntervalAt(0)).toBe(DIFFICULTY.eliteIntervalStart);
+describe('bosses and elites per board', () => {
+  it('scales boss HP gently by board and more by loop', () => {
+    expect(bossHpScale(0)).toBe(1);
+    expect(bossHpScale(5)).toBeCloseTo(1.75);
+    expect(bossHpScale(6)).toBeCloseTo(1.6);
+    expect(bossHpScale(11)).toBeGreaterThan(bossHpScale(5));
+    expect(bossStageHp([10, 20, 30], 0)).toEqual([10, 20, 30]);
   });
 
-  it('tightens as the run goes on, down to a floor', () => {
-    expect(eliteIntervalAt(120)).toBeLessThan(eliteIntervalAt(0));
-    expect(eliteIntervalAt(3600)).toBe(DIFFICULTY.eliteIntervalMin);
+  it('sends one elite early on, two from board 4 and in later loops', () => {
+    expect(elitesFor(0)).toHaveLength(1);
+    expect(elitesFor(3)).toHaveLength(2);
+    expect(elitesFor(6)).toHaveLength(2);
   });
 });
 
-describe('bosses', () => {
-  it('schedules the first boss early enough that a normal run meets one', () => {
-    expect(bossTimeFor(0)).toBe(DIFFICULTY.firstBossAt);
-    expect(DIFFICULTY.firstBossAt).toBeLessThanOrEqual(90);
+describe('first-board onboarding (founder feedback: the start was too hard)', () => {
+  it('brings enemy types in one at a time on the first board only', () => {
+    const kinds = (s: number) => difficultyForBoard(0, s).table.map((t) => t.kind);
+    expect(kinds(0)).toEqual(['cinder']);
+    expect(kinds(15)).toEqual(['cinder', 'dart']);
+    expect(kinds(30)).toEqual(['cinder', 'dart', 'spitter']);
+    expect(difficultyForBoard(1, 0).table.map((t) => t.kind)).toContain('spitter');
   });
 
-  it('repeats on a fixed interval', () => {
-    expect(bossTimeFor(1)).toBe(DIFFICULTY.firstBossAt + DIFFICULTY.bossInterval);
-    expect(bossTimeFor(2)).toBe(DIFFICULTY.firstBossAt + DIFFICULTY.bossInterval * 2);
+  it('thins spawns, holds back collapses and delays the elite on the first board', () => {
+    expect(difficultyForBoard(0, 0).spawnInterval).toBeGreaterThan(difficultyForBoard(6, 0).spawnInterval);
+    expect(difficultyForBoard(0, 0).maxEnemies).toBeLessThan(DIFFICULTY.maxEnemiesStart);
+    expect(collapsesOn(0)).toBe(false);
+    expect(collapsesOn(1)).toBe(true);
+    expect(elitesFor(0)).toEqual([BOARD.firstBoard.eliteAt]);
   });
 
-  it('scales stage HP with each subsequent boss', () => {
-    const first = bossStageHp([10, 20, 30], 0);
-    const second = bossStageHp([10, 20, 30], 1);
-    expect(first).toEqual([10, 20, 30]);
-    expect(second[0]).toBeGreaterThan(first[0]);
-    expect(second).toHaveLength(3);
-  });
-
-  it('reports the phase the run is in', () => {
-    expect(bossPhaseAt(0)).toBe(0);
-    expect(bossPhaseAt(DIFFICULTY.firstBossAt - 1)).toBe(0);
-    expect(bossPhaseAt(DIFFICULTY.firstBossAt)).toBe(1);
-    expect(bossPhaseAt(DIFFICULTY.firstBossAt + DIFFICULTY.bossInterval)).toBe(2);
+  it('does not ease loop 2 board 1', () => {
+    expect(difficultyForBoard(6, 0).table).toHaveLength(6);
   });
 });

@@ -10,17 +10,25 @@ document and a value in that file disagree, the file is right.
 
 ## 1. The loop
 
-1. Tap once from the title — you are already flying.
+1. The **main menu** (founder art, animated) offers Play, How to Play,
+   Progress, Settings and Save (saves now and shows what is kept; the game
+   also saves after every run). Tap Play — you are already flying.
 2. Drag anywhere; the phoenix mirrors your finger with slight momentum, so your
    thumb never has to sit on top of it.
 3. Sweep up **ember shards** (score + currency + XP) — fast, in clusters, for the
    Ember Chain bonus.
-4. Pass *close* to enemies and bullets to bank **Heat**, which raises the score
-   multiplier.
-5. Level up → the game pauses and offers **three upgrade cards**; pick one.
-6. Difficulty rises with **the clock only** — levelling never makes it harder.
-7. Elites arrive every ~46 s; **THE ASHBORN** wakes at 1:20, then every 1:40.
-8. Three hits and the run ends. Results screen → **one tap to run again.**
+4. **Phoenix Fire:** the phoenix shoots a gold fire bolt at the nearest enemy
+   on its own (founder request 2026-11-28) — you aim by where you fly.
+5. Pass *close* to enemies and bullets to bank **Heat**, which raises the score
+   multiplier and makes Phoenix Fire shoot faster.
+6. Level up → the game pauses and offers **three upgrade cards**; pick one.
+7. The run is a sequence of **boards** (§4): each faction's three enemies for
+   a 60 s wave, then its boss, a clean-up beat and a **rest screen** (styled
+   from the founder's mockup: "<BOSS> FALLS", faction badges, score and stats). Six
+   boards make a loop; the loop then repeats, a step harder. Levelling never
+   makes it harder.
+8. One elite per board (two from board 4 and in later loops).
+9. Three hits and the run ends. Results screen → **one tap to run again.**
 
 The core tension: Heat only comes from being near things that kill you, and a
 single hit wipes the whole combo.
@@ -40,8 +48,8 @@ only where the target comes from differs.
 | Input | Effect |
 |---|---|
 | Press and drag anywhere | Steer per the mode above. Speed ramps with distance to the target, hitting full speed ~90 px out, so small nudges give fine control. |
-| Hold | Charge the Phoenix Burst meter (faster while moving; near-misses and kills add extra). |
-| Release | **Fire the Phoenix Burst** if a charge is stored. |
+| Kills | Charge the ultimate meter (founder decision 2026-11-21: kills only; ~7 kills per charge). |
+| Release | **Fire your ultimate** if a charge is stored: the Phoenix Burst until the Ascension Shard swaps it for an elemental ultimate (see `EXPANSION.md`, Stage 6). |
 | Pause button (top-right) | Pause + settings. |
 | Desktop extras | Space = burst, Esc/P = pause. |
 
@@ -83,50 +91,35 @@ tail, a denser trail and a hotter glow.
 **Taking a hit breaks the combo outright** — the multiplier is the whole reward
 for risk, and losing it is the whole punishment.
 
-## 4. Difficulty scaling
+## 4. Boards and difficulty
 
-`src/systems/Difficulty.ts` — pure, unit-tested.
+Founder decision (2026-11-21): **each faction's three enemies and its boss are a
+single board**, with a rest point after each, and gently rising difficulty.
+Tuning: `BOARD` in `src/config/GameConfig.ts`; maths: `src/systems/Difficulty.ts`
+(pure, unit-tested); flow: `GameScene.updateBoard`.
 
-**Difficulty is a function of the clock, and nothing else.**
-
-```
-threat = elapsed_seconds / 60
-```
-
-This is the single most important rule in the game, and it is enforced by a
-test: `threatAt` and `difficultyAt` take *one* argument each, so there is no way
-for player progress to leak into enemy pressure.
-
-It did not always work this way. Threat used to include a term for player level,
-which meant collecting shards quickly — the entire point of the game — summoned
-more enemies, faster enemies and tougher enemies. That inverted the incentive:
-the optimal play was to *ignore* shards. Levelling is now pure upside. Collect
-fast and you face the same wave as everyone else, with more upgrades to face it.
-
-| Derived value | Formula | Range |
-|---|---|---|
-| Spawn interval | `1.45 × 0.87^threat` | 1.45 s → 0.32 s floor |
-| Enemy speed | `1 + threat × 0.075` | 1× → 2.0× cap |
-| Enemy HP | `1 + floor(threat) × 0.3` | steps in whole numbers |
-| Max live enemies | `6 + threat × 2.0` | 6 → 28 cap |
-| Elite interval | `46 − threat × 5` | 46 s → 26 s floor |
-| Arena collapse interval | `24 − threat × 2.2` | 24 s → 9 s floor |
-
-**Elites are on the clock too**, for the same reason — an elite is a 10-shard
-payout as much as a threat, and it must not arrive sooner because you played
-well. They used to spawn on every 3rd level-up.
-
-**Archetype unlocks** are on the clock, so the first minute teaches one threat at
-a time:
-
-| Time | Joins the spawn table |
+| Phase | What happens |
 |---|---|
-| 0:00 | Cinder |
-| 0:14 | Dart |
-| 0:30 | Spitter |
-| 0:50 | Orbiter |
-| 1:14 | Splitter |
-| 1:36 | Magma Mine |
+| Intro (2.2 s) | Banner: "Board n of 6: Faction", no spawns |
+| Wave (60 s) | That faction's chaser / charger / shooter; orbiters, splitters and mines join as half-weight extras from boards 2, 3 and 4 of loop 1 (all of them from loop 2). Elites at 25 s (and 48 s from board 4 / loop 2). Boss warning 3 s before the end |
+| Boss | The faction's boss; ordinary spawns halve |
+| Clear (2.2 s) | Remaining enemies and bullets dissolve, every ember flies to the phoenix |
+| Rest | Game paused: board cleared, 6-board progress track, score / time / level / kills, hearts, +1 heart, "next: a little harder". Continue starts the next board; after board 6, "Loop complete — Begin loop 2" |
+
+**The run's first board is an on-ramp** (`BOARD.firstBoard`, founder feedback
+2026-11-22): chasers only for 15 s, chargers from 15 s, shooters from 30 s,
+thinner spawns, enemies 15% slower, longer charger warnings, no arena
+collapses, elite at 40 s. Loop 2's first board is not eased.
+
+**Threat** = board × 0.45 + loop × 1.6 + (0 → 0.5 across the wave). Loop 1
+spans 0 → 2.75. Loop 2 starts at 1.6 — about board 4 of loop 1, so looping back
+is not a wall — and every loop-2 board is harder than its loop-1 twin. Boss HP
+×(1 + 0.15 per board + 0.6 per loop); attack pace rises gently the same way.
+Threat drives spawn interval, enemy speed, enemy HP, max enemies and arena
+collapse cadence through the same formulas as before (floors and caps kept).
+
+Threat is a pure function of (board, seconds into its wave). It never reads
+player level: collecting fast is pure upside.
 
 ### Rewarding fast collection
 
@@ -155,35 +148,49 @@ stages 10; a boss kill a further 24.
 | 5 | **Splitter** | Magenta | Slow, tanky; on death divides into 3 faster half-size shards. Killing it near you is a mistake. |
 | 6 | **Magma Mine** | Crimson | Spawns *inside* the arena and never moves. Pulses faster and faster, then detonates in a 96 px blast. Area denial. |
 
+**Faction species (2026-11-20).** Cinder, Dart and Spitter now appear as the
+founder's 18 faction creatures (chaser / charger / shooter of six factions),
+keeping these exact behaviours with per-species speed, toughness and size.
+Data: `src/config/factions.ts`; details: `EXPANSION.md`.
+
 **Readability rules:** every committed attack has a telegraph you can see before
 it lands; the telegraph line shows exactly where the attack will go; each
 archetype has a distinct silhouette *and* a distinct colour, so threat type is
 legible at a glance in a crowded arena.
 
-### The Ashborn (boss)
+### Faction bosses
 
-**Wakes at 1:20, and returns every 1:40** thereafter with +45% HP per encounter.
-A three-second warning (audio sting, screen flash, toast) precedes it.
+Since 2026-11-21 six faction bosses from the founder's Boss Roster replace THE
+ASHBORN (founder decision "3a"). Each boss closes its faction's board (§4):
+Magmathar, Criotharis, Nethermorph, Blightbloom, Skyrend, Aurelion, then the
+loop repeats. It arrives at the end of the 60 s wave after a three-second named
+warning (e.g. "MAGMATHAR — The Core Titan — awakens"), with HP scaled by board
+and loop (§4).
+Data: `src/config/bosses.ts`; attacks: `src/entities/bossAttacks.ts`; non-bullet
+attacks use `src/entities/Hazards.ts`.
 
-The first encounter used to sit at 2:50, which meant most runs ended without ever
-meeting the headline fight — a poor reason to stop playing. It now lands inside a
-typical run, and each cycle is announced as a named **Phase** so progress through
-a run is legible rather than an undifferentiated stream of enemies.
+**Phases** (brief): three stages sized 35 / 35 / 30% of total HP, so phase 2
+starts below 65% and phase 3 below 30%. Phase 1 uses the first signature attack,
+phase 2 adds the second, phase 3 adds the third and may combine two at once
+(35% of the time, with a 40% longer breather after). Between stages the boss is
+briefly invulnerable, bullets and hazards clear, six shards drop.
 
-| Stage | Behaviour |
-|---|---|
-| 1 | Drifts on a slow circular path, firing 14-bullet radial crowns every 2.4 s. |
-| 2 | Traces a figure-eight (Lissajous 1:2) while spraying a 3-armed rotating spiral, and summons cinders. |
-| 3 | Stalks you, telegraphs a heavy charge for 0.85 s, slams, then erupts a 20-bullet ring at the impact point. |
+| Boss | Moves | Phase 1 | Phase 2 adds | Phase 3 adds |
+|---|---|---|---|---|
+| Magmathar, Core Titan | drifts | **Lava Wave** — a fire band sweeps the board; the outlined gap is safe | **Meteor Rain** — 8 marked impacts in two waves, one on you | **Eruption Rings** — 3 bullet rings, each with a gap |
+| Criotharis, Winter Alpha | swoops | **Ice Shard Barrage** — 4 aimed 5-shot fans | **Frost Nova** — wind-up, then 2 dense rings with 2 gaps each | **Ice Wall Prison** — 3 walls in a U around you (open side toward the centre), plus aimed shots |
+| Nethermorph, Void Harbinger | keeps its distance | **Void Beams** — 2 volleys of 3 telegraphed beams | **Teleport Strike** — vanishes, reappears 150 px from you, marked slam, then a ring | **Gravity Well** — pulls you toward a small harmful core for 3.5 s |
+| Blightbloom, Wildfeeder | rooted at the top | **Seed Swarm** — 16 seeds that curve toward you for 1.4 s | **Toxic Spores** — 3 lingering clouds near you | **Vine Snare** — 4 marked patches; caught = 82% slower for 1.1 s, no damage |
+| Skyrend, Storm Crown | swoops | **Feather Storm** — 4-arm spiral for 1.8 s | **Dive Bomb** — marks your spot, dives onto it, then a ring | **Wind Tornadoes** — 3 wandering tornadoes that hurt and shove |
+| Aurelion, Arcane Warden | drifts | **Orbiting Orbs** — 6 orbs circling it, radius breathing 60–210 px | **Arcane Laser Grid** — 3 horizontal + 2 vertical beams, safe cells between | **Reality Rift** — 3 rifts (never on you) that pulse damage |
 
-Between stages it is briefly invulnerable while it re-forms: the screen clears of
-bullets, six shards drop and you get 10 XP. That beat is deliberate breathing
-room, not dead time.
+**Fairness rules:** every attack shows a telegraph before it can hurt (earliest
+measured hit on a still player: 0.8 s); bullets stay grazeable; walls never
+damage and always leave a side open; hazards never exceed 40 at once; a stage
+break cancels running attacks and clears the screen.
 
-**Felling one pays properly** — 1,500 score, 40 shards, 24 XP, and **+1 health**.
-Without a reward that size there is no reason to fight a boss rather than kite it
-until it leaves, and "the fight is optional and unrewarding" is how a survival
-game loses its spine.
+**Felling one pays properly** — 1,500 score, 40 shards, 24 XP, **+1 health**, and a
+full ultimate charge.
 
 ## 6. Arena hazards
 
@@ -204,52 +211,106 @@ expensive.
   larger than the space that kills you.
 - **Near-miss cooldown** of 0.5 s per object, so one enemy cannot be farmed by
   hovering next to it.
-- **Burst energy** from movement (14/s at speed), idling (3.5/s), near-misses (7)
-  and kills (2.2).
+- **Phoenix Fire** (`PHOENIX_FIRE`, `systems/PhoenixFire.ts`): one gold bolt
+  every 0.8 s at the nearest enemy within 300 px (boss included); damage 1,
+  speed 640 px/s, light homing for its first 0.35 s. Each Heat step (+0.5
+  multiplier) fires 10% faster, up to +60%. Ember (damage), Hunter (crit),
+  Void (range) and Time (cooldown) Shards apply. Its kills charge the ultimate
+  like any kill. A soft, quiet flame sound, as it repeats.
+- **Ultimate energy** from kills only (founder decision 2026-11-21): 14 per kill
+  (~7 kills per charge), 50 per elite, 50 per boss stage broken, full on a boss
+  kill. Holding, flying and grazing do not charge it, and kills made by the
+  ultimate itself (including the starting Burst) never do.
 
-## 8. Upgrades
+## 8. Power Shards (upgrades)
 
-21 upgrades across three families and three rarities. Draw weights are
-common 100 / rare 32 / legendary 7, with non-commons scaled by `1 + level/25` so
-late runs see rarer cards. A card already at max level is never offered, and the
-three cards in a draft are always distinct.
+Since 2026-11-20 the level-up draft offers the founder's **12 Power Shards**
+(art: `art/power-shards.png`), replacing the original 21 upgrades (founder
+decision "2a"). Draw weights stay common 100 / rare 32 / legendary 7, with
+non-commons scaled by `1 + level/25`. A maxed shard is never offered, and the
+three cards in a draft are always distinct. Cards show the crystal, the effect
+now → next, and `LV n / max`. Values live in `src/upgrades/UpgradeDefs.ts`.
 
-### Offense
-| Upgrade | Rarity | Max | Effect |
+| Shard | Rarity | Max | Effect per level | Hard limit |
+|---|---|---|---|---|
+| Ember | Common | 5 | +12% damage (Phoenix Fire, graze shots, Burst, bolts, crit splash, bosses) | — |
+| Frost | Common | 4 | Enemies run 12% slower (movement and wind-ups); bosses half | 48% |
+| Void | Common | 5 | +10% range: graze ring, graze-shot and Phoenix Fire reach, Burst radius | — |
+| Nature | Rare | 4 | Restore 1 heart on pick; from L2 regrow 1 heart every 45 / 35 / 25 s | never above 3 hearts |
+| Storm | Common | 5 | +8% flight speed | — |
+| Arcane | Legendary | 3 | Auto-fire 1 / 2 / 3 seeking bolts every 1.6 / 1.4 / 1.2 s | 3 bolts |
+| Ascension | Legendary | 3 | L1: trade the Burst for an elemental ultimate (needs an element shard); L2–L3: ultimate ×1.35 / ×1.7 and evolution | — |
+| Titan | Common | 4 | +7% chance to shrug off a hit | 28% |
+| Time | Common | 4 | All cooldowns 7% shorter (Burst, shield, regen, bolts) | 72% of base |
+| Hunter | Common | 4 | +6% crit chance (double damage + splash blast) | 24% |
+| Ward | Rare | 3 | Shield blocks 1 hit; recharge 14 / 11 / 8 s | — |
+| Cosmic | Common | 4 | +12% XP and ember value | — |
+
+The original upgrades' mechanics (orbiting blades, chain lightning, magma
+trail, shrapnel, bullet reflection, second Burst charge, emergency revive)
+remain implemented and stat-driven; they return as shard **synergies**
+(`EXPANSION.md`, Stage 5). All levels fold into one stat block via
+`computeStats()`, which also applies Time to every timed effect and enforces
+the hard limits.
+
+### Synergies
+
+Taking every shard of a pair (or trio) at least once switches on a synergy for
+the rest of the run. Several can be active together. A level-up card that would
+complete one glows pink and says so; the pause menu lists active synergies; a
+message announces each unlock. Data: `src/upgrades/Synergies.ts` (`SYN` holds
+every number); effects: `src/scenes/SynergyController.ts`, with Molten Armor's
+armour folded into `computeStats()` and Infernal Cyclone into `bladeSpec()`.
+
+| Synergy | Shards | Effect | Limit |
 |---|---|---|---|
-| Emberblades | Common | 4 | +1 orbiting fire blade |
-| White-Hot Edge | Rare | 3 | Blades deal +1 damage and orbit wider/faster |
-| Chain Lightning | Rare | 3 | Damage arcs to +1 nearby enemy (and +0.5 arc damage after L1) |
-| Critical Bloom | Common | 4 | +12% chance hits detonate in a fire bloom |
-| Homing Embers | Common | 4 | +1 auto-fired seeking ember, faster volleys |
-| Solar Detonation | Rare | 3 | Burst +60% damage, +20% radius |
-| Magma Wake | Rare | 3 | Burning trail, +2.5 damage/sec |
-| Ashfall Doctrine | **Legendary** | 1 | +18% crit, +2 chain targets, kills throw 3 shrapnel embers |
+| Firestorm | Ember + Storm | Every 1.6 s a ring of lightning-fire bursts out to 90 px (1.5 dmg, +0.25 per Ember/Storm level past the first), then lightning chains from the farthest enemy caught to 2 more | a pulse, never a standing damage zone |
+| Frozen Barrage | Frost + Arcane | 5-shard ice fan at the nearest enemy every 2 s; chilled enemies move 30% slower; 3 hits freeze for 1.2 s | bosses are never frozen |
+| Shadow Execution | Void + Hunter | A crit detonates a 90 px void explosion (2 dmg) | once per 0.6 s; raw damage, so it cannot crit again |
+| Phoenix Renewal | Nature + Ward | A shield unbroken for 12 s blooms: +1 heart | resets when the shield breaks; never above 3 hearts |
+| Thunder Tempest | Storm + Arcane | Every 2.5 s lightning hits the nearest enemy (3 dmg) and jumps 3 times at 70% each | 3 jumps |
+| Molten Armor | Ember + Titan | +10% shrug-off chance; whatever hits you is scorched (85 px, 2 dmg) | once per 1 s; shrug-off capped at 40% overall |
+| Temporal Echo | Time + Void | A graze shot repeats 0.35 s later at half damage | once per 0.4 s; echoes never echo |
+| Celestial Harvest | Cosmic + Nature | Every 25 embers, +1 heart | once per 20 s; grants no XP |
+| Titan's Judgment | Titan + Hunter | Every 2 hits taken or shrugged off: golden 170 px counterblast (6 dmg) | once per 6 s |
+| Celestial Barrage | Arcane + Void + Hunter | Every 3.5 s, 4 homing star bolts that pierce 3 and can crit | 4 bolts |
 
-### Defense
-| Upgrade | Rarity | Max | Effect |
-|---|---|---|---|
-| Cinder Shield | Common | 3 | Absorbs one hit; recharge 14 s → 11 s → 8 s |
-| Ashen Grace | Common | 3 | +0.5 s invulnerability after a hit |
-| Mirror Flame | Rare | 3 | +25% chance to reflect enemy bullets back as yours |
-| Flame Armor | Rare | 3 | +15% chance to ignore damage entirely |
-| Second Dawn | **Legendary** | 2 | A lethal hit is survived at 1 HP instead |
+**Infernal Cyclone** (Ember Blades + Ember + Storm): blades spin 12% faster and
+deal 20% more, with hotter swords, fiercer trails and lightning flickers. The
+trails still never deal damage, and the bonus applies once.
 
-### Utility
-| Upgrade | Rarity | Max | Effect |
-|---|---|---|---|
-| Ember Draw | Common | 4 | +45% pickup radius |
-| Updraft | Common | 4 | +12% movement speed |
-| Rising Insight | Common | 4 | +25% XP |
-| Long Burn | Common | 3 | +30% combo duration |
-| Heavy Air | Rare | 3 | Enemy bullets 18% slower (multiplicative) |
-| Brinkwalker | Rare | 3 | +60% near-miss Heat, score and burst energy |
-| Molten Fortune | Rare | 3 | +40% shard score and currency |
-| Twin Phoenix | **Legendary** | 1 | A second stored Phoenix Burst charge |
+Until 2026-11-21 Firestorm summoned orbiting blades. The founder's Ember Blades
+brief made the blades their own weapon, so Firestorm became the pulsing
+lightning-fire ring its original brief describes (no second blade system).
 
-Stacking is intentional and visible: Emberblades adds real orbiting sprites,
-Magma Wake paints a trail, Cinder Shield draws a ring, Twin Phoenix adds a HUD
-charge pip. All levels fold into one stat block via `computeStats()`.
+### Ember Blades (weapon)
+
+An orbital melee weapon, taken from the level-up draft like a shard (no separate
+levelling). Tuning: `src/upgrades/EmberBlades.ts`; weapon:
+`src/entities/EmberBlades.ts`; sword art cut from `art/ember-blades.png`.
+
+| Level | Swords | Change |
+|---|---|---|
+| 1 | 1 | Summon one red-hot orbiting blade |
+| 2 | 2 | Add a second blade |
+| 3 | 3 | Add a third blade |
+| 4 | 4 | + rotation speed (2 s → 1.7 s per turn) |
+| 5 | 5 | + damage (×1.25) |
+| 6 | 6 | + rotation speed (1.4 s per turn) |
+
+- Swords orbit the phoenix's position at 46 px, clockwise on screen, evenly
+  spaced (360° / n), gliding to new slots when one is forged in (sparks and a
+  molten flash). Edges point along the direction of travel.
+- Only the metal hurts: each sword has its own capsule (34 × 10 px), swept in
+  ≤ 0.12 rad steps so a fast spin cannot skip an enemy, with a 0.4 s cooldown per
+  sword per enemy. 2 damage per hit (bosses take half). Trails, sparks, glows and
+  the forging flash are drawn separately and never take part in collision.
+- Ember raises blade damage through the normal damage path (once); Hunter crits
+  apply; Storm adds +3% spin per level (cap +12%); Time does not change spin.
+  Spin can never be faster than 1.1 s per turn.
+- Trails are short tapered embers covering at most 35% of the gap to the next
+  sword (≤ 50°), so even six blades show clear gaps.
+
 
 ## 9. Progression & cosmetics
 

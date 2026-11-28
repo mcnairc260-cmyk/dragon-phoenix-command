@@ -1,21 +1,22 @@
 import Phaser from 'phaser';
-import { ARENA, BOSS, BURST, CONTROL, DIFFICULTY, ELITE, ENEMY, HAZARD, PICKUP, PLAYER, SCORING } from '../config/GameConfig';
+import { ARENA, BOARD, BOSS, BURST, CONTROL, ELITE, ENEMY, GRAZE_SHOT, HAZARD, PHOENIX_FIRE, PICKUP, PLAYER, SCORING } from '../config/GameConfig';
 import { ObjectPool } from '../core/ObjectPool';
 import { weightedIndex } from '../core/Rng';
 import { session } from '../core/Session';
 import { clamp, TAU } from '../core/math';
 import { applyCamera } from '../core/viewport';
-import { BRAND, BRAND_CSS } from '../config/brand';
+import { BRAND, BRAND_CSS, SIGNAL } from '../config/brand';
 import { Boss } from '../entities/Boss';
 import { Enemy } from '../entities/Enemy';
 import { Pickup } from '../entities/Pickup';
 import { Projectile } from '../entities/Projectile';
+import { phoenixFireInterval } from '../systems/PhoenixFire';
 import { Player } from '../entities/Player';
 import { Arena } from '../effects/Arena';
 import { Fx } from '../effects/Fx';
 import { TEX } from '../effects/Textures';
 import { audio } from '../systems/AudioEngine';
-import { bossStageHp, bossPhaseAt, bossTimeFor, difficultyAt, eliteIntervalAt, type EnemyKind } from '../systems/Difficulty';
+import { boardRef, bossStageHp, collapsesOn, difficultyForBoard, elitesFor, type DifficultySnapshot, type EnemyKind } from '../systems/Difficulty';
 import { haptics } from '../systems/Haptics';
 import { addXp, createLevelState, levelProgress, type LevelState } from '../systems/Leveling';
 import { CONTROL_MODES, recordRun, type ControlMode } from '../systems/Progression';
@@ -36,7 +37,17 @@ import { Tutorial } from '../systems/Tutorial';
 import { Hud } from '../ui/Hud';
 import { computeStats, UPGRADES_BY_ID, type PlayerStats, type UpgradeLevels } from '../upgrades/UpgradeDefs';
 import { draftUpgrades, takeUpgrade } from '../upgrades/UpgradeDraft';
-import { gameOverPanel, pausePanel, progressionPanel, upgradePanel } from '../ui/panels';
+import { gameOverPanel, pausePanel, progressionPanel, restPanel, ultimatePanel, upgradePanel } from '../ui/panels';
+import { KIND_ROLE, factionForBoard, speciesFor } from '../config/factions';
+import { UltimateController } from './UltimateController';
+import { SynergyController, type ShotTag } from './SynergyController';
+import { SYN, activeSynergies, hasSynergy } from '../upgrades/Synergies';
+import { HazardField } from '../entities/Hazards';
+import { EmberBlades } from '../entities/EmberBlades';
+import { BLADES, bladeSpec } from '../upgrades/EmberBlades';
+import { bossFor } from '../config/bosses';
+import { ULTIMATES_BY_ID, eligibleUltimates, evolutionStage, type UltimateId } from '../upgrades/Ultimates';
+
 
 const DEPTH = {
   arena: 0,
@@ -64,6 +75,12 @@ export class GameScene extends Phaser.Scene {
   private hud!: Hud;
   private player!: Player;
   private boss!: Boss;
+  private ultimates!: UltimateController;
+  private hazards!: HazardField;
+  private synergies!: SynergyController;
+  private emberBlades!: EmberBlades;
+  /** > 0 while damage from an ultimate is being applied (its kills do not charge the meter). */
+  private ultimateDamageDepth = 0;
 
   private enemyPool!: ObjectPool<Enemy>;
   private projectilePool!: ObjectPool<Projectile>;
@@ -85,13 +102,30 @@ export class GameScene extends Phaser.Scene {
   private collapseTimer = 0;
   private ambientTimer = 0;
   private homingTimer = 0;
+  /** Seconds until the next Phoenix Fire bolt. */
+  private fireTimer = 0;
   private trailTimer = 0;
   private trailDamageTimer = 0;
   private hazardHitTimer = 0;
+  /** Nature Shard regrowth progress, seconds. */
+  private regenTimer = 0;
   private timeScale = 1;
   private slowMoHandle = 0;
 
-  private bossIndex = 0;
+  /**
+   * Board sequence (GameConfig BOARD): each faction is one board — a wave of
+   * its three enemies, then its boss, a clean-up beat and a rest screen.
+   * `boardIndex` counts boards from the start of the run (6 per loop).
+   */
+  private boardIndex = 0;
+  private boardPhase: 'intro' | 'wave' | 'boss' | 'clear' | 'rest' = 'intro';
+  private phaseTime = 0;
+  /** Seconds into the current board's wave: drives its gentle in-board ramp. */
+  private waveTime = 0;
+  private elitesSent = 0;
+  private boardKills = 0;
+  private boardAnnounced = false;
+  private difficulty: DifficultySnapshot = difficultyForBoard(0, 0);
   private bossWarned = false;
   private bossActive = false;
 
@@ -106,10 +140,8 @@ export class GameScene extends Phaser.Scene {
   private readonly playerAnchor = { x: 0, y: 0 };
   private controlMode: ControlMode = 'relative';
   private stick?: Phaser.GameObjects.Graphics;
-  private eliteTimer = 0;
   private emberChain = 0;
   private emberChainTimer = 0;
-  private phaseAnnounced = 0;
   private distanceMoved = 0;
   private runBursts = 0;
   private runDamage = 0;
@@ -140,6 +172,53 @@ export class GameScene extends Phaser.Scene {
     this.player.spawn(this.arena.cx, this.arena.cy);
 
     this.boss = new Boss(this, DEPTH.boss);
+    // Swords orbit just outside the phoenix art, drawn above it.
+    this.emberBlades = new EmberBlades(this, DEPTH.player + 5);
+    this.emberBlades.reducedMotion = session.settings.reducedMotion;
+    this.synergies = new SynergyController({
+      scene: this,
+      fxDepth: DEPTH.fx,
+      fx: this.fx,
+      player: () => this.player,
+      stats: () => this.stats,
+      build: () => this.build,
+      enemies: () => this.enemies,
+      boss: () =>
+        this.bossActive && this.boss.active && !this.boss.intangible ? { x: this.boss.x, y: this.boss.y, radius: this.boss.radius } : null,
+      damageEnemy: (enemy, amount, canCrit) => this.damageEnemy(enemy, amount, canCrit),
+      damageEnemyRaw: (enemy, amount) => {
+        if (enemy.active && enemy.damage(amount)) this.killEnemy(enemy);
+      },
+      damageBoss: (amount) => this.damageBoss(amount),
+      healPlayer: (hearts) => this.healPlayer(hearts),
+      fireShot: (o) => {
+        this.spawnFriendlyShot({ ...o, x: this.player.x, y: this.player.y });
+      },
+      echoGrazeShot: (target, scale) => this.fireGrazeShot(target, scale),
+      announce: (text, color) =>
+        this.fx.floatText(this.player.x, this.player.y - 40, text, `#${color.toString(16).padStart(6, '0')}`, 15),
+    });
+    // Boss hazards draw under enemies and the phoenix, over the board.
+    this.hazards = new HazardField(this, DEPTH.pickup - 0.5);
+    this.ultimates = new UltimateController({
+      scene: this,
+      fxDepth: DEPTH.fx,
+      fx: this.fx,
+      player: () => this.player,
+      stats: () => this.stats,
+      enemies: () => this.enemies,
+      boss: () =>
+        this.bossActive && this.boss.active && !this.boss.intangible ? { x: this.boss.x, y: this.boss.y, radius: this.boss.radius } : null,
+      damageEnemy: (enemy, amount) => this.asUltimate(() => this.damageEnemy(enemy, amount, false)),
+      damageBoss: (amount) => this.asUltimate(() => this.damageBoss(amount)),
+      clearHostileBullets: (x, y, radius) => this.clearHostileBullets(x, y, radius),
+      healPlayer: (hearts) => this.healPlayer(hearts),
+      fireFriendly: (o) => {
+        const projectile = this.spawnFriendlyShot({ ...o, homing: false, radius: 5, tag: '' });
+        projectile.fromUltimate = true;
+      },
+      slowMo: (scale, duration) => this.slowMo(scale, duration),
+    });
     this.hud = new Hud(this, DEPTH.hud, () => this.openPause());
     this.hud.layout(width, height);
 
@@ -205,15 +284,22 @@ export class GameScene extends Phaser.Scene {
     this.collapseTimer = 12;
     this.ambientTimer = 0.4;
     this.homingTimer = 0;
+    this.fireTimer = 0.5;
     this.trailTimer = 0;
     this.trailDamageTimer = 0;
     this.hazardHitTimer = 0;
+    this.regenTimer = 0;
     this.timeScale = 1;
-    this.eliteTimer = DIFFICULTY.eliteIntervalStart;
     this.emberChain = 0;
     this.emberChainTimer = 0;
-    this.phaseAnnounced = 0;
-    this.bossIndex = 0;
+    this.boardIndex = 0;
+    this.boardPhase = 'intro';
+    this.phaseTime = 0;
+    this.waveTime = 0;
+    this.elitesSent = 0;
+    this.boardKills = 0;
+    this.boardAnnounced = false;
+    this.difficulty = difficultyForBoard(0, 0);
     this.bossWarned = false;
     this.bossActive = false;
     this.paused = false;
@@ -371,26 +457,33 @@ export class GameScene extends Phaser.Scene {
     const dt = rawDt * this.timeScale;
 
     this.elapsed += dt;
-    const difficulty = difficultyAt(this.elapsed);
+    this.updateBoard(dt);
+    const difficulty = this.difficulty;
+    const fighting = this.boardPhase === 'wave' || this.boardPhase === 'boss';
 
     this.arena.update(dt);
+    const prevX = this.player.x;
+    const prevY = this.player.y;
     this.updatePlayer(dt);
-    this.updateSpawning(dt, difficulty.spawnInterval, difficulty.maxEnemies, difficulty.hpMultiplier, difficulty.speedMultiplier, difficulty.table);
-    this.updateCollapses(dt, difficulty.collapseInterval);
-    this.updateBossSchedule(dt, difficulty);
+    this.updateBlades(dt, prevX, prevY);
+    if (fighting) {
+      this.updateSpawning(dt, difficulty.spawnInterval, difficulty.maxEnemies, difficulty.hpMultiplier, difficulty.speedMultiplier, difficulty.table);
+      if (collapsesOn(this.boardIndex)) this.updateCollapses(dt, difficulty.collapseInterval);
+    }
     this.updateEnemies(dt);
+    this.updateHazards(dt);
+    this.ultimates.update(dt);
+    this.synergies.update(dt);
     this.updateProjectiles(dt);
     this.updatePickups(dt);
     this.updateTrail(dt);
     this.updateAutoAttacks(dt);
     this.checkCollisions(dt);
 
-    this.updateEliteSchedule(dt);
     if (this.emberChainTimer > 0) {
       this.emberChainTimer -= dt;
       if (this.emberChainTimer <= 0) this.emberChain = 0;
     }
-    this.announcePhase();
 
     scoreTime(this.score, dt);
     tickCombo(this.score, dt);
@@ -406,6 +499,17 @@ export class GameScene extends Phaser.Scene {
     const before = { x: this.player.x, y: this.player.y };
     this.player.update(dt, this.pointer, this.arena);
     this.distanceMoved += Math.hypot(this.player.x - before.x, this.player.y - before.y);
+
+    // Nature Shard: regrow a heart on a timer (never above max, only while hurt).
+    if (this.stats.regenInterval > 0 && this.player.health < PLAYER.maxHealth) {
+      this.regenTimer += dt;
+      if (this.regenTimer >= this.stats.regenInterval) {
+        this.regenTimer = 0;
+        this.healPlayer(1);
+      }
+    } else {
+      this.regenTimer = 0;
+    }
 
     // Arena collapse damage, rate-limited so standing in lava is a slow burn.
     this.hazardHitTimer -= dt;
@@ -446,7 +550,11 @@ export class GameScene extends Phaser.Scene {
     options: { elite?: boolean; child?: boolean } = {},
   ): Enemy {
     const enemy = this.enemyPool.acquire();
-    enemy.spawn({ kind, x, y, hpMultiplier, speedMultiplier, ...options });
+    // Chasers, chargers and shooters wear the species of this board's faction.
+    const role = options.child ? undefined : KIND_ROLE[kind];
+    const species = role ? speciesFor(role, factionForBoard(boardRef(this.boardIndex).board).id) : null;
+    const telegraphBonus = this.boardIndex === 0 ? BOARD.firstBoard.chargeTelegraphBonus : 0;
+    enemy.spawn({ kind, x, y, hpMultiplier, speedMultiplier, species, telegraphBonus, ...options });
     this.enemies.push(enemy);
     if (options.elite) {
       this.fx.shockwave(x, y, enemy.glowColor, 180, 520);
@@ -465,38 +573,150 @@ export class GameScene extends Phaser.Scene {
     audio.warning();
   }
 
-  private updateBossSchedule(dt: number, difficulty: { hpMultiplier: number; speedMultiplier: number }): void {
-    void dt;
-    if (this.bossActive) return;
-    const dueAt = bossTimeFor(this.bossIndex);
-
-    if (!this.bossWarned && this.elapsed >= dueAt - BOSS.warningTime) {
-      this.bossWarned = true;
-      session.ui.toast(`${BOSS.name} awakens`, 3000);
-      audio.bossWarning();
-      haptics.play('boss');
-      this.fx.flash(BRAND.emberOrange, 0.3, 400);
+  // ── Boards ──────────────────────────────────────────────────────────────
+  /** Intro → wave → boss → clear → rest, then the next board. */
+  private updateBoard(dt: number): void {
+    const ref = boardRef(this.boardIndex);
+    this.phaseTime += dt;
+    switch (this.boardPhase) {
+      case 'intro':
+        if (!this.boardAnnounced) {
+          this.boardAnnounced = true;
+          this.announceBoard();
+        }
+        if (this.phaseTime >= BOARD.introSeconds) this.setBoardPhase('wave');
+        break;
+      case 'wave': {
+        this.waveTime += dt;
+        const elites = elitesFor(this.boardIndex);
+        if (this.elitesSent < elites.length && this.waveTime >= elites[this.elitesSent]) {
+          this.elitesSent += 1;
+          this.spawnElite();
+        }
+        const def = bossFor(ref.board);
+        if (!this.bossWarned && this.waveTime >= BOARD.waveSeconds - BOSS.warningTime) {
+          this.bossWarned = true;
+          session.ui.toast(`${def.name} — ${def.title} — awakens`, 3000);
+          audio.bossWarning();
+          haptics.play('boss');
+          this.fx.flash(def.color, 0.3, 400);
+        }
+        if (this.waveTime >= BOARD.waveSeconds) this.spawnBoss();
+        break;
+      }
+      case 'clear':
+        // The board is won: embers fly to the phoenix, then the rest screen.
+        if (this.phaseTime >= BOARD.clearSeconds) {
+          for (const pickup of [...this.pickups]) this.collectPickup(pickup);
+          this.pickups.length = 0;
+          this.openRest();
+        }
+        break;
+      default:
+        break;
     }
+    this.difficulty = difficultyForBoard(this.boardIndex, this.waveTime);
+  }
 
-    if (this.elapsed >= dueAt) {
-      this.bossActive = true;
-      this.bossWarned = false;
-      const spawn = this.arena.pointAt(-Math.PI / 2, 0.55);
-      this.boss.spawn(spawn.x, spawn.y, bossStageHp(BOSS.stageHp, this.bossIndex));
-      this.fx.shockwave(spawn.x, spawn.y, BRAND.emberOrange, 460, 700);
-      this.fx.chromaticFlash(10, 240);
-      this.fx.shake(0.012, 420);
-      audio.setIntensity(1);
-      void difficulty;
+  private setBoardPhase(phase: GameScene['boardPhase']): void {
+    this.boardPhase = phase;
+    this.phaseTime = 0;
+  }
+
+  private announceBoard(): void {
+    const ref = boardRef(this.boardIndex);
+    const faction = factionForBoard(ref.board);
+    const loop = ref.loop > 0 ? ` · Loop ${ref.loop + 1}` : '';
+    session.ui.toast(`Board ${ref.board + 1} of ${BOARD.count}${loop}: ${faction.name}`, 2600);
+    this.fx.floatText(this.arena.cx, this.arena.cy - 60, faction.name.toUpperCase(), `#${faction.color.toString(16).padStart(6, '0')}`, 24);
+  }
+
+  private spawnBoss(): void {
+    const ref = boardRef(this.boardIndex);
+    const def = bossFor(ref.board);
+    this.bossActive = true;
+    this.bossWarned = false;
+    this.setBoardPhase('boss');
+    const spawn = this.arena.pointAt(-Math.PI / 2, 0.55);
+    this.hazards.clear();
+    // Attack pace rises gently with the board and more with the loop (Boss caps it).
+    this.boss.spawn(def, spawn.x, spawn.y, bossStageHp(BOSS.stageHp, this.boardIndex), ref.board * 0.4 + ref.loop * 2);
+    this.fx.shockwave(spawn.x, spawn.y, def.color, 460, 700);
+    this.fx.flashOrb(spawn.x, spawn.y, def.color, 160, 420);
+    this.fx.chromaticFlash(10, 240);
+    this.fx.shake(0.012, 420);
+    audio.setIntensity(1);
+  }
+
+  /** Boss down: dissolve what is left so the rest point is a real break. */
+  private clearBoard(): void {
+    this.setBoardPhase('clear');
+    for (const enemy of [...this.enemies]) {
+      if (!enemy.active) continue;
+      this.fx.puffSmoke(enemy.x, enemy.y, BRAND.carbon, 2);
+      this.fx.burstSparks(enemy.x, enemy.y, enemy.glowColor, 6, 160);
+      enemy.deactivate();
     }
+    this.updateEnemies(0);
+    for (let i = this.projectiles.length - 1; i >= 0; i--) {
+      if (this.projectiles[i].hostile) this.releaseProjectile(i);
+    }
+    this.arena.reset();
+  }
+
+  /** The rest point between boards: progress, a heart back, and a breather. */
+  private openRest(): void {
+    this.setBoardPhase('rest');
+    this.paused = true;
+    this.pointer.active = false;
+    const ref = boardRef(this.boardIndex);
+    const next = boardRef(this.boardIndex + 1);
+    const healed = Math.min(BOARD.restHeal, PLAYER.maxHealth - this.player.health);
+    session.ui.openPanel(
+      restPanel({
+        board: ref.board,
+        loop: ref.loop,
+        factionId: factionForBoard(ref.board).id,
+        faction: factionForBoard(ref.board).name,
+        boss: bossFor(ref.board).name,
+        bossArt: bossFor(ref.board).url,
+        nextBoard: next.board,
+        nextLoop: next.loop,
+        nextFaction: factionForBoard(next.board).name,
+        score: Math.round(this.score.score),
+        elapsed: this.elapsed,
+        level: this.levels.level,
+        kills: this.boardKills,
+        health: this.player.health,
+        healed,
+        maxHealth: PLAYER.maxHealth,
+      }),
+      {
+        continue: () => {
+          session.ui.closePanel();
+          if (healed > 0) this.healPlayer(healed);
+          this.boardIndex += 1;
+          this.waveTime = 0;
+          this.elitesSent = 0;
+          this.boardKills = 0;
+          this.boardAnnounced = false;
+          this.setBoardPhase('intro');
+          this.paused = false;
+          audio.uiTap();
+          if (this.pendingLevelUps > 0) this.openDraft();
+        },
+      },
+    );
   }
 
   // ── Entity updates ────────────────────────────────────────────────────────
   private updateEnemies(dt: number): void {
+    // Frost Shard: enemies run on slowed time (movement and wind-ups); bosses resist half.
+    const enemyDt = dt * (1 - this.stats.enemySlow);
     const ctx = {
       playerX: this.player.x,
       playerY: this.player.y,
-      dt,
+      dt: enemyDt,
       fire: (x: number, y: number, angle: number, speed: number, color: number) => this.fireEnemyShot(x, y, angle, speed, color),
       detonate: (enemy: Enemy) => this.detonateMine(enemy),
     };
@@ -507,7 +727,13 @@ export class GameScene extends Phaser.Scene {
         this.removeEnemyAt(i);
         continue;
       }
-      enemy.update(ctx);
+      if (enemy.chillTimer > 0) {
+        enemy.chillTimer -= enemyDt;
+        if (enemy.chillTimer <= 0) enemy.chillHits = 0;
+      }
+      if (enemy.disabled) enemy.updateDisabled(enemyDt);
+      else if (enemy.chillTimer > 0) enemy.update({ ...ctx, dt: enemyDt * (1 - SYN.frozenBarrage.chillSlow) });
+      else enemy.update(ctx);
       // Anything that wanders far outside the caldera is recycled.
       if (this.arena.norm(enemy.x, enemy.y) > ARENA.cullRadius) {
         enemy.deactivate();
@@ -517,13 +743,15 @@ export class GameScene extends Phaser.Scene {
 
     if (this.bossActive && this.boss.active) {
       this.boss.update({
-        dt,
+        // Frost Shard (half strength on bosses) and Absolute Zero's chill.
+        dt: dt * (1 - this.stats.enemySlow * 0.5) * (this.ultimates.bossSlowTimer > 0 ? 0.5 : 1),
         playerX: this.player.x,
         playerY: this.player.y,
         arena: this.arena,
-        fire: (x, y, angle, speed, color) => this.fireEnemyShot(x, y, angle, speed, color),
-        summon: (x, y) => this.spawnEnemy('cinder', x, y, 1.4, 1.1),
-        onStageChange: (stage) => this.onBossStage(stage),
+        hazards: this.hazards,
+        fire: (x, y, angle, speed, color, opts) => this.fireEnemyShot(x, y, angle, speed, color, opts),
+        cue: (x, y, radius, color) => this.fx.shockwave(x, y, color, radius * 2, 600, 1.2),
+        onAttack: (name) => this.hud.flashBossAttack(name),
       });
     }
   }
@@ -534,7 +762,14 @@ export class GameScene extends Phaser.Scene {
     this.enemyPool.release(enemy);
   }
 
-  private fireEnemyShot(x: number, y: number, angle: number, speed: number, color: number): void {
+  private fireEnemyShot(
+    x: number,
+    y: number,
+    angle: number,
+    speed: number,
+    color: number,
+    opts: { homingTime?: number; turnRate?: number; radius?: number } = {},
+  ): void {
     const projectile = this.projectilePool.acquire();
     projectile.spawn({
       x,
@@ -543,16 +778,68 @@ export class GameScene extends Phaser.Scene {
       speed: speed * this.stats.enemyProjectileSpeedMul,
       color,
       hostile: true,
-      radius: 7,
+      radius: opts.radius ?? 7,
       life: 7,
+      // Boss seeds curve toward the phoenix for a limited time.
+      homing: opts.homingTime !== undefined,
+      homingTime: opts.homingTime,
+      turnRate: opts.turnRate,
     });
     this.projectiles.push(projectile);
+  }
+
+  /** Ember Blades: orbit, sweep for hits, draw trails. Only the swords deal damage. */
+  private updateBlades(dt: number, prevX: number, prevY: number): void {
+    if (this.emberBlades.count === 0) return;
+    const spec = bladeSpec(this.stats.orbitBlades, this.build.storm ?? 0, this.emberBlades.cyclone);
+    const bossTarget =
+      this.bossActive && this.boss.active && !this.boss.intangible ? { x: this.boss.x, y: this.boss.y, radius: this.boss.radius } : null;
+    this.emberBlades.update(dt, this.player.x, this.player.y, prevX, prevY, spec, {
+      enemies: this.enemies,
+      boss: bossTarget,
+      // Normal damage path: Ember Shard bonus (once) and Hunter crits apply there.
+      hitEnemy: (enemy, damage, x, y) => {
+        this.damageEnemy(enemy, damage, true);
+        this.fx.burstSparks(x, y, BRAND.emberOrange, 4, 140);
+      },
+      hitBoss: (damage, x, y) => {
+        this.damageBoss(damage * BLADES.bossDamageMul);
+        this.fx.burstSparks(x, y, BRAND.emberOrange, 5, 160);
+      },
+      sparks: (x, y, count) => this.fx.burstSparks(x, y, BRAND.rebirthGold, count, 70),
+    });
+  }
+
+  /** Boss hazards: advance, hit the phoenix, draw. */
+  private updateHazards(dt: number): void {
+    this.hazards.update(dt, this.boss.x, this.boss.y, this.arena);
+    if (this.hazards.count > 0) {
+      const p = this.player;
+      const target = {
+        x: p.x,
+        y: p.y,
+        vx: p.vx,
+        vy: p.vy,
+        hitRadius: p.hitRadius,
+        damage: () => this.damagePlayer(),
+        root: (seconds: number) => {
+          if (p.rootTimer <= 0) session.ui.toast('Snared!', 900);
+          p.rootTimer = Math.max(p.rootTimer, seconds);
+        },
+      };
+      this.hazards.affect(target, dt);
+      p.x = target.x;
+      p.y = target.y;
+      p.vx = target.vx;
+      p.vy = target.vy;
+    }
+    this.hazards.draw();
   }
 
   private updateProjectiles(dt: number): void {
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const projectile = this.projectiles[i];
-      const alive = projectile.update(dt, () => this.nearestEnemy(projectile.x, projectile.y));
+      const alive = projectile.update(dt, () => (projectile.hostile ? { x: this.player.x, y: this.player.y, active: true } : this.nearestEnemy(projectile.x, projectile.y)));
       if (!alive || this.arena.norm(projectile.x, projectile.y) > 1.25) {
         projectile.deactivate();
         this.projectiles.splice(i, 1);
@@ -571,7 +858,8 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    const magnet = PICKUP.basePickupRadius * this.stats.pickupRadiusMul;
+    // During the clean-up beat every ember flies to the phoenix.
+    const magnet = this.boardPhase === 'clear' ? 9999 : PICKUP.basePickupRadius * this.stats.pickupRadiusMul;
     for (let i = this.pickups.length - 1; i >= 0; i--) {
       const pickup = this.pickups[i];
       const alive = pickup.update(dt, this.player.x, this.player.y, magnet);
@@ -585,8 +873,7 @@ export class GameScene extends Phaser.Scene {
 
   private spawnPickup(x: number, y: number, scatter: number): void {
     const pickup = this.pickupPool.acquire();
-    const palette = this.player.colors;
-    pickup.spawn(x, y, palette.glow, palette.accent, scatter);
+    pickup.spawn(x, y, scatter);
     this.pickups.push(pickup);
   }
 
@@ -637,6 +924,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateAutoAttacks(dt: number): void {
+    this.updatePhoenixFire(dt);
     if (this.stats.homingShots <= 0) return;
     this.homingTimer -= dt;
     if (this.homingTimer > 0) return;
@@ -664,6 +952,44 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Phoenix Fire (PHOENIX_FIRE): the phoenix's own bolt at the nearest enemy in
+   * range. Heat speeds it up; the Time Shard's cooldown and the Void Shard's
+   * range apply; damage and crits go through damageEnemy like every hit.
+   */
+  private updatePhoenixFire(dt: number): void {
+    this.fireTimer -= dt;
+    if (this.fireTimer > 0) return;
+    const px = this.player.x;
+    const py = this.player.y;
+    const target = this.nearestEnemy(px, py);
+    if (!target || (target === this.boss && this.boss.intangible) || Math.hypot(target.x - px, target.y - py) > PHOENIX_FIRE.range * this.stats.rangeMul) {
+      // Nothing in reach: check again soon, so the first shot is not late.
+      this.fireTimer = 0.1;
+      return;
+    }
+    this.fireTimer = phoenixFireInterval(this.score.multiplier, this.stats.cooldownMul);
+
+    const projectile = this.projectilePool.acquire();
+    projectile.spawn({
+      x: px,
+      y: py,
+      angle: Math.atan2(target.y - py, target.x - px),
+      speed: PHOENIX_FIRE.speed,
+      color: this.player.colors.accent,
+      hostile: false,
+      homing: true,
+      homingTime: PHOENIX_FIRE.homingTime,
+      turnRate: PHOENIX_FIRE.turnRate,
+      damage: PHOENIX_FIRE.damage,
+      radius: PHOENIX_FIRE.radius,
+      life: PHOENIX_FIRE.life,
+      look: 'bolt',
+    });
+    this.projectiles.push(projectile);
+    audio.phoenixFire();
+  }
+
   /** Closest live enemy (boss included) to a point — used by homing shots. */
   private nearestEnemy(x: number, y: number): { x: number; y: number; active: boolean } | null {
     let best: { x: number; y: number; active: boolean } | null = null;
@@ -684,43 +1010,40 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ── Collisions ────────────────────────────────────────────────────────────
-  private checkCollisions(dt: number): void {
-    void dt;
+  private checkCollisions(_dt: number): void {
     const px = this.player.x;
     const py = this.player.y;
     const hitR = this.player.hitRadius;
     const nearR = this.player.nearMissRadius;
-    const blades = this.player.bladePositions();
-    const bladeDamage = this.stats.orbitBladeDamage;
 
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i];
       if (!enemy.active) continue;
       const dist = Math.hypot(enemy.x - px, enemy.y - py);
 
-      if (dist <= hitR + enemy.radius) {
+      if (dist <= hitR + enemy.radius && !enemy.disabled) {
         this.damagePlayer();
-        // Shove the enemy off so a single contact cannot chain-hit.
+        // Recoil: shove the enemy off and stun it briefly, so one chaser cannot
+        // land a second hit the moment invulnerability ends.
         const angle = Math.atan2(enemy.y - py, enemy.x - px);
-        enemy.x += Math.cos(angle) * 26;
-        enemy.y += Math.sin(angle) * 26;
-      } else if (dist <= nearR + enemy.radius && enemy.nearMissTimer <= 0) {
+        enemy.x += Math.cos(angle) * PLAYER.contactKnockback;
+        enemy.y += Math.sin(angle) * PLAYER.contactKnockback;
+        enemy.heldTimer = Math.max(enemy.heldTimer, PLAYER.contactStun);
+        enemy.vx = 0;
+        enemy.vy = 0;
+      } else if (dist <= nearR + enemy.radius && enemy.nearMissTimer <= 0 && !enemy.disabled) {
+        // Frozen or void-held enemies are harmless, so passing them is not a graze
+        // (otherwise an ultimate would refill its own charge).
         enemy.nearMissTimer = PLAYER.nearMissCooldown;
-        this.registerNearMiss(enemy.x, enemy.y);
+        this.registerNearMiss(enemy.x, enemy.y, enemy);
       }
 
-      if (blades.length > 0) {
-        for (const blade of blades) {
-          if (Math.hypot(enemy.x - blade.x, enemy.y - blade.y) <= 16 + enemy.radius) {
-            this.damageEnemy(enemy, bladeDamage * 0.4, true);
-            break;
-          }
-        }
-      }
     }
 
-    for (let i = this.projectiles.length - 1; i >= 0; i--) {
-      const projectile = this.projectiles[i];
+    // A snapshot, released by reference: a hit can clear bullets mid-loop (a
+    // boss stage break or the board clear), which reorders this.projectiles.
+    // Indexing the live array then read a missing entry and froze the game.
+    for (const projectile of [...this.projectiles]) {
       if (!projectile.active) continue;
 
       if (projectile.hostile) {
@@ -732,21 +1055,30 @@ export class GameScene extends Phaser.Scene {
             audio.hitEnemy();
           } else {
             this.damagePlayer();
-            this.releaseProjectile(i);
+            this.releaseShot(projectile);
           }
           continue;
         }
         if (dist <= nearR + projectile.radius && projectile.nearMissTimer <= 0) {
           projectile.nearMissTimer = PLAYER.nearMissCooldown;
-          this.registerNearMiss(projectile.x, projectile.y);
+          this.registerNearMiss(projectile.x, projectile.y, null);
         }
       } else {
         let consumed = false;
         for (const enemy of this.enemies) {
-          if (!enemy.active) continue;
+          if (!enemy.active || enemy === projectile.lastHit) continue;
           if (Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y) <= projectile.radius + enemy.radius) {
-            this.damageEnemy(enemy, projectile.damage, true);
-            consumed = true;
+            if (projectile.fromUltimate) this.asUltimate(() => this.damageEnemy(enemy, projectile.damage, true));
+            else this.damageEnemy(enemy, projectile.damage, true);
+            if (projectile.tag === 'ice' && enemy.active) this.synergies.onIceHit(enemy);
+            // Celestial bolts pass through a limited number of enemies.
+            if (projectile.pierce > 0) {
+              projectile.pierce -= 1;
+              projectile.lastHit = enemy;
+              this.fx.burstSparks(projectile.x, projectile.y, this.player.colors.accent, 3, 120);
+            } else {
+              consumed = true;
+            }
             break;
           }
         }
@@ -758,7 +1090,7 @@ export class GameScene extends Phaser.Scene {
         }
         if (consumed) {
           this.fx.burstSparks(projectile.x, projectile.y, this.player.colors.accent, 5, 150);
-          this.releaseProjectile(i);
+          this.releaseShot(projectile);
         }
       }
     }
@@ -775,14 +1107,14 @@ export class GameScene extends Phaser.Scene {
 
     if (this.bossActive && this.boss.active) {
       const dist = Math.hypot(this.boss.x - px, this.boss.y - py);
-      if (dist <= hitR + this.boss.radius) this.damagePlayer();
-      for (const blade of blades) {
-        if (Math.hypot(this.boss.x - blade.x, this.boss.y - blade.y) <= 16 + this.boss.radius) {
-          this.damageBoss(bladeDamage * 0.4);
-          break;
-        }
-      }
+      if (dist <= hitR + this.boss.radius && !this.boss.intangible) this.damagePlayer();
     }
+  }
+
+  /** Release a projectile by reference (no-op if something already released it). */
+  private releaseShot(projectile: Projectile): void {
+    const index = this.projectiles.indexOf(projectile);
+    if (index >= 0) this.releaseProjectile(index);
   }
 
   private releaseProjectile(index: number): void {
@@ -793,11 +1125,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ── Rewards & damage ──────────────────────────────────────────────────────
-  private registerNearMiss(x: number, y: number): void {
+  private registerNearMiss(x: number, y: number, grazedEnemy: Enemy | null): void {
     const gained = scoreNearMiss(this.score, this.stats.nearMissMul);
-    this.player.addBurstEnergy(BURST.energyPerNearMiss * this.stats.nearMissMul);
     audio.nearMiss(this.score.combo);
-    this.fx.burstSparks(x, y, this.player.colors.accent, 4, 120);
+    this.fireGrazeShot(grazedEnemy);
     if (this.score.combo % 5 === 0) {
       this.fx.floatText(this.player.x, this.player.y - 34, `${this.score.combo} HEAT`, BRAND_CSS.rebirthGold, 15);
       haptics.play('pickup');
@@ -806,8 +1137,61 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  /** Option B: a near-miss fires a real ember from the phoenix (see GRAZE_SHOT). */
+  /** `echoScale` > 0 marks a Temporal Echo copy (half damage, never echoes again). */
+  private fireGrazeShot(grazedEnemy: Enemy | null, echoScale = 0): void {
+    const px = this.player.x;
+    const py = this.player.y;
+    let target: { x: number; y: number } | null = grazedEnemy;
+    let damage: number = GRAZE_SHOT.damageEnemyGraze;
+    if (!target) {
+      const nearest = this.nearestEnemy(px, py);
+      if (!nearest || Math.hypot(nearest.x - px, nearest.y - py) > GRAZE_SHOT.bulletGrazeRange * this.stats.rangeMul) return;
+      target = nearest;
+      damage = GRAZE_SHOT.damageBulletGraze;
+    }
+    const angle = Math.atan2(target.y - py, target.x - px);
+    this.spawnFriendlyShot({
+      x: px,
+      y: py,
+      angle,
+      speed: GRAZE_SHOT.speed,
+      color: echoScale > 0 ? BRAND.signalCyan : this.player.colors.accent,
+      homing: true,
+      damage: echoScale > 0 ? damage * echoScale : damage,
+      radius: GRAZE_SHOT.radius,
+      life: GRAZE_SHOT.life,
+      pierce: 0,
+      tag: echoScale > 0 ? 'echo' : '',
+    });
+    this.fx.burstSparks(px, py, this.player.colors.accent, 3, 90);
+    if (echoScale === 0) this.synergies.onGrazeShot(grazedEnemy);
+  }
+
+  /** One friendly shot (graze shots, synergy shots, ultimate bolts). */
+  private spawnFriendlyShot(o: {
+    x: number;
+    y: number;
+    angle: number;
+    speed: number;
+    color: number;
+    damage: number;
+    radius: number;
+    life: number;
+    pierce: number;
+    homing: boolean;
+    tag: ShotTag;
+  }): Projectile {
+    const projectile = this.projectilePool.acquire();
+    projectile.spawn({ ...o, hostile: false });
+    projectile.tag = o.tag;
+    this.projectiles.push(projectile);
+    return projectile;
+  }
+
   private collectPickup(pickup: Pickup): void {
     scoreEmber(this.score, this.stats.emberValueMul);
+    this.synergies.onPickup();
     audio.pickup(this.score.combo);
     haptics.play('pickup');
     this.fx.burstEmbers(pickup.x, pickup.y, this.player.colors.glow, 5);
@@ -838,28 +1222,8 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  /** Elites arrive on a clock that tightens with elapsed time only. */
-  private updateEliteSchedule(dt: number): void {
-    if (this.bossActive) return;
-    this.eliteTimer -= dt;
-    if (this.eliteTimer > 0) return;
-    this.eliteTimer = eliteIntervalAt(this.elapsed);
-    this.spawnElite();
-  }
-
-  /**
-   * Name the stretch of the run the player is in. Legible progress is most of
-   * what makes a survival run feel worth continuing.
-   */
-  private announcePhase(): void {
-    const phase = bossPhaseAt(this.elapsed);
-    if (phase <= this.phaseAnnounced) return;
-    this.phaseAnnounced = phase;
-    if (phase > 0) session.ui.toast(`Phase ${romanNumeral(phase + 1)}`, 2600);
-  }
-
   private spawnElite(): void {
-    const difficulty = difficultyAt(this.elapsed);
+    const difficulty = this.difficulty;
     const kinds: EnemyKind[] = difficulty.table.map((t) => t.kind).filter((k) => k !== 'mine');
     const kind = kinds.length > 0 ? kinds[Math.floor(Math.random() * kinds.length)] : 'cinder';
     const point = this.arena.randomEdgePoint();
@@ -867,7 +1231,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private damageEnemy(enemy: Enemy, amount: number, canCrit: boolean): void {
-    let damage = amount;
+    let damage = amount * this.stats.damageMul;
     let crit = false;
     if (canCrit && this.stats.critChance > 0 && Math.random() < this.stats.critChance) {
       crit = true;
@@ -878,6 +1242,7 @@ export class GameScene extends Phaser.Scene {
     audio.hitEnemy();
 
     if (crit) {
+      this.synergies.onCrit(enemy);
       this.fx.flashOrb(enemy.x, enemy.y, this.player.colors.accent, this.stats.critRadius, 240);
       this.fx.shockwave(enemy.x, enemy.y, this.player.colors.accent, this.stats.critRadius, 300);
       // Critical explosions splash everything nearby.
@@ -937,8 +1302,10 @@ export class GameScene extends Phaser.Scene {
     const splitCount = enemy.splitCount;
 
     scoreKill(this.score, wasElite ? SCORING.eliteKillScore : enemy.score);
+    this.boardKills += 1;
     this.grantXp(enemy.xp);
-    this.player.addBurstEnergy(BURST.energyPerKill);
+    // Kills charge the ultimate, except kills made by the ultimate itself.
+    if (this.ultimateDamageDepth === 0) this.chargeUltimate(wasElite ? BURST.energyPerEliteKill : BURST.energyPerKill);
 
     enemy.deactivate();
     this.removeEnemyAt(index);
@@ -957,7 +1324,7 @@ export class GameScene extends Phaser.Scene {
     for (let i = 0; i < drops; i++) this.spawnPickup(x, y, 40 + Math.random() * 90);
 
     if (splitCount > 0) {
-      const difficulty = difficultyAt(this.elapsed);
+      const difficulty = this.difficulty;
       for (let i = 0; i < splitCount; i++) {
         const angle = (i / splitCount) * TAU;
         this.spawnEnemy(
@@ -1011,6 +1378,7 @@ export class GameScene extends Phaser.Scene {
   private damagePlayer(): void {
     const result = this.player.takeDamage();
     if (result === 'ignored') return;
+    this.synergies.onPlayerHit(result);
 
     if (result === 'shielded' || result === 'armored') {
       audio.hitEnemy();
@@ -1039,9 +1407,20 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ── Phoenix Burst ─────────────────────────────────────────────────────────
+  /** Release: fires the equipped ultimate. Every run starts with the Phoenix Burst. */
   private doBurst(): void {
     this.player.consumeBurst();
     this.runBursts += 1;
+
+    if (this.ultimates.ultimate !== 'burst') {
+      const def = this.ultimates.def;
+      audio.burst();
+      haptics.play('burst');
+      // Timed ultimates must finish before the next one can start.
+      this.player.burstCooldown = Math.max(this.player.burstCooldown, def.duration + 0.4);
+      this.ultimates.cast();
+      return;
+    }
 
     const { x, y } = this.player;
     const radius = this.player.burstRadius;
@@ -1061,13 +1440,42 @@ export class GameScene extends Phaser.Scene {
     this.fx.shake(BURST.shake, 320);
     this.slowMo(BURST.slowMoScale, BURST.slowMoDuration);
 
-    for (const enemy of [...this.enemies]) {
-      if (!enemy.active) continue;
-      if (Math.hypot(enemy.x - x, enemy.y - y) <= radius + enemy.radius) {
-        this.damageEnemy(enemy, damage, false);
+    // The Burst is the starting ultimate: its kills do not recharge it either.
+    this.asUltimate(() => {
+      for (const enemy of [...this.enemies]) {
+        if (!enemy.active) continue;
+        if (Math.hypot(enemy.x - x, enemy.y - y) <= radius + enemy.radius) {
+          this.damageEnemy(enemy, damage, false);
+        }
       }
-    }
+    });
 
+    this.clearHostileBullets(x, y, radius);
+
+    if (this.bossActive && this.boss.active && Math.hypot(this.boss.x - x, this.boss.y - y) <= radius + this.boss.radius) {
+      this.asUltimate(() => this.damageBoss(damage));
+    }
+  }
+
+  /** Run damage that came from an ultimate, so its kills do not recharge the meter. */
+  private asUltimate(apply: () => void): void {
+    this.ultimateDamageDepth += 1;
+    try {
+      apply();
+    } finally {
+      this.ultimateDamageDepth -= 1;
+    }
+  }
+
+  private chargeUltimate(amount: number): void {
+    if (this.player.addBurstEnergy(amount)) {
+      session.ui.toast(`${this.ultimates.def.name} ready — release`, 1600);
+    }
+  }
+
+  /** Destroy enemy bullets inside a radius (Burst, Supernova, Void Collapse). */
+  private clearHostileBullets(x: number, y: number, radius: number): void {
+    const accent = this.player.colors.accent;
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const projectile = this.projectiles[i];
       if (!projectile.hostile) continue;
@@ -1075,10 +1483,6 @@ export class GameScene extends Phaser.Scene {
         this.fx.burstSparks(projectile.x, projectile.y, accent, 4, 120);
         this.releaseProjectile(i);
       }
-    }
-
-    if (this.bossActive && this.boss.active && Math.hypot(this.boss.x - x, this.boss.y - y) <= radius + this.boss.radius) {
-      this.damageBoss(damage);
     }
   }
 
@@ -1094,16 +1498,18 @@ export class GameScene extends Phaser.Scene {
 
   // ── Boss ──────────────────────────────────────────────────────────────────
   private damageBoss(amount: number): void {
-    const result = this.boss.damage(amount, { onStageChange: (stage) => this.onBossStage(stage) });
+    const result = this.boss.damage(amount * this.stats.damageMul, { onStageChange: (stage) => this.onBossStage(stage) });
     audio.hitEnemy();
     if (result === 'dead') this.killBoss();
   }
 
   private onBossStage(stage: number): void {
+    this.hazards.clear();
     this.fx.shockwave(this.boss.x, this.boss.y, this.boss.color, 520, 700);
     this.fx.chromaticFlash(10, 220);
     this.fx.shake(0.012, 400);
     session.ui.toast(`Stage ${stage + 1}`);
+    this.chargeUltimate(BURST.energyPerBossStage);
     audio.bossWarning();
     haptics.play('boss');
     // Clear the screen of bullets so a stage change is a breath, not a wall.
@@ -1117,12 +1523,14 @@ export class GameScene extends Phaser.Scene {
   private killBoss(): void {
     const x = this.boss.x;
     const y = this.boss.y;
+    this.hazards.clear();
+    const felled = this.boss.def?.name ?? 'Boss';
     this.boss.deactivate();
     this.bossActive = false;
-    this.bossIndex += 1;
     this.runBosses += 1;
 
     scoreKill(this.score, SCORING.bossKillScore);
+    this.chargeUltimate(BURST.maxEnergy);
     // Felling a boss restores health and pays a large XP lump. Without a reward
     // this size there is no reason to fight one rather than kite it forever.
     if (this.player.health < PLAYER.maxHealth) {
@@ -1139,12 +1547,28 @@ export class GameScene extends Phaser.Scene {
     this.fx.burstSparks(x, y, BRAND.rebirthGold, 70, 640);
     this.fx.shake(0.02, 700);
     this.fx.flash(BRAND.rebirthGold, 0.4, 500);
-    session.ui.toast('Ashborn felled', 3000);
+    session.ui.toast(`${felled} felled — board cleared`, 3000);
 
     for (let i = 0; i < BOSS.emberDrop; i++) this.spawnPickup(x, y, 60 + Math.random() * 220);
-    for (let i = this.projectiles.length - 1; i >= 0; i--) {
-      if (this.projectiles[i].hostile) this.releaseProjectile(i);
+    this.clearBoard();
+  }
+
+  /** Ember Blades level-up: one more sword, forged in with sparks and molten light. */
+  private forgeBlades(): void {
+    const before = this.emberBlades.count;
+    this.emberBlades.setCount(this.stats.orbitBlades, this.player.x, this.player.y);
+    for (const p of this.emberBlades.positions(this.player.x, this.player.y).slice(before)) {
+      this.fx.flashOrb(p.x, p.y, BRAND.emberOrange, 34, 320);
+      this.fx.burstSparks(p.x, p.y, BRAND.rebirthGold, 14, 200);
     }
+  }
+
+  /** Restore hearts, capped at max (Nature Shard). */
+  private healPlayer(hearts: number): void {
+    if (this.player.health >= PLAYER.maxHealth) return;
+    this.player.health = Math.min(PLAYER.maxHealth, this.player.health + hearts);
+    this.fx.floatText(this.player.x, this.player.y - 30, '+1 ♥', BRAND_CSS.rebirthGold, 15);
+    this.fx.shockwave(this.player.x, this.player.y, SIGNAL.toxic, 90, 420);
   }
 
   // ── Upgrades ──────────────────────────────────────────────────────────────
@@ -1153,21 +1577,61 @@ export class GameScene extends Phaser.Scene {
     this.paused = true;
     const cards = draftUpgrades(this.build, Math.random, { playerLevel: this.levels.level });
 
-    session.ui.openPanel(upgradePanel(cards, this.levels.level), {
+    session.ui.openPanel(upgradePanel(cards, this.levels.level, this.build), {
       pick: (dataset) => {
         const id = dataset.id;
         if (!id) return;
+        const synergiesBefore = new Set(activeSynergies(this.build).map((s) => s.id));
         this.build = takeUpgrade(this.build, id);
+        for (const syn of activeSynergies(this.build)) {
+          if (synergiesBefore.has(syn.id)) continue;
+          session.ui.toast(`Synergy unlocked: ${syn.name}`, 2600);
+          this.fx.shockwave(this.player.x, this.player.y, syn.color, 300, 640, 1.2);
+        }
         this.stats = computeStats(this.build);
         this.player.applyStats(this.stats);
         this.score.comboDuration = SCORING.baseComboDuration * this.stats.comboDurationMul;
         if (UPGRADES_BY_ID.get(id)?.rarity === 'legendary') this.legendaryTaken = true;
+        if (id === 'nature') this.healPlayer(1);
+        if (id === 'ember-blades') this.forgeBlades();
+        this.emberBlades.cyclone = hasSynergy(this.build, 'infernal-cyclone');
         audio.upgradeSelect();
         haptics.play('levelUp');
         this.fx.shockwave(this.player.x, this.player.y, this.player.colors.accent, 300, 600);
+        if (id === 'ascension') {
+          this.ascend(this.build.ascension ?? 0);
+          // The first Ascension trades the Burst for an elemental ultimate.
+          if (this.ultimates.ultimate === 'burst') {
+            this.openUltimateChoice();
+            return;
+          }
+        }
         this.closeDraft();
       },
       skip: () => this.closeDraft(),
+    });
+  }
+
+  /** Ascension level → ultimate power and the phoenix's evolution stage. */
+  private ascend(level: number): void {
+    this.ultimates.ascension = level;
+    this.player.setEvolution(level);
+    session.ui.toast(`${evolutionStage(level)} phoenix`, 2400);
+    this.fx.shockwave(this.player.x, this.player.y, BRAND.rebirthGold, 360, 760, 1.4);
+  }
+
+  private openUltimateChoice(): void {
+    const options = eligibleUltimates(this.build);
+    session.ui.openPanel(ultimatePanel(options), {
+      ultimate: (dataset) => {
+        const id = dataset.id as UltimateId | undefined;
+        const def = id ? ULTIMATES_BY_ID.get(id) : undefined;
+        if (!def || !options.includes(def)) return;
+        this.ultimates.ultimate = def.id;
+        session.ui.toast(`${def.name} — release to unleash`, 2800);
+        this.fx.shockwave(this.player.x, this.player.y, def.color, 320, 700, 1.2);
+        this.closeDraft();
+      },
     });
   }
 
@@ -1232,6 +1696,7 @@ export class GameScene extends Phaser.Scene {
     this.dead = true;
     this.pointer.active = false;
     this.player.stopTrail();
+    this.emberBlades.hide();
 
     audio.gameOver();
     audio.setIntensity(0);
@@ -1279,6 +1744,7 @@ export class GameScene extends Phaser.Scene {
         embers: summary.embers,
         level: summary.level,
         kills: summary.kills,
+        boardsCleared: this.boardIndex + (this.boardPhase === 'clear' || this.boardPhase === 'rest' ? 1 : 0),
         highScore: result.save.highScore,
         isHighScore: result.isHighScore,
         newAchievements: result.newAchievements,
@@ -1331,11 +1797,19 @@ export class GameScene extends Phaser.Scene {
         level: this.levels.level,
         xpProgress: levelProgress(this.levels),
         burstFraction: this.player.burstFraction,
+        boardLabel: (() => {
+          const ref = boardRef(this.boardIndex);
+          return `BOARD ${ref.board + 1}/${BOARD.count}${ref.loop > 0 ? ` · LOOP ${ref.loop + 1}` : ''}`;
+        })(),
+        boardColor: factionForBoard(boardRef(this.boardIndex).board).color,
+        ultimateName: this.ultimates.def.name,
+        ultimateColor: this.ultimates.def.color,
         burstCharges: this.player.burstCharges,
         maxBurstCharges: this.player.maxBurstCharges,
         ...(this.bossActive && this.boss.active
           ? {
-              bossName: BOSS.name,
+              bossName: this.boss.def?.name ?? '',
+              bossColor: this.boss.color,
               bossHp: clamp(this.boss.hp / this.boss.maxStageHp, 0, 1),
               bossStage: this.boss.stage,
               bossStages: this.boss.totalStages - this.boss.stage,
@@ -1370,8 +1844,3 @@ export class GameScene extends Phaser.Scene {
 /** XP awarded by a single ember shard, before any Ember Chain bonus. */
 const PICKUP_XP = 1;
 
-const NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
-
-function romanNumeral(n: number): string {
-  return NUMERALS[Math.min(Math.max(n, 1), NUMERALS.length) - 1];
-}

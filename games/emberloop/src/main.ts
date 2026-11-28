@@ -3,12 +3,13 @@ import './style.css';
 import { session } from './core/Session';
 import { RENDER_SCALE } from './core/viewport';
 import { BRAND_CSS } from './config/brand';
-import { measureSafeArea } from './core/safeArea';
+import { VIEWPORT_EVENT, measureSafeArea, stageHeight } from './core/safeArea';
 import { BootScene } from './scenes/BootScene';
 import { GameScene } from './scenes/GameScene';
 import { TitleScene } from './scenes/TitleScene';
 import { audio } from './systems/AudioEngine';
 import { Ui } from './ui/Ui';
+import { Capacitor } from '@capacitor/core';
 
 const ui = new Ui();
 session.init(ui);
@@ -24,7 +25,8 @@ const uiRoot = document.getElementById('ui-root') as HTMLElement;
  */
 function computeViewport(): { width: number; height: number; landscapePhone: boolean } {
   const w = window.innerWidth;
-  const h = window.innerHeight;
+  // Normally innerHeight; the full screen on iPhone Home Screen apps that report a short viewport.
+  const h = stageHeight();
   const coarse = window.matchMedia('(pointer: coarse)').matches;
   const landscape = w > h;
 
@@ -52,6 +54,8 @@ function applyViewport(): void {
     game.scale.resize(width * RENDER_SCALE, height * RENDER_SCALE);
     game.scale.setZoom(1 / RENDER_SCALE);
   }
+  // DOM layouts that depend on the insets (the main menu art) re-fit on this.
+  window.dispatchEvent(new Event(VIEWPORT_EVENT));
 }
 
 const initial = computeViewport();
@@ -87,6 +91,13 @@ window.addEventListener('orientationchange', () => {
   // iOS reports stale dimensions immediately after the rotation event.
   window.setTimeout(applyViewport, 150);
 });
+// A Home Screen app can report its insets late, without a resize event, so
+// check again once the page has settled and whenever it comes back.
+window.visualViewport?.addEventListener('resize', applyViewport);
+window.addEventListener('pageshow', applyViewport);
+window.addEventListener('load', () => {
+  for (const delay of [250, 1000]) window.setTimeout(applyViewport, delay);
+});
 
 /* Belt-and-braces gesture blocking: CSS handles most of it, but iOS Safari
    still fires these for pinch-zoom and double-tap zoom. */
@@ -100,7 +111,10 @@ document.addEventListener('contextmenu', (event) => event.preventDefault());
 // Pause audio when the tab is hidden; the scenes handle pausing the run itself.
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) audio.suspend();
-  else if (!ui.panelOpen) audio.resume();
+  else {
+    if (!ui.panelOpen) audio.resume();
+    applyViewport();
+  }
 });
 
 if (session.debug) {
@@ -121,12 +135,28 @@ if (session.debug) {
   requestAnimationFrame(sampleFps);
 }
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+// Skipped in the native iPhone app: the game ships inside the app, so it is already offline.
+if ('serviceWorker' in navigator && import.meta.env.PROD && !Capacitor.isNativePlatform()) {
   window.addEventListener('load', () => {
     // sw.js is copied verbatim from public/ and sits next to index.html.
     const swUrl = new URL('sw.js', window.location.href).href;
-    navigator.serviceWorker.register(swUrl, { scope: './' }).catch(() => {
-      // Offline support is a bonus, never a requirement to play.
-    });
+    navigator.serviceWorker
+      .register(swUrl, { scope: './', updateViaCache: 'none' })
+      .then((registration) => {
+        // A Home Screen app is usually resumed, not reopened, so look for a new
+        // deploy whenever it comes back to the foreground.
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') registration.update().catch(() => undefined);
+        });
+      })
+      .catch(() => {
+        // Offline support is a bonus, never a requirement to play.
+      });
+  });
+
+  // When a new version takes over, reload into it, but never in the middle of a run.
+  const hadController = navigator.serviceWorker.controller !== null;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController && !game.scene.isActive('Game')) window.location.reload();
   });
 }
